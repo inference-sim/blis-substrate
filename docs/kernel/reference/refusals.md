@@ -19,6 +19,15 @@ change. The engine's reasons cite the vLLM v0.31.0 source in the code beside the
   forwarding wrapper around nothing does. The refusal names the panic. A rules method that
   panics later, inside a pricing call, is a defect in the caller's rules and panics there.
 
+## The kernel implementations that run are malformed
+
+- `Inputs.Implementations` has an implementation with no library, a code hash that is not
+  lower-case hexadecimal of at least 12 digits, a code hash with no variant, or two different code
+  hashes for one library and variant. A pool runs one build of a kernel.
+- A coefficient the cost model needs lists kernel implementations and none of them runs, and no
+  less trusted entry of its name covers the deployment. The error names each refused entry and the
+  implementation it is valid for.
+
 ## The engine would not start it
 
 These are layouts vLLM v0.31.0 refuses at startup.

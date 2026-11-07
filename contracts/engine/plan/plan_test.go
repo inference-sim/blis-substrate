@@ -311,3 +311,28 @@ func TestAPlanSurvivesJSON(t *testing.T) {
 		t.Errorf("round trip changed the plan:\n%+v\n%+v", p, back)
 	}
 }
+
+// The implementations a pool runs are what the coefficient lookup matches against (VAL-8):
+// each once, from the target's layers and the drafter's, in a fixed order.
+func TestImplementationsAreTheDistinctOnesThePoolRuns(t *testing.T) {
+	a := KernelImpl{Library: "nccl", Variant: "ncclAllReduce", CodeHash: "aaaaaaaaaaaa", Toolkit: "cuda13.0"}
+	b := KernelImpl{Library: "flashinfer", Variant: "decode", CodeHash: "bbbbbbbbbbbb"}
+	c := KernelImpl{Library: "nccl", Variant: "ncclAllGather", CodeHash: "aaaaaaaaaaaa"}
+	p := PoolPlan{
+		Layers:      []LoweredLayer{{KernelImpl: a}, {KernelImpl: b}, {KernelImpl: a}},
+		DraftLayers: []LoweredLayer{{KernelImpl: c}, {KernelImpl: b}},
+	}
+	got := p.Implementations()
+	want := []KernelImpl{b, c, a}
+	if len(got) != len(want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	}
+	if len((PoolPlan{}).Implementations()) != 0 {
+		t.Errorf("a plan with no layers runs no implementation")
+	}
+}
