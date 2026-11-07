@@ -40,6 +40,9 @@ sets, and how a cost model combines them is described under
 | `fitted` | boolean | yes | Whether the value comes from fitting a curve. Must be present even when false. |
 | `scope` | mapping | yes | Where the value holds, below. At least one dimension. |
 | `rate_basis` | string | no | What a `bytes_per_us` rate measures: `memory` (the default) or `work`. A memory rate cannot exceed the chip's datasheet memory bandwidth (SUB-5). A `work` rate counts bytes of work, such as a record counted once per query and key pair, and may exceed it; it requires a `rationale`. One of the [rate bases](vocabularies.md#rate-bases). |
+| `kernel_impls` | list | no | The kernel implementations the value is valid for ([below](#kernel_impls)). A lookup matches the entry only for one of them. Not allowed on `transferred`, `assumed` or `not_charged`. |
+| `measures` | mapping | no | What the number includes ([below](#measures)). Only on `measured` and `calibrated`. |
+| `fit_range` | list | no | The range of inputs the fit's data covered ([below](#fit_range)). Only on `measured` and `calibrated`. A price that reads the entry outside it is extrapolated and ranks with `transferred`. |
 | `ci95` | `[low, high]` | no | 95% confidence interval. Must contain `value`. |
 | `sources` | list | depends on `method` | Citations, below. If present, not empty. |
 | `rationale` | string | depends on `method` | The reasoning behind a value that was not measured. |
@@ -77,6 +80,39 @@ Dtype and backend are not scope dimensions. Both are part of the entry's name, a
 | `kind` | string | yes | One of the [source kinds](vocabularies.md#source-kinds). |
 | `cite` | string | yes | The reference: an issue, a paper, a datasheet URL. |
 | `role` | string | yes | One of the [source roles](vocabularies.md#source-roles). |
+
+### `kernel_impls`
+
+<!-- fields: coefficient.KernelImpl -->
+
+| Key | Type | Required | Meaning |
+|---|---|---|---|
+| `library` | string | yes | The library that runs the kernel. |
+| `variant` | string | yes | The library's own exported kernel name. |
+| `code_hash` | string | yes | The hash of the kernel's source and target GPU architecture, or of a binary library: lower-case hexadecimal, at least 12 digits. |
+
+### `measures`
+
+<!-- fields: coefficient.Measures -->
+
+| Key | Type | Required | Meaning |
+|---|---|---|---|
+| `time` | string | yes | One of the [measurement times](vocabularies.md#measurement-times): `device`, or `device_and_host`. |
+| `execution` | string | yes | One of the [measurement executions](vocabularies.md#measurement-executions): `captured` or `eager`. |
+| `harness` | string | yes | The harness that collected the data, with its pin. |
+
+### `fit_range`
+
+<!-- fields: coefficient.Bound -->
+
+| Key | Type | Required | Meaning |
+|---|---|---|---|
+| `dim` | string | yes | The input dimension, such as `tokens` or `ranks`. Listed once. |
+| `low` | number | yes | The smallest value the fit's data took. |
+| `high` | number | yes | The largest value the fit's data took. Not below `low`. |
+
+An interval `ci95` that is unbounded, or wider than half the value, marks the entry
+*unidentified*: its data do not determine it, and a price that used it ranks with `assumed`.
 
 ## Identity is name and scope
 
