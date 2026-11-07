@@ -2,6 +2,7 @@ package coefficient
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/inference-sim/blis-substrate/contracts/check"
@@ -149,6 +150,7 @@ func (e Entry) validate(p *validate.Problems, at string) {
 			p.Field(at+".rationale", "rate_basis work requires a rationale that says why the rate is not a memory rate")
 		}
 	}
+	e.validateEvidenceRecords(p, at)
 	// Companion fields required by method. Gated on a known method so an unknown one is
 	// reported once (as an unknown method) rather than also as a missing companion.
 	if e.Method.Valid() {
@@ -236,4 +238,134 @@ func (e Entry) citesKind(k vocab.SourceKind) bool {
 		}
 	}
 	return false
+}
+
+// validateEvidenceRecords checks the optional records of design D5, VAL-8, VAL-9 and VAL-10:
+// the kernel implementations an entry is valid for, its measurement boundary, and the range
+// its fit covered. Each is checked whenever it is present; the ratchet over the entries that
+// state none is a registry test, because the fields arrive with the fitting scripts.
+func (e Entry) validateEvidenceRecords(p *validate.Problems, at string) {
+	seenImpl := map[KernelImpl]bool{}
+	for i, k := range e.KernelImpls {
+		kat := fmt.Sprintf("%s.kernel_impls[%d]", at, i)
+		if strings.TrimSpace(k.Library) == "" {
+			p.Field(kat+".library", "required")
+		}
+		if strings.TrimSpace(k.Variant) == "" {
+			p.Field(kat+".variant", "required: the library's own exported kernel name")
+		}
+		if !hexHash(k.CodeHash) {
+			p.Field(kat+".code_hash", "%q must be a lower-case hexadecimal hash of at least 12 digits", k.CodeHash)
+		}
+		if seenImpl[k] {
+			p.Field(kat, "duplicate kernel implementation %s/%s/%s", k.Library, k.Variant, k.CodeHash)
+		}
+		seenImpl[k] = true
+	}
+	if len(e.KernelImpls) > 0 {
+		switch e.Method {
+		case vocab.MethodTransferred, vocab.MethodAssumed, vocab.MethodNotCharged:
+			// A transferred value is by definition not measured on the implementation it is
+			// keyed by, and an assumed or not-charged one was never measured; a kernel_impls
+			// list on them would claim a measurement that does not exist (design D5).
+			p.Field(at+".kernel_impls", "method %q is not measured on a kernel implementation, so it states none", e.Method)
+		}
+	}
+	if e.Measures != nil {
+		m := e.Measures
+		if !m.Time.Valid() {
+			p.Field(at+".measures.time", "%q is not one of %v", m.Time, vocab.AllMeasurementTimes())
+		}
+		if !m.Execution.Valid() {
+			p.Field(at+".measures.execution", "%q is not one of %v", m.Execution, vocab.AllMeasurementExecutions())
+		}
+		if strings.TrimSpace(m.Harness) == "" {
+			p.Field(at+".measures.harness", "required: the harness that collected the data")
+		}
+	}
+	seenDim := map[string]bool{}
+	for i, b := range e.FitRange {
+		bat := fmt.Sprintf("%s.fit_range[%d]", at, i)
+		if strings.TrimSpace(b.Dim) == "" {
+			p.Field(bat+".dim", "required")
+		}
+		if seenDim[b.Dim] {
+			p.Field(bat+".dim", "duplicate dimension %q", b.Dim)
+		}
+		seenDim[b.Dim] = true
+		lowFinite := p.FiniteField(bat+".low", b.Low)
+		highFinite := p.FiniteField(bat+".high", b.High)
+		if lowFinite && highFinite && b.Low > b.High {
+			p.Field(bat, "low %v exceeds high %v", b.Low, b.High)
+		}
+	}
+	// The data a measured or calibrated value was fitted to is part of what it claims; a fit
+	// range on any other method would describe data that did not produce the value.
+	if len(e.FitRange) > 0 && e.Method != vocab.MethodMeasured && e.Method != vocab.MethodCalibrated {
+		p.Field(at+".fit_range", "method %q was not fitted to data, so it states no fit range", e.Method)
+	}
+	if e.Measures != nil && e.Method != vocab.MethodMeasured && e.Method != vocab.MethodCalibrated {
+		p.Field(at+".measures", "method %q has no measurement boundary", e.Method)
+	}
+}
+
+// Unidentified reports whether the entry's data do not determine it (design VAL-10): its
+// 95% interval is unbounded, or wider than half its value. An unidentified entry keeps its
+// method and its citations, and ranks with assumed for VAL-3. An entry with no interval is
+// not unidentified; it has not said.
+func (e Entry) Unidentified() bool {
+	if e.CI95 == nil {
+		return false
+	}
+	lo, hi := e.CI95.Low, e.CI95.High
+	if math.IsInf(lo, 0) || math.IsInf(hi, 0) || math.IsNaN(lo) || math.IsNaN(hi) {
+		return true
+	}
+	return hi-lo > 0.5*math.Abs(e.Value)
+}
+
+// Extrapolated reports whether a lookup at point lies outside the range the entry's fit
+// covered (design VAL-10), on any dimension it recorded. in maps a dimension name to its
+// value at the lookup; a recorded dimension the lookup does not supply is not judged.
+// An entry that recorded no range is never extrapolated: it has not said.
+func (e Entry) Extrapolated(in map[string]float64) bool {
+	for _, b := range e.FitRange {
+		if v, ok := in[b.Dim]; ok && (v < b.Low || v > b.High) {
+			return true
+		}
+	}
+	return false
+}
+
+// EffectiveRank is the rank VAL-3 reports for a price that used this entry: the method's
+// rank, or transferred's when the lookup is extrapolated, or assumed's when the entry is
+// unidentified, whichever is the least trusted of those that apply. not_charged has none.
+func (e Entry) EffectiveRank(extrapolated bool) (rank int, ranked bool) {
+	rank, ranked = e.Method.Rank()
+	if !ranked {
+		return 0, false
+	}
+	if extrapolated {
+		if t, _ := vocab.MethodTransferred.Rank(); t > rank {
+			rank = t
+		}
+	}
+	if e.Unidentified() {
+		if a, _ := vocab.MethodAssumed.Rank(); a > rank {
+			rank = a
+		}
+	}
+	return rank, true
+}
+
+func hexHash(h string) bool {
+	if len(h) < 12 {
+		return false
+	}
+	for _, c := range h {
+		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
+			return false
+		}
+	}
+	return true
 }
