@@ -24,6 +24,7 @@
     runs: pull_request
     status: ci
     test: 'contracts: TestKernelImportsOnlySpec'
+    known_bad: 'contracts: TestKernelImportsOnlySpec'
   - repo: blis-substrate
     check: >-
       API-compatibility check of the contracts/ packages against the last substrate tag
@@ -52,6 +53,7 @@
     runs: pull_request
     status: ci
     test: 'contracts: TestLoadRejectsUnknownFields'
+    known_bad: 'contracts: TestLoadRejectsUnknownFields'
   - repo: blis-substrate
     check: Examples must validate
     runs: pull_request
@@ -256,6 +258,7 @@
     runs: pull_request
     status: ci
     test: TestEmbedPatternsEqualLoaderPatterns
+    known_bad: '.: TestEmbedPatternCheckRefusesItsKnownBadInputs'
   review: null
   status: ci
   target:
@@ -326,6 +329,7 @@
     runs: pull_request
     status: ci
     test: 'contracts: TestLoadRejectsUnknownFields'
+    known_bad: 'contracts: TestEveryLoaderRefusesTheMalformedSet'
   - repo: blis-substrate
     check: >-
       A shared set of malformed documents in contracts/conformance, run against every loader
@@ -356,11 +360,13 @@
     runs: pull_request
     status: ci
     test: TestNoNestedModule
+    known_bad: '.: TestNestedModuleCheckRefusesItsKnownBadInputs'
   - repo: blis-substrate
     check: A check of that uncompressed total
     runs: pull_request
     status: ci
     test: TestModuleZipIsUnder100MB
+    known_bad: '.: TestModuleSizeCheckRefusesItsKnownBadInput'
   review: null
   status: ci
   target:
@@ -535,6 +541,7 @@
     runs: pull_request
     status: ci
     test: 'tools/schemagen: TestPublishedSchemasMatchTheTypes'
+    known_bad: 'tools/schemagen: TestStaleSchemasRefusesItsKnownBadInputs'
   - repo: blis-config-search
     check: Schema validation in the applications' CI
     runs: pull_request

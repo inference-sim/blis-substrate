@@ -26,23 +26,8 @@ func TestPublishedSchemasMatchTheTypes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := map[string]bool{}
-	for _, f := range files {
-		want[filepath.Base(f.path)] = true
-		got, err := os.ReadFile(filepath.Join(root, f.path))
-		if err != nil {
-			t.Errorf("%s is not committed: run `go run ./tools/schemagen`", f.path)
-			continue
-		}
-		if !bytes.Equal(got, f.content) {
-			t.Errorf("%s differs from the Go types: run `go run ./tools/schemagen`", f.path)
-		}
-	}
-	committed, _ := filepath.Glob(filepath.Join(root, outDir, "*.schema.json"))
-	for _, c := range committed {
-		if !want[filepath.Base(c)] {
-			t.Errorf("%s is committed but the generator does not write it", c)
-		}
+	for _, problem := range staleSchemas(root, files) {
+		t.Error(problem)
 	}
 	// Every published document has an embedded schema, and only those.
 	for _, d := range documents {
@@ -55,6 +40,63 @@ func TestPublishedSchemasMatchTheTypes(t *testing.T) {
 	}
 	if len(schema.Documents) != len(documents) {
 		t.Errorf("contracts/schema lists %d documents, the generator %d", len(schema.Documents), len(documents))
+	}
+}
+
+// staleSchemas compares generated schemas with those committed under root, in both directions.
+func staleSchemas(root string, files []file) []string {
+	var out []string
+	want := map[string]bool{}
+	for _, f := range files {
+		want[filepath.Base(f.path)] = true
+		got, err := os.ReadFile(filepath.Join(root, f.path))
+		if err != nil {
+			out = append(out, f.path+" is not committed: run `go run ./tools/schemagen`")
+			continue
+		}
+		if !bytes.Equal(got, f.content) {
+			out = append(out, f.path+" differs from the Go types: run `go run ./tools/schemagen`")
+		}
+	}
+	committed, _ := filepath.Glob(filepath.Join(root, outDir, "*.schema.json"))
+	for _, c := range committed {
+		if !want[filepath.Base(c)] {
+			out = append(out, c+" is committed but the generator does not write it")
+		}
+	}
+	return out
+}
+
+// X18 for SUB-19: a schema that differs from the types, one not committed, and one the
+// generator no longer writes are each reported; a matching directory is not.
+func TestStaleSchemasRefusesItsKnownBadInputs(t *testing.T) {
+	dir := t.TempDir()
+	put := func(rel, body string) {
+		p := filepath.Join(dir, rel)
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	a := file{path: outDir + "/a.schema.json", content: []byte("{}\n")}
+	put(a.path, "{}\n")
+	if got := staleSchemas(dir, []file{a}); len(got) != 0 {
+		t.Fatalf("a matching directory was reported: %v", got)
+	}
+	put(a.path, "{\"x\":1}\n")
+	if got := staleSchemas(dir, []file{a}); len(got) != 1 || !strings.Contains(got[0], "differs") {
+		t.Errorf("a changed schema: %v", got)
+	}
+	put(a.path, "{}\n")
+	b := file{path: outDir + "/b.schema.json", content: []byte("{}")}
+	if got := staleSchemas(dir, []file{a, b}); len(got) != 1 || !strings.Contains(got[0], "not committed") {
+		t.Errorf("an uncommitted schema: %v", got)
+	}
+	put(outDir+"/old.schema.json", "{}")
+	if got := staleSchemas(dir, []file{a}); len(got) != 1 || !strings.Contains(got[0], "does not write") {
+		t.Errorf("an orphan schema: %v", got)
 	}
 }
 

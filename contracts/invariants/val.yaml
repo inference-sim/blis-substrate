@@ -20,6 +20,7 @@
     runs: pull_request
     status: ci
     test: 'contracts/spec/coefficient: TestRationaleRequiredForEveryMethodButMeasured'
+    known_bad: 'contracts/spec/coefficient: TestRationaleRequiredForEveryMethodButMeasured'
   - repo: blis-substrate
     check: >-
       Schema rules in blis-substrate/validate for the method list of §9.2, with the sources each method
