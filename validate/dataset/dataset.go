@@ -1,8 +1,8 @@
-// Package dataset holds the checks of catalog and registry data files that are shared by
+// Package dataset holds the checks of catalog and coefficient registry data files that are shared by
 // the validator commands and by the loader (package load), so a file is judged the same way
 // in CI and when a run loads it (design §3.3, SUB-9, X15).
 //
-// Each Check function takes one file's path relative to its catalog or registry directory
+// Each Check function takes one file's path relative to its catalog or coefficient registry directory
 // and its bytes, parses it with the strict contracts loader, and runs its validators. A
 // parse failure is the returned error; a document that parses and is wrong is reported in
 // the returned problems.
@@ -108,7 +108,7 @@ func CheckWorkload(rel string, b []byte) (*workload.CatalogWorkload, *validate.P
 	return w, w.Validate(), nil
 }
 
-// CheckMeasurementSources checks measurements/sources.yaml as the loader does: the registry is
+// CheckMeasurementSources checks measurements/sources.yaml as the loader does: the coefficient registry is
 // well formed. It does not judge the licence terms (X12); validate-catalog does, through
 // Registry.Validate.
 func CheckMeasurementSources(rel string, b []byte) (*measurement.Registry, *validate.Problems, error) {
@@ -178,7 +178,7 @@ type Catalog struct {
 	Sources    *measurement.Registry
 }
 
-// Registry is a registry's parsed data, keyed by file stem.
+// Registry is a coefficient registry's parsed data, keyed by file stem.
 type Registry struct {
 	Sets       map[string]*coefficient.Set
 	Acceptance map[string]*acceptance.ProfileSet
@@ -285,7 +285,7 @@ func CheckCatalog(files map[string][]byte) (*Catalog, []Problem) {
 	return c, out
 }
 
-// CheckRegistry parses and checks every file of a registry, and then the rules that span
+// CheckRegistry parses and checks every file of a coefficient registry, and then the rules that span
 // files: VAL-4's rule that no two entries a lookup could both return are left to load order.
 func CheckRegistry(files map[string][]byte) (*Registry, []Problem) {
 	r := &Registry{Sets: map[string]*coefficient.Set{}, Acceptance: map[string]*acceptance.ProfileSet{},

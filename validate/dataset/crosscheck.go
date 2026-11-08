@@ -8,9 +8,9 @@ import (
 	"github.com/inference-sim/blis-substrate/contracts/spec/coefficient"
 )
 
-// CheckFits checks a registry against the catalog it runs with (design §3.3): every chip,
+// CheckFits checks a coefficient registry against the catalog it runs with (design §3.3): every chip,
 // model and fabric a coefficient's scope names, and every model and chip an acceptance or
-// routing profile names, is an entry of that catalog. A candidate registry that does not
+// routing profile names, is an entry of that catalog. A candidate coefficient registry that does not
 // fit the catalog in use is refused, rather than leaving its entries to match nothing.
 func CheckFits(c *Catalog, r *Registry) []Problem {
 	var out []Problem

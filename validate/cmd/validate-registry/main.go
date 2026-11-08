@@ -1,12 +1,12 @@
 // Command validate-registry loads every committed coefficient set in a blis-registry
-// checkout, and every acceptance-profile set under acceptance/ when the registry hosts any,
+// checkout, and every acceptance-profile set under acceptance/ when the coefficient registry hosts any,
 // and validates each against the schema.
 //
 // blis-registry carries its own Python validator, but every Go consumer loads these
 // sets through contracts.LoadCoefficientSet and the field checks in
 // (*coefficient.Set).Validate — among them the intra-set (name, scope) duplicate rule a
-// resolver depends on. This command runs exactly those checks over a registry root, so
-// the registry's own CI can reject a bad set on the pull request that introduces it,
+// resolver depends on. This command runs exactly those checks over a coefficient registry root, so
+// the coefficient registry's own CI can reject a bad set on the pull request that introduces it,
 // rather than leaving it to surface later in a consumer. It is the coefficient-set
 // counterpart to validate-catalog.
 //
@@ -15,7 +15,7 @@
 // case-insensitively, de-duplicated by resolved path. Sharing that predicate is what keeps
 // the two gates from diverging on the sets that exist — with one qualification: like any
 // plain directory walk it does not descend into symlinked directories, so a set reachable
-// only through a linked directory is out of scope (the registry stores regular files, so
+// only through a linked directory is out of scope (the coefficient registry stores regular files, so
 // this does not arise today).
 //
 // It validates each set with (*coefficient.Set).Validate — the field layer, the same
@@ -48,7 +48,7 @@ func main() {
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
 
-// run validates every coefficient set discovered under the registry root given as the
+// run validates every coefficient set discovered under the coefficient registry root given as the
 // sole argument (registry.SetPaths — recursive over coefficients/, .yaml and .yml),
 // writing one summary line per set to stdout — the coefficient count when it validates,
 // FAILED when it does not — and every finding to stderr. It returns a process exit code:
@@ -61,7 +61,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 	root := args[0]
-	// Distinguish a mistyped root from a real registry with nothing to validate, as
+	// Distinguish a mistyped root from a real coefficient registry with nothing to validate, as
 	// validate-catalog does: without this, a nonexistent root and an empty coefficients/
 	// both read as "no sets found", so a typo looks like an empty directory.
 	if info, err := os.Stat(root); err != nil || !info.IsDir() {
@@ -103,7 +103,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 			return len(s.Coefficients), "coefficient(s)", p, nil
 		})
 	}
-	// Acceptance-profile sets are optional: a registry that hosts none is complete. They are
+	// Acceptance-profile sets are optional: a coefficient registry that hosts none is complete. They are
 	// named relative to the root (acceptance/<file>) so they cannot be mistaken for a
 	// coefficient set of the same file name.
 	for _, path := range accPaths {
