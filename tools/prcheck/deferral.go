@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/yaml.v3"
+	validate "github.com/inference-sim/blis-substrate/contracts/check"
 )
 
 // The X20 deferral. The release plan lets the commit-policy check defer two findings for a
@@ -51,9 +51,7 @@ func ApplyDeferral(src []byte, today time.Time, findings []string) (fail, deferr
 		return findings, nil
 	}
 	var d Deferral
-	dec := yaml.NewDecoder(bytes.NewReader(src))
-	dec.KnownFields(true)
-	if err := dec.Decode(&d); err != nil {
+	if err := validate.DecodeStrict("x20-deferral.yaml", src, &d); err != nil {
 		return append(append([]string{}, findings...), fmt.Sprintf("x20-deferral.yaml: %v", err)), nil
 	}
 	var bad []string
