@@ -6913,8 +6913,8 @@ the entry is and where its <code>config.json</code> came from.</p>
 <tr>
 <td><code>licence</code></td>
 <td>mapping</td>
-<td>yes</td>
-<td>The licence <code>config.json</code> is published under, below (X12).</td>
+<td>no</td>
+<td>The licence <code>config.json</code> is published under, below (X12). The loader decodes it and does not require it; <code>validate-catalog</code> requires it in the project's own catalog.</td>
 </tr>
 <tr>
 <td><code>config</code></td>
@@ -7109,9 +7109,13 @@ storage-class and workload-shape files.</p>
 <p>Two problems are warnings: a layer kind that neither the stack nor the speculator uses,
 and an <code>emit</code> condition on a node that is not a collective.</p>
 <p>A model identity is invalid if <code>name</code> is empty, <code>source</code> is absent, or <code>source</code> lacks a
-<code>provider</code>, <code>repo</code> or <code>revision</code>; if <code>licence</code> is absent, its <code>id</code> is not an SPDX identifier or
-<code>LicenseRef-&lt;name&gt;</code>, or its <code>evidence</code> is not an <code>https</code> URL naming the pinned revision; or if
-<code>config.sha256</code> is not a lowercase hex SHA-256.</p>
+<code>provider</code>, <code>repo</code> or <code>revision</code>; or if <code>config.sha256</code> is not a lowercase hex SHA-256. This is
+all the loader checks. No simulation path reads, requires or enforces a licence (X12), so a
+catalog or overlay a user supplies is not refused for lacking a <code>licence</code> record, or for a
+record that is not well formed.</p>
+<p>The project's own catalog is held to more, in CI. <code>validate-catalog</code> fails a <code>model.yaml</code>
+whose <code>licence</code> is absent, whose <code>id</code> is not an SPDX identifier or <code>LicenseRef-&lt;name&gt;</code> that
+names a licence text, or whose <code>evidence</code> is not an <code>https</code> URL naming the pinned revision.</p>
 <p><code>validate-catalog</code> also checks that <code>name</code> in both <code>graph.yaml</code> and <code>model.yaml</code> equals the
 directory name.</p>
 <p>Source: <a href="https://github.com/inference-sim/blis-substrate/tree/main/contracts/spec/model"><code>spec/model</code></a>.</p>
