@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -15,7 +16,9 @@ import (
 	"github.com/inference-sim/blis-substrate/contracts/rules"
 	"github.com/inference-sim/blis-substrate/contracts/spec/coefficient"
 	"github.com/inference-sim/blis-substrate/contracts/spec/deployment"
+	"github.com/inference-sim/blis-substrate/contracts/spec/model"
 	"github.com/inference-sim/blis-substrate/load"
+	"gopkg.in/yaml.v3"
 )
 
 // pricesOf is everything a caller can ask a kernel for, as one comparable string: the memory
@@ -272,4 +275,135 @@ func TestEveryCoefficientFamilyChangesSomePriceOrIsListed(t *testing.T) {
 	}
 	t.Logf("%d scenarios, %d families, %d unpriced", len(scenarios), len(all), len(unpriced))
 	_ = time.Second
+}
+
+// SUB-20's second check: changing a node's label changes no price. Every node of every
+// catalog graph that carries a Role has it replaced by a string that matches nothing, and the
+// model is priced again. A price that moves is a decision that depends on the label.
+//
+// At this release it does move for the models that have a block-index scorer or a shared
+// expert, because the cost model branches on those two labels (contracts/testdata/
+// role_branches.txt). The test lists them: it fails on a model not listed and on a listed model
+// whose price no longer moves, so typed roles (blis-schemas#67) must delete lines.
+func TestChangingALabelChangesNoPriceOrIsListed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("prices every catalog model; CI runs it without -short")
+	}
+	d, err := load.Embedded()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cases := perturbationScenarios(t, d)
+	seen := map[string]bool{}
+	var movers []string
+	for _, c := range cases {
+		model := strings.SplitN(c.label, "/", 2)[0]
+		if seen[model] {
+			continue
+		}
+		seen[model] = true
+		base, err := New(c.in)
+		if err != nil {
+			t.Fatalf("%s: %v", c.label, err)
+		}
+		want := pricesOf(base)
+		g := relabelled(t, *c.in.Model)
+		in := c.in
+		in.Model = &g
+		k, err := New(in)
+		if err != nil {
+			t.Fatalf("%s with every role renamed: %v", c.label, err)
+		}
+		if pricesOf(k) != want {
+			movers = append(movers, model)
+		}
+	}
+	sort.Strings(movers)
+	got := strings.Join(movers, "\n") + "\n"
+	path := filepath.Join("testdata", "label_dependent_models.txt")
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if os.Getenv("UPDATE_COMPLETENESS") != "" {
+		var head []string
+		for _, l := range strings.Split(string(raw), "\n") {
+			if strings.HasPrefix(l, "#") {
+				head = append(head, l)
+			}
+		}
+		if err := os.WriteFile(path, []byte(strings.Join(head, "\n")+"\n"+got), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	if want := stripComments(string(raw)); want != got {
+		t.Errorf("the models whose price depends on a node label differ from %s.\nwant:\n%s\ngot:\n%s", path, want, got)
+	}
+}
+
+// relabelled returns a copy of the graph with every node Role replaced by a string no code
+// compares with, and every reference to a role (a node's Aliases, an architecture override's
+// Role) rewritten to match, so the document stays valid and only the label changes. It walks
+// the whole graph by reflection, so the speculator's own stacks, the embedding, the head and
+// the architecture overrides are renamed with the layer kinds. The empty role stays empty: its
+// absence is itself what several sites read.
+func relabelled(t *testing.T, g model.Graph) model.Graph {
+	t.Helper()
+	b, err := yaml.Marshal(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out model.Graph
+	if err := yaml.Unmarshal(b, &out); err != nil {
+		t.Fatalf("copying the graph: %v", err)
+	}
+	rename := map[string]string{}
+	visit(reflect.ValueOf(&out), func(f reflect.StructField, v reflect.Value) {
+		if f.Name == "Role" && v.Kind() == reflect.String && v.String() != "" {
+			if _, ok := rename[v.String()]; !ok {
+				rename[v.String()] = fmt.Sprintf("relabelled_%d", len(rename)+1)
+			}
+		}
+	})
+	visit(reflect.ValueOf(&out), func(f reflect.StructField, v reflect.Value) {
+		switch {
+		case f.Name == "Role" && v.Kind() == reflect.String && v.String() != "":
+			v.SetString(rename[v.String()])
+		case f.Name == "Aliases" && v.Kind() == reflect.String && v.String() != "":
+			if scope, role, ok := strings.Cut(v.String(), "."); ok {
+				if nr, found := rename[role]; found {
+					v.SetString(scope + "." + nr)
+				}
+			}
+		}
+	})
+	return out
+}
+
+// visit calls fn for every settable struct field reachable from v.
+func visit(v reflect.Value, fn func(reflect.StructField, reflect.Value)) {
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Interface:
+		if !v.IsNil() {
+			visit(v.Elem(), fn)
+		}
+	case reflect.Slice, reflect.Array:
+		for i := 0; i < v.Len(); i++ {
+			visit(v.Index(i), fn)
+		}
+	case reflect.Map:
+		for _, k := range v.MapKeys() {
+			visit(v.MapIndex(k), fn)
+		}
+	case reflect.Struct:
+		for i := 0; i < v.NumField(); i++ {
+			f := v.Type().Field(i)
+			if !f.IsExported() {
+				continue
+			}
+			fn(f, v.Field(i))
+			visit(v.Field(i), fn)
+		}
+	}
 }
