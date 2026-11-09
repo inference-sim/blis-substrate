@@ -48,7 +48,7 @@ func TestEveryPlanFieldIsPricedOrListed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		l := strings.TrimSpace(sc.Text())

@@ -1,7 +1,6 @@
 package resolve
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/inference-sim/blis-substrate/contracts/spec/coefficient"
@@ -103,7 +102,7 @@ func lookup(t *testing.T, sets []*coefficient.Set, d Scope) (float64, error) {
 	}
 	v, err := c.Value("x")
 	if err != nil {
-		t.Fatal(fmt.Sprintf("Value: %v", err))
+		t.Fatalf("Value: %v", err)
 	}
 	return v, nil
 }

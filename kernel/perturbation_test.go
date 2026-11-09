@@ -384,7 +384,7 @@ func relabelled(t *testing.T, g model.Graph) model.Graph {
 // visit calls fn for every settable struct field reachable from v.
 func visit(v reflect.Value, fn func(reflect.StructField, reflect.Value)) {
 	switch v.Kind() {
-	case reflect.Ptr, reflect.Interface:
+	case reflect.Pointer, reflect.Interface:
 		if !v.IsNil() {
 			visit(v.Elem(), fn)
 		}
