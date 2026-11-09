@@ -204,12 +204,14 @@
   - repo: blis-substrate
     check: Completeness test over every primitive and every catalog chip
     runs: pull_request
-    status: new
+    status: ci
+    test: 'kernel: TestEveryValueTheKernelSuppliesItselfIsListed'
+    known_bad: 'kernel: TestEveryValueTheKernelSuppliesItselfIsListed'
   review: null
-  status: new
+  status: ci
   target:
     status: ci
-    milestone: 2
+    milestone: null
 - id: SUB-8
   section: §5
   statement: >-
@@ -332,6 +334,8 @@
     never dropped.
   scope:
   - blis-substrate
+  - blis-vllm
+  - inference-sim
   checks:
   - repo: blis-substrate
     check: Each loader refuses unknown keys
@@ -343,9 +347,21 @@
     check: >-
       A shared set of malformed documents in contracts/conformance, run against every loader
     runs: pull_request
-    status: new
+    status: ci
+    test: 'contracts: TestEveryLoaderRefusesTheMalformedSet'
+    known_bad: 'contracts: TestEveryLoaderRefusesTheMalformedSet'
   - repo: blis-substrate
     check: A test that every declared field is read
+    runs: pull_request
+    status: ci
+    test: 'contracts: TestEveryLoaderReadsEveryFieldItsExampleStates'
+    known_bad: 'contracts: TestEveryLoaderReadsEveryFieldItsExampleStates'
+  - repo: blis-vllm
+    check: The shared set of malformed documents, run against the repository's loaders
+    runs: pull_request
+    status: new
+  - repo: inference-sim
+    check: The shared set of malformed documents, run against the repository's loaders
     runs: pull_request
     status: new
   review: null
