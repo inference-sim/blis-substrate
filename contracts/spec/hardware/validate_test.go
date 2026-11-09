@@ -2,6 +2,8 @@ package hardware
 
 import (
 	"math"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -286,5 +288,90 @@ func TestChipValidatesComputeCapability(t *testing.T) {
 		if p.OK() || !strings.Contains(p.Error(), "ComputeCapability") {
 			t.Errorf("%q accepted:\n%s", cc, p.Error())
 		}
+	}
+}
+
+// SUB-18: provenance is recorded per field. A field the map does not name has the file's
+// provenance, and a source other than datasheet, published or measured:<device> is refused.
+func TestFieldProvenance(t *testing.T) {
+	chip := func(fp map[string]string) *Chip {
+		return &Chip{Name: "x", Provenance: vocab.ProvenanceVendorSpec, BF16Peak: 100, MemoryBandwidthTBs: 1,
+			MemoryGiB: 80, IntraNodeBwGBps: 100, SMCount: 100, FieldProvenance: fp}
+	}
+	for _, ok := range []map[string]string{nil, {}, {"MemoryGiB": "measured:NVIDIA H100"}, {"SMCount": "published", "TFlopsPeak": "datasheet"}} {
+		if p := chip(ok).Validate(); !p.OK() {
+			t.Errorf("%v refused: %s", ok, p.Error())
+		}
+	}
+	for name, c := range map[string]struct {
+		fp   map[string]string
+		want string
+	}{
+		"fitted is a coefficient":        {map[string]string{"MemoryGiB": "fitted"}, "belongs in the coefficient registry"},
+		"assumed is a coefficient":       {map[string]string{"SMCount": "assumed"}, "belongs in the coefficient registry"},
+		"measured with no device":        {map[string]string{"MemoryGiB": "measured:"}, "names the device"},
+		"measured without the colon":     {map[string]string{"MemoryGiB": "measured"}, "names the device"},
+		"datasheet naming a device":      {map[string]string{"MemoryGiB": "datasheet:H100"}, "only a measured figure names a device"},
+		"a source nobody defined":        {map[string]string{"MemoryGiB": "rumour"}, "is not datasheet"},
+		"a field the chip does not have": {map[string]string{"NoSuchFact": "datasheet"}, "names no catalog fact"},
+		"the provenance itself":          {map[string]string{"Provenance": "datasheet"}, "names no catalog fact"},
+	} {
+		p := chip(c.fp).Validate()
+		if p.OK() || !strings.Contains(p.Error(), c.want) {
+			t.Errorf("%s: %v", name, p)
+		}
+	}
+	f := &Fabric{Name: "n", Provenance: vocab.ProvenanceVendorSpec, InterNodeBwGBps: 50, FieldProvenance: map[string]string{"InterNodeBwGBps": "fitted"}}
+	if p := f.Validate(); p.OK() {
+		t.Error("a fitted fabric bandwidth was accepted")
+	}
+	f.FieldProvenance = map[string]string{"InterNodeBwGBps": "datasheet"}
+	if p := f.Validate(); !p.OK() {
+		t.Errorf("a datasheet fabric bandwidth was refused: %s", p.Error())
+	}
+}
+
+func TestParseFieldSourceRoundTrips(t *testing.T) {
+	for _, s := range []string{"datasheet", "published", "measured:NVIDIA B300 SXM6 AC"} {
+		f, err := vocab.ParseFieldSource(s)
+		if err != nil || f.String() != s {
+			t.Errorf("%q -> %+v, %v", s, f, err)
+		}
+	}
+}
+
+// Every chip that records a per-field source is valid, and a measured figure names the device
+// its comment says it was read from, so the comment and the record cannot drift apart.
+func TestCommittedChipsRecordTheirExceptions(t *testing.T) {
+	files, err := filepath.Glob("../../../catalog/hardware/*.yaml")
+	if err != nil || len(files) == 0 {
+		t.Fatalf("no chips: %v", err)
+	}
+	measured := 0
+	for _, f := range files {
+		raw, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var c Chip
+		if err := yaml.Unmarshal(raw, &c); err != nil {
+			t.Fatalf("%s: %v", f, err)
+		}
+		c.Name = strings.TrimSuffix(filepath.Base(f), ".yaml")
+		if p := c.Validate(); !p.OK() {
+			t.Errorf("%s: %s", f, p.Error())
+		}
+		for field, src := range c.FieldProvenance {
+			fs, _ := vocab.ParseFieldSource(src)
+			if fs.Kind == vocab.FieldMeasured {
+				measured++
+				if !strings.Contains(string(raw), fs.Device) {
+					t.Errorf("%s: %s is measured on %q, which the file never mentions", f, field, fs.Device)
+				}
+			}
+		}
+	}
+	if measured < 6 {
+		t.Errorf("%d measured figures recorded; the six driver-reported memory totals are measurements", measured)
 	}
 }

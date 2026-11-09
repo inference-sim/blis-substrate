@@ -213,7 +213,7 @@ keeps or introduces; CI refuses an identifier that does not exist (X14).
 - **SUB-17** (new; target ci by M3) A transfer or collective names its endpoints by rank, and the cost model prices it over the path between them through the catalog's links: the NVLink domain, the NIC and each switch tier.
   - `new`, pull_request: A property test over random placements, in blis-substrate
 - **SUB-18** (new; target ci by M2) Provenance is recorded per field, not per file.
-  - `new`, pull_request: Validator rules on catalog provenance fields
+  - `new`, pull_request: Validator rules on catalog provenance fields (`contracts/spec/hardware: TestFieldProvenance`)
 - **SUB-19** (partial; target ci by M1) Every document that crosses a repository boundary has one definition, in contracts/spec: the scenario, the deployment, the Result, and the per-point record the scoring harness writes.
   - `ci`, pull_request: A generator test in blis-substrate that the published schemas match the Go types (`tools/schemagen: TestPublishedSchemasMatchTheTypes`)
 - **SUB-20** (new; target ci by M2) No price, size or engine decision depends on a free-text label.

@@ -530,6 +530,8 @@
     check: Validator rules on catalog provenance fields
     runs: pull_request
     status: new
+    test: 'contracts/spec/hardware: TestFieldProvenance'
+    known_bad: 'contracts/spec/hardware: TestFieldProvenance'
   review: null
   status: new
   target:
