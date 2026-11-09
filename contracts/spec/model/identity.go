@@ -37,9 +37,9 @@ import (
 // keys. That is intentional and NOT a claim of leniency-parity — an unknown key is a probable
 // typo that would otherwise silently drop the setting its author meant, and rejecting it is
 // the same filename-identity direction #27/#25 take. One consequence: unlike Chip and Fabric,
-// Identity does not strip the catalog's underscore-prefixed _comment* keys (the same gap #28
-// tracks for workload Shape), so such a key would be rejected rather than ignored; no
-// committed model.yaml carries one today.
+// Identity does not strip the catalog's underscore-prefixed _comment* keys (workload Shape
+// does, since its loader gained that hook), so such a key would be rejected rather than
+// ignored; no committed model.yaml carries one today.
 type Identity struct {
 	Name   string  `yaml:"name"`
 	Source *Source `yaml:"source"`
