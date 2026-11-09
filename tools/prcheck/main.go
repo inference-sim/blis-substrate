@@ -21,8 +21,8 @@
 //	prcheck versions
 //	    X23: version literals outside the sources of versions, and outside records under specs/.
 //	prcheck docrefs
-//	    X26: paths, line ranges and table rows in Markdown documents. Every finding fails; no
-//	    list of known findings hides one.
+//	    X26: paths, line ranges and table rows in Markdown documents, except records under specs/
+//	    and rfcs/. Every finding fails; no list of known findings hides one.
 //	prcheck skips -results <file> [-python-package <dir>] [-min <n>]
 //	    X16, X22: a skipped test not on the quarantine list fails, and so does a go test
 //	    run with fewer than -min results.
@@ -268,7 +268,7 @@ func run(args []string, w io.Writer) error {
 		var bad []string
 		n := 0
 		for _, f := range files {
-			if !strings.HasSuffix(f, ".md") || strings.Contains(f, "/testdata/") {
+			if !strings.HasSuffix(f, ".md") || strings.Contains(f, "/testdata/") || IsRecord(f) {
 				continue
 			}
 			src, err := os.ReadFile(f)

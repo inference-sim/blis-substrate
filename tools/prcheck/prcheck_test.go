@@ -984,3 +984,56 @@ func TestContractsAPIToolIsNotADependency(t *testing.T) {
 		t.Error("apidiff is not pinned to a version and commit")
 	}
 }
+
+// A contract-change review set names its issue in .github/contract-review-set when it exists.
+// The file holds one owner/repo#n, and the issue it names is a review set of this repository
+// (SUB-1, design 12.8).
+func TestTheContractReviewSetFileNamesOneIssue(t *testing.T) {
+	raw, err := os.ReadFile("../../.github/contract-review-set")
+	if os.IsNotExist(err) {
+		return // no set is open: the check accepts no incompatible change
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	ref := strings.TrimSpace(string(raw))
+	if strings.ContainsAny(ref, " \t\n") || !reviewSetRef.MatchString(ref) {
+		t.Fatalf("contract-review-set holds %q; it holds one owner/repo#n", ref)
+	}
+	if !strings.HasPrefix(ref, "inference-sim/blis-substrate#") {
+		t.Errorf("%s is not an issue of this repository; a review set of the substrate is tracked here", ref)
+	}
+	// The CI step reads the file the same way this test does.
+	ci, err := os.ReadFile("../../.github/workflows/ci.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(ci), ".github/contract-review-set") || !strings.Contains(string(ci), "contracts-apidiff") {
+		t.Error("ci.yml does not pass the review-set file to contracts-apidiff")
+	}
+}
+
+func TestAMalformedReviewSetFileIsRefusedByTheCheck(t *testing.T) {
+	for _, ref := range []string{"27", "#27", "blis-substrate#27", "inference-sim/blis-substrate", "inference-sim/blis-substrate#0", "two refs#1 #2"} {
+		if _, _, err := JudgeContractsAPI([]string{"x"}, "v0.13.0", ref); err == nil {
+			t.Errorf("%q was taken as a review set", ref)
+		}
+	}
+}
+
+// X23, X26: a record of what was planned or decided is skipped by both checks, and nothing else is.
+func TestRecordsAreSkipped(t *testing.T) {
+	for _, p := range []string{"specs/a.md", "docs/specs/old/plan.md", "rfcs/1.md", "docs/rfcs/x/y.md"} {
+		if !IsRecord(p) {
+			t.Errorf("%s is a record", p)
+		}
+		if f := VersionFindings(p, []byte("Go 1.27")); len(f) != 0 {
+			t.Errorf("%s: version lint did not skip it: %v", p, f)
+		}
+	}
+	for _, p := range []string{"docs/spec.md", "docs/aspecs/a.md", "docs/rfcs.md", "README.md", "myspecs/a.md"} {
+		if IsRecord(p) {
+			t.Errorf("%s is not a record", p)
+		}
+	}
+}

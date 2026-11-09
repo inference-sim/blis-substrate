@@ -25,6 +25,18 @@ var (
 	blisModLit   = regexp.MustCompile(`\b(?:blis-substrate|blis-vllm|blis-sglang|inference-sim|llm-d-router|blis-config-search|accuracy-dashboard)[@ ]v\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?`)
 )
 
+// IsRecord reports whether a path is a record of what was planned or decided, such as a draft
+// specification under specs/ or an RFC. A record says what was true when it was written, so the
+// version and reference checks skip it (design X23, X26).
+func IsRecord(p string) bool {
+	for _, d := range []string{"specs", "rfcs"} {
+		if strings.HasPrefix(p, d+"/") || strings.Contains(p, "/"+d+"/") {
+			return true
+		}
+	}
+	return false
+}
+
 // versionSource reports whether a path is one of X23's sources of versions, or exempt.
 func versionSource(p string) bool {
 	base := path.Base(p)
@@ -32,7 +44,7 @@ func versionSource(p string) bool {
 	case "go.mod", "go.sum", "go.work.sum", "stack.json", "stack.lock", "pins.env", "harness.pin", "toolchain":
 		return true
 	}
-	if strings.HasPrefix(p, "specs/") || strings.Contains(p, "/specs/") {
+	if IsRecord(p) {
 		return true
 	}
 	return strings.HasSuffix(base, "_test.go") || strings.HasPrefix(base, "test_") ||

@@ -28,7 +28,7 @@ X25	new	M1
 X26	new	M1
 X27	new	M1
 X28	new	M1
-SUB-1	partial	M2
+SUB-1	ci	now
 SUB-2	ci	now
 SUB-3	partial	M4
 SUB-4	partial	M1
@@ -43,9 +43,9 @@ SUB-12	partial	M2
 SUB-13	ci	now
 SUB-14	new	M2
 SUB-15	new	M4
-SUB-16	new	M2
+SUB-16	ci	now
 SUB-17	new	M3
-SUB-18	new	M2
+SUB-18	ci	now
 SUB-19	partial	M1
 SUB-20	new	M2
 VLM-1	ci	now
@@ -115,7 +115,7 @@ VAL-1	partial	M2
 VAL-2	new	M2
 VAL-3	new	M2
 VAL-4	new	M2
-VAL-5	new	M2
+VAL-5	partial	M2
 VAL-6	partial	M1
 VAL-7	new	M2
 VAL-8	new	M2

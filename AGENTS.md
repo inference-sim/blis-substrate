@@ -159,9 +159,9 @@ keeps or introduces; CI refuses an identifier that does not exist (X14).
   - `new`, nightly: A nightly job in every repository that resolves each cited issue and fails on a closed one (`shared-nightly.yml: prcheck issues -resolve`)
   - `new`, pull_request: A pull-request check that refuses a change closing an issue still cited elsewhere (`shared-pr-checks.yml: prcheck issues -closes`)
   - `new`, nightly: The nightly job also reports an issue closed outside a merge
-- **SUB-1** (partial; target ci by M2) Packages under contracts/ import only the Go standard library, the YAML parser and each other.
+- **SUB-1** (ci; target reached) Packages under contracts/ import only the Go standard library, the YAML parser and each other.
   - `ci`, pull_request: Import test (`contracts: TestKernelImportsOnlySpec`)
-  - `new`, pull_request: API-compatibility check of the contracts/ packages against the last substrate tag (`ci.yml job contracts: prcheck contracts-apidiff`)
+  - `ci`, pull_request: API-compatibility check of the contracts/ packages against the last substrate tag (`ci.yml job contracts: prcheck contracts-apidiff`)
 - **SUB-2** (ci; target reached) Every new or changed data field ships with its validator, a failing example for each way it can be wrong, and regenerated reference documentation.
   - `ci`, pull_request: Documentation-matches-types test (`contracts: TestDocFieldTablesMatchTypes`)
   - `ci`, pull_request: Strict loaders (`contracts: TestLoadRejectsUnknownFields`)
@@ -206,14 +206,14 @@ keeps or introduces; CI refuses an identifier that does not exist (X14).
 - **SUB-15** (new; target ci by M4) A model graph holds only what the checkpoint states: the tensors, their shapes and stored data types, scale tensors, and the layer structure.
   - `new`, pull_request: A test that rederives every graph field from those inputs
   - `new`, pull_request: A check that graph vocabulary has no emit conditions. The deriver records each header's SHA-256 and the revision, under the same licence rule as config.json (X12)
-- **SUB-16** (new; target ci by M2) Quantities carry units as types.
-  - `new`, pull_request: The compiler (`contracts/units: TestMixedUnitsDoNotCompile`)
-  - `new`, pull_request: A load-time unit check in the cost model (`contracts/spec/coefficient: TestAUnitThatTheFormulaDoesNotNeedIsRefused`)
-  - `new`, pull_request: Validator rules that catalog peaks are dense figures and that their ratios between data types match the datasheet. The bounds on rates are SUB-5's
+- **SUB-16** (ci; target reached) Quantities carry units as types.
+  - `ci`, pull_request: The compiler (`contracts/units: TestMixedUnitsDoNotCompile`)
+  - `ci`, pull_request: A load-time unit check in the cost model (`contracts/spec/coefficient: TestAUnitThatTheFormulaDoesNotNeedIsRefused`)
+  - `ci`, pull_request: Validator rules that catalog peaks are dense figures and that their ratios between data types match the datasheet. The bounds on rates are SUB-5's (`contracts/spec/hardware: TestPeaksAreDenseFigures`)
 - **SUB-17** (new; target ci by M3) A transfer or collective names its endpoints by rank, and the cost model prices it over the path between them through the catalog's links: the NVLink domain, the NIC and each switch tier.
   - `new`, pull_request: A property test over random placements, in blis-substrate
-- **SUB-18** (new; target ci by M2) Provenance is recorded per field, not per file.
-  - `new`, pull_request: Validator rules on catalog provenance fields (`contracts/spec/hardware: TestFieldProvenance`)
+- **SUB-18** (ci; target reached) Provenance is recorded per field, not per file.
+  - `ci`, pull_request: Validator rules on catalog provenance fields (`contracts/spec/hardware: TestFieldProvenance`)
 - **SUB-19** (partial; target ci by M1) Every document that crosses a repository boundary has one definition, in contracts/spec: the scenario, the deployment, the Result, and the per-point record the scoring harness writes.
   - `ci`, pull_request: A generator test in blis-substrate that the published schemas match the Go types (`tools/schemagen: TestPublishedSchemasMatchTheTypes`)
 - **SUB-20** (new; target ci by M2) No price, size or engine decision depends on a free-text label.
@@ -235,8 +235,8 @@ keeps or introduces; CI refuses an identifier that does not exist (X14).
   - `new`, pull_request: Validator check against the previous release, plus a review question
   - `new`, pull_request: A validator rule that refuses unordered matches
   - `new`, pull_request: A cost-model test that resolves every pair of scope kinds in both load orders and agrees with the validator (X15)
-- **VAL-5** (new; target ci by M2) The typical error of each method is measured by leaving one chip out, and published per primitive family, using data units with role validate (§10).
-  - `new`, nightly: Nightly job: leave one chip out and compare each method's estimate with the chip's measured value, per primitive family, over the registry's measured coefficients (`nightly.yml job method-error: ledger method-error`)
+- **VAL-5** (partial; target ci by M2) The typical error of each method is measured by leaving one chip out, and published per primitive family, using data units with role validate (§10).
+  - `ci`, nightly: Nightly job: leave one chip out and compare each method's estimate with the chip's measured value, per primitive family, over the registry's measured coefficients (`nightly.yml job method-error: ledger method-error`)
   - `new`, nightly: The same comparison over data units with role validate, which the AISimulate and forward-pass sources do not list yet
 - **VAL-6** (partial; target ci by M1) A change to a measured or calibrated value passes the landing gate.
   - `ci`, pull_request: On fixtures per pull request (`registry/validator (pytest)`)

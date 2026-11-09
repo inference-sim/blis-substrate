@@ -117,7 +117,7 @@
       Nightly job: leave one chip out and compare each method's estimate with the chip's measured
       value, per primitive family, over the registry's measured coefficients
     runs: nightly
-    status: new
+    status: ci
     test: 'nightly.yml job method-error: ledger method-error'
     known_bad: 'ledger: TestSameGenerationLeavesOneChipOut'
   - repo: blis-substrate
@@ -127,7 +127,7 @@
     runs: nightly
     status: new
   review: null
-  status: new
+  status: partial
   target:
     status: ci
     milestone: 2
