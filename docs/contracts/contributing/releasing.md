@@ -41,7 +41,9 @@ the check runs that prove each registry check. Only then does the bot make the a
 whose message is the generated release notes (LIF-4), on that same commit, and only if every ci
 check has a successful run there (LIF-3). A hand-written result cannot stand in for a run: there
 is no results file. A tip that moved after the check has no check runs and is refused, and so is
-a check whose job was skipped, which proves nothing. A head that already carries a release tag is refused, and so is a
+a check whose job was skipped, which proves nothing. A check that runs only nightly (the
+method-error job of VAL-5) is proved by running the nightly workflow by hand on the staged commit
+(`workflow_dispatch`). A head that already carries a release tag is refused, and so is a
 `go.mod` that requires a BLIS module at a pseudo-version.
 
 The bot works one layer at a time and a person does the pushing and the waiting. Each run re-plans the whole
