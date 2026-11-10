@@ -7,8 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"gopkg.in/yaml.v3"
-
+	"github.com/inference-sim/blis-substrate/contracts/check"
 	"github.com/inference-sim/blis-substrate/contracts/invariants"
 )
 
@@ -21,10 +20,8 @@ type RunMap map[string]map[string][]string
 // ParseRunMap reads the mapping strictly: an unknown shape is an error.
 func ParseRunMap(raw []byte) (RunMap, error) {
 	var m RunMap
-	dec := yaml.NewDecoder(bytes.NewReader(raw))
-	dec.KnownFields(true)
-	if err := dec.Decode(&m); err != nil {
-		return nil, fmt.Errorf("check-runs.yaml: %w", err)
+	if err := validate.DecodeStrict("check-runs.yaml", raw, &m); err != nil {
+		return nil, err
 	}
 	for repo, tests := range m {
 		for test, names := range tests {
