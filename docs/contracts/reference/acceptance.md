@@ -154,7 +154,7 @@ acceptance:
 |---|---|---|---|
 | `profiles` | string | no | An acceptance-profile set under `acceptance/` in the registry, consulted in place of the default. Not with `value`. |
 | `value` | mapping | no | An inline value, above. |
-| `fallback_category` | string | no | The category to use when the workload's has no curve. The substitution is recorded. Not with `value`. |
+| `fallback_category` | string | no | The category to use when the workload's has no curve. The substitution is recorded. A fallback given on the command line outranks this one. Not with `value`. |
 | `exact_only` | boolean | no | Limits the profile lookup to a measured profile with the run's exact key; it never borrows. Not with `value`. |
 
 A pin must set at least one key.
