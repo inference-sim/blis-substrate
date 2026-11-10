@@ -1,6 +1,13 @@
 package hardware
 
-import "github.com/inference-sim/blis-substrate/contracts/check"
+import (
+	"reflect"
+	"sort"
+	"strings"
+
+	"github.com/inference-sim/blis-substrate/contracts/check"
+	"github.com/inference-sim/blis-substrate/contracts/vocab"
+)
 
 // MaxDenseRatio is the largest ratio of one data type's dense peak to the next wider type's on
 // a shipped part. NVIDIA's B300 datasheet gives NVFP4 at 3.11 times FP8; a sparse figure would be
@@ -17,6 +24,7 @@ func (c *Chip) Validate() *validate.Problems {
 	if !c.Provenance.Valid() {
 		p.Field("Provenance", "%q is not a recognized provenance", c.Provenance)
 	}
+	checkFieldProvenance(p, c.FieldProvenance, chipFields)
 	if c.ComputeCapability != "" {
 		if _, ok := c.CapabilityMajor(); !ok {
 			p.Field("ComputeCapability", "%q must be major.minor, such as 9.0 or 10.3", c.ComputeCapability)
@@ -115,6 +123,7 @@ func (f *Fabric) Validate() *validate.Problems {
 	if !f.Provenance.Valid() {
 		p.Field("Provenance", "%q is not a recognized provenance", f.Provenance)
 	}
+	checkFieldProvenance(p, f.FieldProvenance, fabricFields)
 	if p.FiniteField("InterNodeBwGBps", f.InterNodeBwGBps) && f.InterNodeBwGBps <= 0 {
 		p.Field("InterNodeBwGBps", "must be positive")
 	}
@@ -150,4 +159,53 @@ func IntraToInterRatio(c Chip, f Fabric) float64 {
 		return 1
 	}
 	return c.IntraNodeBwGBps / f.InterNodeBwGBps
+}
+
+// chipFields and fabricFields are the facts a FieldProvenance entry may name: every catalog
+// fact of the type, by its wire name. Provenance itself is not one.
+var chipFields = fieldNames(Chip{})
+var fabricFields = fieldNames(Fabric{})
+
+// checkFieldProvenance refuses a per-field source that names no field of the type, or that is
+// not datasheet, published or measured:<device> (SUB-18). A fitted or assumed value is refused
+// with the reason: it is a coefficient and belongs in the coefficient registry.
+func checkFieldProvenance(p *validate.Problems, m map[string]string, fields map[string]bool) {
+	names := make([]string, 0, len(m))
+	for k := range m {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	for _, k := range names {
+		if !fields[k] {
+			p.Field("FieldProvenance."+k, "names no catalog fact of this type; the facts are %s", strings.Join(sortedKeys(fields), ", "))
+			continue
+		}
+		if _, err := vocab.ParseFieldSource(m[k]); err != nil {
+			p.Field("FieldProvenance."+k, "%v", err)
+		}
+	}
+}
+
+func sortedKeys(m map[string]bool) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// fieldNames returns the yaml wire names of a struct's catalog facts: every tagged field except
+// the identity and the provenance records themselves.
+func fieldNames(v any) map[string]bool {
+	out := map[string]bool{}
+	t := reflect.TypeOf(v)
+	for i := 0; i < t.NumField(); i++ {
+		name, _, _ := strings.Cut(t.Field(i).Tag.Get("yaml"), ",")
+		if name == "" || name == "-" || name == "Provenance" || name == "FieldProvenance" {
+			continue
+		}
+		out[name] = true
+	}
+	return out
 }
