@@ -338,6 +338,29 @@ func (e preemptsTwice) Schedule(now engine.Time) (engine.Batch, error) {
 	return b, err
 }
 
+// skipsValidation is an engine that runs a request without applying Request.Validate: it drops
+// the adapter path, so the request passes as the base model.
+type skipsValidation struct{ *FIFO }
+
+func (e skipsValidation) Add(r engine.Request, now engine.Time) error {
+	r.AdapterPath = ""
+	return e.FIFO.Add(r, now)
+}
+
+// The conformance suite fails an engine whose Add does not apply Request.Validate.
+func TestProtocolErrorsFailAnEngineThatSkipsValidation(t *testing.T) {
+	cfg := fifoCfg()
+	cfg.InFlight, cfg.TokenBudget = 2, 4
+	newBad := func() (engine.Engine, error) {
+		f, err := NewFIFO(cfg)
+		return skipsValidation{f}, err
+	}
+	if err := CheckProtocolErrors(newBad, req("A", 4, 2), req("B", 4, 2)); err == nil ||
+		!strings.Contains(err.Error(), "Request.Validate") {
+		t.Fatalf("got %v, want a failure naming Request.Validate", err)
+	}
+}
+
 // preemptsAStrangerIdle reports a preemption of a request it was never given in a batch
 // that runs nothing, as vLLM's step does when it preempts every running request.
 type preemptsAStrangerIdle struct{ *FIFO }

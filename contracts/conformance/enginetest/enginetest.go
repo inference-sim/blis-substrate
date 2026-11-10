@@ -506,8 +506,8 @@ func TestEngine(t testing.TB, newEngine func() (engine.Engine, error), arrivals 
 }
 
 // CheckProtocolErrors checks the errors a simulator relies on to detect its own bugs:
-// completing an unknown batch, completing out of order, and finishing an unknown request
-// (which is not an error). It needs an engine that will schedule two batches at once for
+// adding a request that does not validate, completing an unknown batch, completing out of
+// order, and finishing an unknown request (which is not an error). It needs an engine that will schedule two batches at once for
 // the out-of-order case, and skips that case for an engine whose limit is one.
 func CheckProtocolErrors(newEngine func() (engine.Engine, error), a, b engine.Request) error {
 	e, err := newEngine()
@@ -522,6 +522,13 @@ func CheckProtocolErrors(newEngine func() (engine.Engine, error), a, b engine.Re
 	}
 	if err := e.TransferDone(12345, true, 0); !errors.Is(err, engine.ErrUnknownTransfer) {
 		return fmt.Errorf("TransferDone of an unknown transfer returned %v, want ErrUnknownTransfer", err)
+	}
+	// Add applies Request.Validate: a path with no adapter name is refused, not run as the
+	// base model.
+	bad := a
+	bad.Adapter, bad.AdapterPath = "", "/adapters/refused"
+	if err := e.Add(bad, 0); err == nil {
+		return fmt.Errorf("Add of a request with an adapter path and no adapter name returned nil, want the error of Request.Validate")
 	}
 	if e.InFlightLimit() < 2 {
 		return nil
