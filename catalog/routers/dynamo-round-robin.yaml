@@ -1,33 +1,327 @@
 # Dynamo's frontend in its round-robin mode, which it runs when its configuration sets none.
-# The entry records that no llm-d policy is close enough, and why. Every citation is a line of the
-# router's own code at the one Dynamo build the entry covers (revisions, below), or of llm-d's router
-# at the commit the module tag v1.0.0-blis.3 of inference-sim/llm-d-router points to. The entry says
-# nothing of any other Dynamo build: a run on one stays router_unsupported until an entry cites it.
+# The entry maps the mode to llm-d's round-robin policy and says exactly how the two differ and
+# how far the choice of policy moves BLIS's figures. Every citation is a line of a router's own
+# code at the commit named, or of llm-d's router at the commit the module tag v1.0.0-blis.3 of
+# inference-sim/llm-d-router points to. The bound is measured on BLIS only (see the guide
+# contracts/guides/router-sensitivity.md); it is a sensitivity, not an error against Dynamo.
 kind: RouterMapping
 router: dynamo
 mode: round-robin
-# The build the April 2026 recipes pin (committed 2026-04-26).
 revisions:
   - 1682167d3c97f0fc8cd405dee51f17288eeaeb55
-policy: none
+policy: round-robin
 reason: >-
-  llm-d's round-robin policy (a profile with no scorer, so the max-score picker rotates the tied
-  endpoints) is a rotation, as Dynamo's mode is, but the two keep their counters in different
-  places, and which places decides which endpoint serves which request. Dynamo keeps one
-  counter per router object. In the build the recipes pin it is the counter of a PushRouter, one
-  per endpoint client in each frontend process (push_router.rs). Every recipe the dashboard read runs several frontends
-  (enable_multiple_frontends), so the sequence the workers see interleaves independent rotations.
-  llm-d keeps one counter per runtime and draws it at every pick of every profile (common.go,
-  picker.go). A run with a prefill and a decode profile, as inference-sim's disaggregating
-  configuration has (examples/llm-d/pd.yaml: a max-score-picker in each of the two profiles),
-  draws two counters per request, so the prefill profile sees the even counters and the decode
-  profile the odd ones. With an even pool size the prefill pool then reaches only the endpoints at
-  even shifts (one endpoint of two), and the decode pool only the odd ones. The measured series
-  are disaggregated, so the policy would distort which endpoint serves a request in exactly the
-  case the table is for. The entry would map to round-robin if the deployment were stated to
-  have one frontend and BLIS drew one counter per request for the pool, or kept a counter per
-  profile; neither is established. Dynamo's order of workers (instance_ids_avail) is not cited
-  either. Until then the mode stays unsupported.
+  Dynamo's round-robin mode and llm-d's round-robin policy both choose a worker without reading
+  load: each takes the next value of a counter and indexes the list of workers by it. Both give
+  every worker the same number of requests to within one, and neither reacts to a worker that
+  falls behind. They differ in where the counter lives, in how many rotations a deployment runs
+  and in the order of the worker list, which the differences below state. How far the choice of
+  policy moves BLIS's figures is the bound: small for time per output token and for throughput
+  in most of the regime, large for time to first token at 64 to 256 clients when the alternative
+  reads load. The first version of this entry held that no policy was close enough, because
+  llm-d's shared counter would give a prefill pool of even size every other endpoint. Runs did
+  not show it (the pool-balance difference), so the entry maps the mode and keeps the counter
+  structure as a stated difference.
+difference:
+  - aspect: counter-per-pool
+    text: >-
+      Dynamo's counter is a field of one router object (push_router.rs 130-131), and its
+      prefill router is an object of its own with its own inner router (prefill_router/mod.rs 44-49),
+      so each pool of workers rotates on its own counter. llm-d keeps one counter for the
+      hosted runtime, and the max-score picker draws it at every pick of every profile
+      (common.go 98-104, picker.go 108-117), so the prefill pick and the decode pick of one
+      request draw two successive values. BLIS has one rotation shared by the pools where Dynamo
+      has one for each.
+    evidence: [2, 4, 6, 7]
+  - aspect: frontends
+    text: >-
+      A Dynamo deployment can run several frontend processes, each with router objects and
+      counters of its own that start at zero, so the sequence of requests a worker sees
+      interleaves independent rotations; the recipes the dashboard read run several
+      (enable_multiple_frontends). BLIS hosts one router and draws one rotation. Which frontend a request reaches is the load
+      balancer's choice and is not modelled.
+    evidence: [2]
+  - aspect: worker-order
+    text: >-
+      Dynamo indexes the list of available instances (client.rs 166-168) by the counter modulo
+      its length, in the order the client holds the instances, which the code read does not
+      fix. llm-d rotates the candidates in the order they reach the picker, and BLIS lists its
+      endpoints in identifier order, so a given request need not reach the same worker in the two.
+      The number each worker receives agrees to within one.
+    evidence: [1, 3, 7]
+  - aspect: pool-balance
+    text: >-
+      Read from the counters above, a prefill pool of even size would see only every other
+      endpoint under llm-d's policy. BLIS runs do not show it. With a workload that saturates
+      the prefill pool (8,192 prompt tokens, 16 output tokens), round-robin served 25.3 to 27.0
+      requests per second at 16 to 1,024 clients with two prefill endpoints, against 27.1 to 27.3
+      under least-active-requests and 13.6 with one prefill endpoint; with four it served 46.3 to
+      53.3 against 53.6 to 54.4. A pool used through one endpoint would give about half. The
+      14 percent gap at four endpoints and 16 clients is also seen under the random picker and
+      the default policy, so it is the arrival imbalance of a policy that ignores load, not a
+      stuck counter.BLIS does not record which prefill endpoint served a request, so the
+      mechanism is not confirmed. The tables are in the guide.
+    evidence: [5, 6, 7]
+  - aspect: load-blind
+    text: >-
+      Neither mode reads load, so neither reacts to a worker that falls behind. A policy that
+      does (least-active-requests, default, queue-scorer) is not this mode; the second group of
+      ratios in the bound is what a wrong guess of the mode would cost.
+    evidence: [1, 7]
+bound:
+  evidence:
+    file: registry/docs/router-sensitivity/runs.csv
+    sha256: f54dad99e89c657fb03e9484c2699303754bb2e2750dbffcaf9c670ae8cd1ec2
+    producer: inference-sim/inference-sim
+    commit: 780f661ef9c18a2a9928acf8a63a67667cd597c0
+    command: python3 -I registry/docs/router-sensitivity/sweep.py --blis <blis built from the commit> --work <scratch directory> --out runs.csv
+  ratios:
+    - metric: ttft_p50_ms
+      against: [random-picker]
+      regime:
+        workload: balanced
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.07
+    - metric: ttft_p99_ms
+      against: [random-picker]
+      regime:
+        workload: balanced
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.11
+    - metric: tpot_p50_ms
+      against: [random-picker]
+      regime:
+        workload: balanced
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.01
+    - metric: output_tok_s
+      against: [random-picker]
+      regime:
+        workload: balanced
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.01
+    - metric: ttft_p50_ms
+      against: [random-picker]
+      regime:
+        workload: prefill-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.13
+    - metric: ttft_p99_ms
+      against: [random-picker]
+      regime:
+        workload: prefill-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.19
+    - metric: tpot_p50_ms
+      against: [random-picker]
+      regime:
+        workload: prefill-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.01
+    - metric: output_tok_s
+      against: [random-picker]
+      regime:
+        workload: prefill-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.04
+    - metric: ttft_p50_ms
+      against: [random-picker]
+      regime:
+        workload: decode-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.09
+    - metric: ttft_p99_ms
+      against: [random-picker]
+      regime:
+        workload: decode-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.10
+    - metric: tpot_p50_ms
+      against: [random-picker]
+      regime:
+        workload: decode-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.01
+    - metric: output_tok_s
+      against: [random-picker]
+      regime:
+        workload: decode-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.01
+    - metric: ttft_p50_ms
+      against: [default, least-active-requests, queue-scorer]
+      regime:
+        workload: balanced
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.55
+    - metric: ttft_p99_ms
+      against: [default, least-active-requests, queue-scorer]
+      regime:
+        workload: balanced
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.05
+    - metric: tpot_p50_ms
+      against: [default, least-active-requests, queue-scorer]
+      regime:
+        workload: balanced
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.09
+    - metric: output_tok_s
+      against: [default, least-active-requests, queue-scorer]
+      regime:
+        workload: balanced
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.12
+    - metric: ttft_p50_ms
+      against: [default, least-active-requests, queue-scorer]
+      regime:
+        workload: prefill-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.18
+    - metric: ttft_p99_ms
+      against: [default, least-active-requests, queue-scorer]
+      regime:
+        workload: prefill-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.65
+    - metric: tpot_p50_ms
+      against: [default, least-active-requests, queue-scorer]
+      regime:
+        workload: prefill-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.04
+    - metric: output_tok_s
+      against: [default, least-active-requests, queue-scorer]
+      regime:
+        workload: prefill-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.16
+    - metric: ttft_p50_ms
+      against: [default, least-active-requests, queue-scorer]
+      regime:
+        workload: decode-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.41
+    - metric: ttft_p99_ms
+      against: [default, least-active-requests, queue-scorer]
+      regime:
+        workload: decode-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.26
+    - metric: tpot_p50_ms
+      against: [default, least-active-requests, queue-scorer]
+      regime:
+        workload: decode-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.06
+    - metric: output_tok_s
+      against: [default, least-active-requests, queue-scorer]
+      regime:
+        workload: decode-bound
+        concurrency_min: 16
+        concurrency_max: 1024
+        model: minimax-m2.5
+        hardware: gb200-nvl72
+        shapes: [1P3D, 2P3D, 3P2D, 4P1D]
+      max_ratio: 1.07
+  not_measured:
+    - One model (minimax-m2.5) on one part (gb200-nvl72) over NIXL on ib-400g, served by vLLM 0.32.0. Another model or part moves where the pools saturate, and with it where the large ratios sit.
+    - Closed-loop clients with fixed prompt and output lengths. No run had a prefix shared between requests, a session of several turns, a spread of lengths, or an open-loop arrival rate.
+    - Concurrency 16, 64, 256 and 1024 only, and the pool shapes 1P3D, 2P3D, 3P2D and 4P1D only, with one-GPU prefill instances and four-GPU decode instances. Ratios between the swept points, and larger pools, were not run.
+    - The ratios are between policies inside BLIS. No run behind Dynamo was compared with a run of BLIS, so how far Dynamo's real behaviour is from either policy is not measured.
+    - Time to first token, at 64 to 256 clients, is where the ratios against the policies that read load are large. The bound does not hold tightly there, and a ranking by TTFT p50 or p99 in that regime should not rest on this substitution. Time per output token and throughput move far less, except at the extremes of concurrency.
 evidence:
   - side: router
     field: mode
@@ -35,14 +329,14 @@ evidence:
     commit: 1682167d3c97f0fc8cd405dee51f17288eeaeb55
     path: components/src/dynamo/common/configuration/groups/router_args.py
     lines: "66-68"
-    claim: The router-mode option, which the frontend adds as its router options, defaults to round-robin, so a run that sets no router mode runs it.
+    claim: The router-mode argument defaults to round-robin, so a run that sets no router mode runs it.
   - side: router
     field: mode
     repository: ai-dynamo/dynamo
     commit: 1682167d3c97f0fc8cd405dee51f17288eeaeb55
     path: lib/runtime/src/pipeline/network/egress/push_router.rs
     lines: "357-372"
-    claim: In the build the April 2026 recipes pin, round-robin takes the next value of the router's counter and selects the instance at that value modulo the number of available instances.
+    claim: Round-robin takes the next value of the router's counter and selects the instance at that value modulo the number of available instances.
   - side: router
     field: policy
     repository: ai-dynamo/dynamo
@@ -50,6 +344,20 @@ evidence:
     path: lib/runtime/src/pipeline/network/egress/push_router.rs
     lines: "130-131"
     claim: The counter is a field of the router object, so each router keeps its own.
+  - side: router
+    field: policy
+    repository: ai-dynamo/dynamo
+    commit: 1682167d3c97f0fc8cd405dee51f17288eeaeb55
+    path: lib/runtime/src/component/client.rs
+    lines: "166-168"
+    claim: The list the counter indexes is the client's available instances, in the order the client holds them.
+  - side: router
+    field: policy
+    repository: ai-dynamo/dynamo
+    commit: 1682167d3c97f0fc8cd405dee51f17288eeaeb55
+    path: lib/llm/src/kv_router/prefill_router/mod.rs
+    lines: "44-49"
+    claim: The prefill router is an object of its own, with its own inner router and the router mode it was built with, so the prefill workers have a router object separate from the decode workers'.
   - side: llm-d
     field: policy
     repository: inference-sim/llm-d-router
