@@ -14,7 +14,10 @@
 // other.
 package enginesettings
 
-import "slices"
+import (
+	"maps"
+	"slices"
+)
 
 // Settings is one pool's engine settings, in the engine block's own terms.
 type Settings struct {
@@ -56,6 +59,33 @@ type Settings struct {
 
 	// Frontend is the API server: "" or "python" (the default), or "rust".
 	Frontend string
+
+	// The kernel-facing settings: each selects which kernel runs, so each changes a step's
+	// time, and the kernel prices a stated value from a measured coefficient or refuses it
+	// (VLM-3, VAL-8). The zero value of each is "unstated", which prices as the engine's own
+	// choice, never as one of the values below.
+	//
+	// AttentionBackend is attention_config.backend; MLAPrefillBackend is
+	// attention_config.mla_prefill_backend; UseTRTLLMAttention is
+	// attention_config.use_trtllm_attention (nil when unstated); LinearBackend is
+	// kernel_config.linear_backend, in the engine's lower-case form; CustomOps is
+	// compilation_config.custom_ops; CUDAGraphDecoderReplay is
+	// compilation_config.cudagraph_decoder_replay (nil when unstated) and
+	// DecoderReplayCUDAGraphCaptureSizes its capture sizes.
+	AttentionBackend                   string
+	MLAPrefillBackend                  string
+	UseTRTLLMAttention                 *bool
+	LinearBackend                      string
+	CustomOps                          []string
+	CUDAGraphDecoderReplay             *bool
+	DecoderReplayCUDAGraphCaptureSizes []int
+	// MiniMaxM3MSADecodeBackend is attention_config.minimax_m3_msa_decode_backend ("" when
+	// unstated: the engine's "triton"); AttentionBackendPerKind is attention_config.
+	// backend_per_kind and LinearBackendPerQuant kernel_config.linear_backend_per_quant, each
+	// empty when unstated.
+	MiniMaxM3MSADecodeBackend string
+	AttentionBackendPerKind   map[string]string
+	LinearBackendPerQuant     map[string]string
 
 	DBO          *DBO
 	EPLB         *EPLB
@@ -101,6 +131,9 @@ type Speculative struct {
 	// autoregressive drafter with either empty is refused. A parallel-block drafter ignores them.
 	FirstPassRows string
 	PassRequests  string
+	// KVCacheDType is speculative_config.kv_cache_dtype: the drafter's own KV cache dtype,
+	// "" when unstated (the drafter keeps the target's layout).
+	KVCacheDType string
 }
 
 // The words FirstPassRows and PassRequests take.
@@ -148,7 +181,7 @@ func (m MaxModelLen) Stated() (int, bool) {
 // does not change a kernel already built from them.
 func (s Settings) Clone() Settings {
 	for _, b := range []**bool{&s.EnablePrefixCaching, &s.AsyncScheduling, &s.DisableCascadeAttn,
-		&s.DisableCustomAllReduce, &s.DCPQReplicate} {
+		&s.DisableCustomAllReduce, &s.DCPQReplicate, &s.UseTRTLLMAttention, &s.CUDAGraphDecoderReplay} {
 		if *b != nil {
 			v := **b
 			*b = &v
@@ -159,6 +192,10 @@ func (s Settings) Clone() Settings {
 		s.MaxCUDAGraphCaptureSize = &v
 	}
 	s.CUDAGraphCaptureSizes = slices.Clone(s.CUDAGraphCaptureSizes)
+	s.CustomOps = slices.Clone(s.CustomOps)
+	s.AttentionBackendPerKind = maps.Clone(s.AttentionBackendPerKind)
+	s.LinearBackendPerQuant = maps.Clone(s.LinearBackendPerQuant)
+	s.DecoderReplayCUDAGraphCaptureSizes = slices.Clone(s.DecoderReplayCUDAGraphCaptureSizes)
 	if s.DBO != nil {
 		v := *s.DBO
 		s.DBO = &v

@@ -78,3 +78,31 @@ func TestPredicates(t *testing.T) {
 		t.Error("Speculating")
 	}
 }
+
+// The kernel-facing settings clone deeply too: a caller editing the slices or pointers it
+// passed does not change a kernel built from them.
+func TestCloneCopiesTheKernelFacingSettings(t *testing.T) {
+	on := true
+	orig := Settings{
+		UseTRTLLMAttention: &on, CUDAGraphDecoderReplay: &on,
+		CustomOps:                          []string{"all"},
+		DecoderReplayCUDAGraphCaptureSizes: []int{128, 256},
+		AttentionBackendPerKind:            map[string]string{"mla_attention": "FLASHINFER_MLA"},
+		LinearBackendPerQuant:              map[string]string{"nvfp4_w4a16": "humming"},
+	}
+	c := orig.Clone()
+	*orig.UseTRTLLMAttention, *orig.CUDAGraphDecoderReplay = false, false
+	orig.CustomOps[0] = "none"
+	orig.DecoderReplayCUDAGraphCaptureSizes[0] = 1
+	orig.AttentionBackendPerKind["mla_attention"], orig.LinearBackendPerQuant["nvfp4_w4a16"] = "x", "y"
+	switch {
+	case !*c.UseTRTLLMAttention || !*c.CUDAGraphDecoderReplay:
+		t.Error("editing the original's pointers changed its clone")
+	case !reflect.DeepEqual(c.CustomOps, []string{"all"}):
+		t.Errorf("editing the original's custom ops changed its clone: %v", c.CustomOps)
+	case c.AttentionBackendPerKind["mla_attention"] != "FLASHINFER_MLA" || c.LinearBackendPerQuant["nvfp4_w4a16"] != "humming":
+		t.Error("editing the original's per-kind maps changed its clone")
+	case !reflect.DeepEqual(c.DecoderReplayCUDAGraphCaptureSizes, []int{128, 256}):
+		t.Errorf("editing the original's replay sizes changed its clone: %v", c.DecoderReplayCUDAGraphCaptureSizes)
+	}
+}
