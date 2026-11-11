@@ -64,14 +64,16 @@ type Inputs struct {
 	// the caller, as speculative acceptance is. Nil prices an expert-parallel group as
 	// evenly loaded and records that as an assumption.
 	Routing *routing.Resolution
-	// Implementations are the kernel implementations that run in the priced pool: the library,
-	// variant and code hash the engine lowered each primitive to, which is
-	// plan.PoolPlan.Implementations() for a caller that holds the pool's plan (design VAL-8). A
-	// coefficient that lists kernel implementations is used only when one of them is here, by
-	// library, variant and code hash together; a different hash of the same kernel is refused.
-	// Empty means the caller does not say what runs, and then only coefficients that list no
-	// implementation are used, as every coefficient of the registry did before any listed one.
-	Implementations []plan.KernelImpl
+	// Implementations are the kernel implementations the pool runs, by the lowered primitive each
+	// executes: the library, variant and code hash the engine lowered it to, which is
+	// plan.PoolPlan.ImplementationsByPrimitive() for a caller that holds the pool's plan (design
+	// VAL-8). A coefficient that lists kernel implementations is used only for the primitive it
+	// prices (coefficient.PrimitiveOf), and only when every implementation supplied for that
+	// primitive is one it lists, by library, variant and code hash together; a different hash of
+	// the same kernel, or a kernel of another primitive, is refused. A primitive with nothing
+	// supplied uses only coefficients that list no implementation, as every coefficient of the
+	// registry did before any listed one.
+	Implementations map[plan.Primitive][]plan.KernelImpl
 	// Acceptance is the run's resolved speculative acceptance (blis-schemas acceptance.Resolve),
 	// resolved by the caller as Routing is. It is read only when the engine enables adaptive
 	// verification (enginesettings.Speculative.EnableAdaptiveVerification), where it is
@@ -2849,14 +2851,19 @@ func (k *Kernel) residentBytes(l price.PlannedLayer) float64 {
 
 // runningImpls converts the engine's implementations to the registry's key: library, variant and
 // code hash. The toolkit is recorded by the engine and is not part of the key (design 6.2).
-func runningImpls(in []plan.KernelImpl) []coefficient.KernelImpl {
-	var out []coefficient.KernelImpl
-	seen := map[coefficient.KernelImpl]bool{}
-	for _, k := range in {
-		c := coefficient.KernelImpl{Library: k.Library, Variant: k.Variant, CodeHash: k.CodeHash}
-		if !seen[c] {
-			seen[c] = true
-			out = append(out, c)
+func runningImpls(in map[plan.Primitive][]plan.KernelImpl) map[string][]coefficient.KernelImpl {
+	out := map[string][]coefficient.KernelImpl{}
+	for prim, impls := range in {
+		seen := map[coefficient.KernelImpl]bool{}
+		for _, k := range impls {
+			c := coefficient.KernelImpl{Library: k.Library, Variant: k.Variant, CodeHash: k.CodeHash}
+			if !seen[c] {
+				seen[c] = true
+				out[string(prim)] = append(out[string(prim)], c)
+			}
+		}
+		if _, ok := out[string(prim)]; !ok {
+			out[string(prim)] = nil
 		}
 	}
 	return out
@@ -2882,7 +2889,7 @@ func (k *Kernel) buildProvenance(c *resolve.Coefficients) {
 		k.origins = append(k.origins, kernel.CoefficientOrigin{
 			Name: name, Set: r.Set, Method: string(r.Entry.Method),
 			Scope:       scopeString(r.Entry, k.chip.Name),
-			KernelMatch: string(r.Match),
+			KernelMatch: string(r.Match), Primitive: r.Primitive, Running: coefficient.DescribeImpls(r.Running),
 		})
 	}
 	k.origins = append(k.origins, k.assumptions...)

@@ -503,6 +503,10 @@ func TestEvidenceRecords(t *testing.T) {
 			e.Sources = []Source{{Kind: vocab.SourceModel, Role: vocab.RolePrimary, Cite: "catalog facts"}}
 			e.KernelImpls = []KernelImpl{impl}
 		}},
+		{"kernel impl on a name that prices no lowered kernel", "binds to no primitive", func(e *Entry) {
+			e.Name = "hbm_derate"
+			e.KernelImpls = []KernelImpl{impl}
+		}},
 		{"measured_on on a measured entry", "states no other", func(e *Entry) {
 			e.KernelImpls = []KernelImpl{impl}
 			e.MeasuredOn = []KernelImpl{impl}

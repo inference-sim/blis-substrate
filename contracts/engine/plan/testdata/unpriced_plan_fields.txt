@@ -43,7 +43,6 @@ Layout.RanksPerNode # not yet priced: the cost model reads a plan in the boundar
 Layout.Tensor # not yet priced: the cost model reads a plan in the boundary transition's equivalence step
 LoweredLayer.Collective # not yet priced: the cost model reads a plan in the boundary transition's equivalence step
 LoweredLayer.Layer # not yet priced: the cost model reads a plan in the boundary transition's equivalence step
-LoweredLayer.Primitive # not yet priced: the cost model reads a plan in the boundary transition's equivalence step
 LoweredLayer.Shape # not yet priced: the cost model reads a plan in the boundary transition's equivalence step
 LoweredLayer.Stage # not yet priced: the cost model reads a plan in the boundary transition's equivalence step
 PaddedShape.Launch # not yet priced: the cost model reads a plan in the boundary transition's equivalence step

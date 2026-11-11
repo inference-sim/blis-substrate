@@ -10,3 +10,4 @@ KernelImpl.CodeHash # kernel: TestTheKernelImplementationThatRunsDecidesWhichCoe
 KernelImpl.Library # kernel: TestTheKernelImplementationThatRunsDecidesWhichCoefficientPrices
 KernelImpl.Variant # kernel: TestTheKernelImplementationThatRunsDecidesWhichCoefficientPrices
 LoweredLayer.KernelImpl # kernel: TestTheKernelImplementationThatRunsDecidesWhichCoefficientPrices
+LoweredLayer.Primitive # kernel: TestTheKernelImplementationThatRunsDecidesWhichCoefficientPrices

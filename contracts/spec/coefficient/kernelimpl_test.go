@@ -15,34 +15,73 @@ var (
 	implFlash        = KernelImpl{Library: "flashinfer", Variant: "decode", CodeHash: "cccccccccccc"}
 )
 
+// attn is a coefficient name that prices the attention.decode primitive.
+const attn = "attention_decode_rate"
+
 func keyed(impls ...KernelImpl) Entry {
-	return Entry{Name: "x", Method: vocab.MethodMeasured, KernelImpls: impls}
+	return Entry{Name: attn, Method: vocab.MethodMeasured, KernelImpls: impls}
 }
 
-// VAL-8: a keyed entry matches only the implementation that runs, by library, variant and code
-// hash together, and there is no fallback to a sibling.
+// on says which implementations a pool runs for attention.decode.
+func on(impls ...KernelImpl) map[string][]KernelImpl {
+	if len(impls) == 0 {
+		return nil
+	}
+	return map[string][]KernelImpl{"attention.decode": impls}
+}
+
+// VAL-8: a keyed entry matches only the implementation that runs the primitive it prices, by
+// library, variant and code hash together, and there is no fallback to a sibling.
 func TestMatchKernels(t *testing.T) {
 	for _, c := range []struct {
 		name    string
 		e       Entry
-		running []KernelImpl
+		running map[string][]KernelImpl
 		want    KernelMatch
 	}{
-		{"the listed implementation runs", keyed(implA), []KernelImpl{implA}, KernelExact},
-		{"it runs among others", keyed(implA), []KernelImpl{implFlash, implA}, KernelExact},
-		{"one of several listed runs", keyed(implA, implB), []KernelImpl{implB}, KernelExact},
-		{"a different hash of the same kernel", keyed(implA), []KernelImpl{implB}, KernelRefused},
-		{"the same hash of another variant", keyed(implA), []KernelImpl{implOtherVariant}, KernelRefused},
-		{"another library", keyed(implA), []KernelImpl{implFlash}, KernelRefused},
+		{"the listed implementation runs the primitive", keyed(implA), on(implA), KernelExact},
+		{"one of several listed runs", keyed(implA, implB), on(implB), KernelExact},
+		{"a list that covers every build the primitive runs", keyed(implA, implFlash), on(implA, implFlash), KernelExact},
+		{"a different hash of the same kernel", keyed(implA), on(implB), KernelRefused},
+		{"the same hash of another variant", keyed(implA), on(implOtherVariant), KernelRefused},
+		{"another library", keyed(implA), on(implFlash), KernelRefused},
 		{"nothing is said to run", keyed(implA), nil, KernelRefused},
 		{"the engine could not identify the build", keyed(implA),
-			[]KernelImpl{{Library: "nccl", Variant: "ncclAllReduce"}}, KernelRefused},
-		{"a toolkit is not part of the key", keyed(implA), []KernelImpl{implA}, KernelExact},
+			on(KernelImpl{Library: "nccl", Variant: "ncclAllReduce"}), KernelRefused},
+		// The pool runs A for one primitive and B for another: the entry is valid for A only.
+		{"the kernel runs, but another primitive's", keyed(implA),
+			map[string][]KernelImpl{"gemm": {implA}, "attention.decode": {implFlash}}, KernelRefused},
+		{"the kernel runs only another primitive", keyed(implA), map[string][]KernelImpl{"gemm": {implA}}, KernelRefused},
+		{"the primitive also runs a kernel the entry does not list", keyed(implA), on(implA, implFlash), KernelRefused},
+		{"a name that prices no primitive", Entry{Name: "hbm_derate", KernelImpls: []KernelImpl{implA}},
+			map[string][]KernelImpl{"": {implA}}, KernelRefused},
 		{"an entry that lists none, nothing runs", keyed(), nil, KernelUnkeyed},
-		{"an entry that lists none applies to whatever runs", keyed(), []KernelImpl{implB}, KernelUnkeyed},
+		{"an entry that lists none applies to whatever runs", keyed(), on(implB), KernelUnkeyed},
 	} {
 		if got := c.e.MatchKernels(c.running); got != c.want {
 			t.Errorf("%s: got %q, want %q", c.name, got, c.want)
+		}
+	}
+}
+
+// The binding of a coefficient name to the primitive it prices.
+func TestPrimitiveOf(t *testing.T) {
+	for name, want := range map[string]string{
+		"gemm_eps_max_bf16": "gemm", "gemm_m_half_fp8_block": "gemm", "gemm_n_half_bf16": "gemm",
+		"gemm_eps_max_w4a16_mxfp4_grouped": "moe.grouped_gemm", "gemm_m_half_w4a16_mxfp4_grouped": "moe.grouped_gemm",
+		"attention_decode_rate_mla": "attention.decode", "attention_decode_floor_swa": "attention.decode",
+		"attention_prefill_floor": "attention.prefill", "attention_prefill_rate_sparse_mla": "attention.prefill",
+		"recurrent_decode_rate_kda": "recurrent.update", "recurrent_prefill_rate_gdn": "recurrent.update",
+		"collective_floor_all_reduce_fp16_8rank_h100":               "all_reduce",
+		"collective_peak_rate_all_gather_bf16_4rank_h200":           "all_gather",
+		"collective_transition_rate_reduce_scatter_fp16_2rank_b200": "reduce_scatter",
+		"collective_floor_alltoall_fp16_8rank_h100":                 "all2all",
+		"moe_a2a_rate_deepep_low_latency_8rank":                     "all2all", "host_gather_rate_uva": "gather",
+		"hbm_derate": "", "host_launch_per_kernel": "", "fabric_bandwidth_efficiency": "", "mhc_rate_pre": "",
+		"engine_workspace_bytes": "", "nccl_communicator_bytes_8rank": "", "moe_routing_imbalance_median": "",
+	} {
+		if got := PrimitiveOf(name); got != want {
+			t.Errorf("PrimitiveOf(%q) = %q, want %q", name, got, want)
 		}
 	}
 }
@@ -51,11 +90,11 @@ func TestMatchKernels(t *testing.T) {
 // target only: a transferred entry matches the implementation it is moved to and not the one it
 // was measured on.
 func TestATransferredEntryMatchesItsTargetAndNotItsSource(t *testing.T) {
-	e := Entry{Name: "x", Method: vocab.MethodTransferred, KernelImpls: []KernelImpl{implB}, MeasuredOn: []KernelImpl{implA}}
-	if got := e.MatchKernels([]KernelImpl{implB}); got != KernelExact {
+	e := Entry{Name: attn, Method: vocab.MethodTransferred, KernelImpls: []KernelImpl{implB}, MeasuredOn: []KernelImpl{implA}}
+	if got := e.MatchKernels(on(implB)); got != KernelExact {
 		t.Errorf("the target: got %q", got)
 	}
-	if got := e.MatchKernels([]KernelImpl{implA}); got != KernelRefused {
+	if got := e.MatchKernels(on(implA)); got != KernelRefused {
 		t.Errorf("the source implementation: got %q, want refused (measured_on is never matched)", got)
 	}
 	if got := e.SourceImpls(); len(got) != 1 || got[0] != implA {
@@ -84,10 +123,11 @@ func TestImplsCompatible(t *testing.T) {
 		{"two unkeyed entries", nil, nil, true},
 		{"the same implementation", []KernelImpl{implA}, []KernelImpl{implA}, true},
 		{"two builds of one kernel never both run", []KernelImpl{implA}, []KernelImpl{implB}, false},
-		{"two kernels of one library can both run", []KernelImpl{implA}, []KernelImpl{implOtherVariant}, true},
-		{"different libraries can both run", []KernelImpl{implA}, []KernelImpl{implFlash}, true},
-		{"a list with one compatible pair", []KernelImpl{implA, implFlash}, []KernelImpl{implB, implFlash}, true},
-		{"a list whose every pair clashes", []KernelImpl{implA}, []KernelImpl{implB, implB}, false},
+		// A primitive's running set must be covered by each entry, so entries with nothing in
+		// common never both match.
+		{"two kernels of one library, nothing in common", []KernelImpl{implA}, []KernelImpl{implOtherVariant}, false},
+		{"different libraries, nothing in common", []KernelImpl{implA}, []KernelImpl{implFlash}, false},
+		{"lists with one implementation in common", []KernelImpl{implA, implFlash}, []KernelImpl{implB, implFlash}, true},
 	} {
 		if got := ImplsCompatible(keyed(c.a...), keyed(c.b...)); got != c.want {
 			t.Errorf("%s: got %v, want %v", c.name, got, c.want)
@@ -147,18 +187,20 @@ func TestEntriesForTwoBuildsOfOneKernelAreBothValidInOneSet(t *testing.T) {
 func TestValidateRunning(t *testing.T) {
 	for _, c := range []struct {
 		name    string
-		impls   []KernelImpl
+		impls   map[string][]KernelImpl
 		wantErr string
 	}{
 		{"none", nil, ""},
-		{"one build of each kernel", []KernelImpl{implA, implFlash}, ""},
-		{"a build the engine could not identify", []KernelImpl{{Library: "nccl", Variant: "ncclAllReduce"}}, ""},
-		{"a library alone", []KernelImpl{{Library: "cublas"}}, ""},
-		{"the same implementation twice", []KernelImpl{implA, implA}, ""},
-		{"no library", []KernelImpl{{Variant: "v", CodeHash: "aaaaaaaaaaaa"}}, "library is required"},
-		{"a hash with no variant", []KernelImpl{{Library: "l", CodeHash: "aaaaaaaaaaaa"}}, "variant"},
-		{"a malformed hash", []KernelImpl{{Library: "l", Variant: "v", CodeHash: "AAAA"}}, "lower-case hexadecimal"},
-		{"two builds of one kernel", []KernelImpl{implA, implB}, "two builds of one kernel"},
+		{"one build of each kernel", map[string][]KernelImpl{"all_reduce": {implA}, "attention.decode": {implFlash}}, ""},
+		{"a build the engine could not identify", on(KernelImpl{Library: "nccl", Variant: "ncclAllReduce"}), ""},
+		{"a library alone", on(KernelImpl{Library: "cublas"}), ""},
+		{"the same build for two primitives", map[string][]KernelImpl{"all_reduce": {implA}, "all_gather": {implA}}, ""},
+		{"no library", on(KernelImpl{Variant: "v", CodeHash: "aaaaaaaaaaaa"}), "library is required"},
+		{"a hash with no variant", on(KernelImpl{Library: "l", CodeHash: "aaaaaaaaaaaa"}), "variant"},
+		{"a malformed hash", on(KernelImpl{Library: "l", Variant: "v", CodeHash: "AAAA"}), "lower-case hexadecimal"},
+		{"two builds of one kernel in one primitive", on(implA, implB), "two builds of one kernel"},
+		{"two builds of one kernel across primitives", map[string][]KernelImpl{"all_reduce": {implA}, "all_gather": {implB}}, "two builds of one kernel"},
+		{"a primitive with no implementation", map[string][]KernelImpl{"gemm": nil}, "no implementation"},
 	} {
 		err := ValidateRunning(c.impls)
 		switch {

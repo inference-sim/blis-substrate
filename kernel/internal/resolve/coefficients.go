@@ -37,14 +37,14 @@ type Coefficients struct {
 	// refused holds the entries the deployment's scope admitted and the running kernel
 	// implementations did not (VAL-8), for the lookup's error and the registry's report.
 	refused []ImplRefusal
-	// running is the kernel implementations the lookup was keyed by.
-	running []coefficient.KernelImpl
+	// running is the kernel implementations the lookup was keyed by, by lowered primitive.
+	running map[string][]coefficient.KernelImpl
 }
 
 // ImplRefusal is an entry that covers the deployment and is not valid for the kernel
 // implementations that run: it lists implementations and none of them is running. Running holds
-// the implementations that run in the same library and variant as one the entry lists, which are
-// the ones a reader expects it to have matched.
+// the implementations the plan supplies for the primitive the entry prices, which are the ones a
+// reader expects it to have matched.
 type ImplRefusal struct {
 	Set     string
 	Entry   coefficient.Entry
@@ -61,17 +61,23 @@ type Resolved struct {
 	// unkeyed when it states none and so applies to every implementation without having been
 	// shown to match the one that runs. Never refused: a lookup does not return such an entry.
 	Match coefficient.KernelMatch
+	// Primitive is the lowered primitive the entry's name prices (coefficient.PrimitiveOf), and
+	// Running the implementations the plan supplies for it, which the entry was matched against.
+	// Running is empty when the caller supplied none for the primitive.
+	Primitive string
+	Running   []coefficient.KernelImpl
 }
 
 // Load builds a lookup from sets in scenario order. An entry whose scope excludes the
 // deployment is skipped rather than applied: a constant fitted on one part does not
 // describe another, and silently using it is the error this filtering prevents.
 //
-// An entry that lists kernel implementations is admitted only when one of them is what
-// scope.Implementations says runs, by library, variant and code hash together (VAL-8): a
-// different hash of the same kernel is refused, never matched as a sibling. An entry that lists
-// none applies to every implementation and is returned as unkeyed. With no implementation given,
-// only unkeyed entries are admitted.
+// An entry that lists kernel implementations is admitted only when every implementation that
+// scope.Implementations supplies for the primitive the entry prices is one of them, by library,
+// variant and code hash together (VAL-8): a different hash of the same kernel, or a primitive that
+// also runs a kernel the entry does not list, is refused, never matched as a sibling. An entry
+// that lists none applies to every implementation and is returned as unkeyed. For a primitive
+// with no implementation supplied, only unkeyed entries are admitted.
 //
 // Among the admitted entries of one name, the lookup uses the one design VAL-4 chooses: the
 // smaller method rank (design §9.2) first, then the scope precedence over every dimension.
@@ -95,7 +101,7 @@ func Load(sets []*coefficient.Set, scope Scope) (*Coefficients, error) {
 			}
 			if e.MatchKernels(scope.Implementations) == coefficient.KernelRefused {
 				c.refused = append(c.refused, ImplRefusal{Set: s.Name, Entry: e,
-					Running: sameSlot(e.KernelImpls, scope.Implementations)})
+					Running: scope.Implementations[coefficient.PrimitiveOf(e.Name)]})
 				continue
 			}
 			if _, seen := all[e.Name]; !seen {
@@ -120,7 +126,8 @@ func Load(sets []*coefficient.Set, scope Scope) (*Coefficients, error) {
 				return err
 			}
 			into[name] = Resolved{Entry: w.Entry, Set: w.Set, Displaced: displaced,
-				Match: w.Entry.MatchKernels(scope.Implementations)}
+				Match: w.Entry.MatchKernels(scope.Implementations), Primitive: coefficient.PrimitiveOf(w.Entry.Name),
+				Running: scope.Implementations[coefficient.PrimitiveOf(w.Entry.Name)]}
 		}
 		return nil
 	}
@@ -131,26 +138,14 @@ func Load(sets []*coefficient.Set, scope Scope) (*Coefficients, error) {
 	if err := choose(c.byNameFabric, fabric); err != nil {
 		return nil, err
 	}
-	c.running = append([]coefficient.KernelImpl(nil), scope.Implementations...)
+	c.running = map[string][]coefficient.KernelImpl{}
+	for p, impls := range scope.Implementations {
+		c.running[p] = append([]coefficient.KernelImpl(nil), impls...)
+	}
 	if len(c.byName) == 0 {
 		return nil, fmt.Errorf("no coefficient in %v applies to %s%s", c.order, scope, c.refusedNote(""))
 	}
 	return c, nil
-}
-
-// sameSlot returns the running implementations that share a library and variant with one the
-// entry lists.
-func sameSlot(listed, running []coefficient.KernelImpl) []coefficient.KernelImpl {
-	var out []coefficient.KernelImpl
-	for _, r := range running {
-		for _, l := range listed {
-			if r.Slot() == l.Slot() {
-				out = append(out, r)
-				break
-			}
-		}
-	}
-	return out
 }
 
 // Refused returns the entries the scope admitted and the running implementations refused, in
@@ -158,9 +153,13 @@ func sameSlot(listed, running []coefficient.KernelImpl) []coefficient.KernelImpl
 // finds it here.
 func (c *Coefficients) Refused() []ImplRefusal { return append([]ImplRefusal(nil), c.refused...) }
 
-// Implementations returns the kernel implementations the lookup was keyed by.
-func (c *Coefficients) Implementations() []coefficient.KernelImpl {
-	return append([]coefficient.KernelImpl(nil), c.running...)
+// Implementations returns the kernel implementations the lookup was keyed by, by primitive.
+func (c *Coefficients) Implementations() map[string][]coefficient.KernelImpl {
+	out := map[string][]coefficient.KernelImpl{}
+	for p, impls := range c.running {
+		out[p] = append([]coefficient.KernelImpl(nil), impls...)
+	}
+	return out
 }
 
 // refusedNote renders the refused entries of a name ("" for all) for an error: which entries
@@ -171,11 +170,13 @@ func (c *Coefficients) refusedNote(name string) string {
 		if name != "" && r.Entry.Name != name {
 			continue
 		}
-		ran := "none of that kernel runs"
-		if len(r.Running) > 0 {
-			ran = "running: " + coefficient.DescribeImpls(r.Running)
-		} else if len(c.running) == 0 {
-			ran = "no implementation was stated"
+		prim := coefficient.PrimitiveOf(r.Entry.Name)
+		ran := "no implementation was stated for primitive " + prim
+		switch {
+		case prim == "":
+			ran = "its name prices no lowered primitive"
+		case len(r.Running) > 0:
+			ran = "primitive " + prim + " runs " + coefficient.DescribeImpls(r.Running)
 		}
 		lines = append(lines, fmt.Sprintf("%s: %s [%s] is valid for %s (%s)", r.Set, r.Entry.Name,
 			r.Entry.Method, coefficient.DescribeImpls(r.Entry.KernelImpls), ran))
@@ -196,15 +197,16 @@ type Scope struct {
 	// Fabric is the cluster's inter-node network, its catalog identity, or "" for a
 	// single-node cluster. An entry scoped to a fabric applies only over that fabric.
 	Fabric string
-	// Implementations are the kernel implementations that run in the priced pool (VAL-8). An
-	// entry that lists implementations is admitted only when one of them is here. Empty means
-	// the caller does not say what runs, and then only entries that list none are admitted.
-	Implementations []coefficient.KernelImpl
+	// Implementations are the kernel implementations that run in the priced pool, by the lowered
+	// primitive each executes (VAL-8). An entry that lists implementations is admitted only when
+	// every implementation supplied for the primitive it prices is one it lists. A primitive
+	// with none supplied admits only entries that list none.
+	Implementations map[string][]coefficient.KernelImpl
 }
 
 func (s Scope) String() string {
 	return fmt.Sprintf("hardware=%s model=%s tp=%d ep=%d nodes_spanned=%d fabric=%s implementations=[%s]",
-		s.Hardware, s.Model, s.TP, s.EP, s.NodesSpanned, s.Fabric, coefficient.DescribeImpls(s.Implementations))
+		s.Hardware, s.Model, s.TP, s.EP, s.NodesSpanned, s.Fabric, describeRunning(s.Implementations))
 }
 
 // Admits reports whether an entry's scope covers this deployment (coefficient.Scope.Admits).
@@ -362,4 +364,18 @@ func containsInt(list []int, want int) bool {
 		}
 	}
 	return false
+}
+
+// describeRunning renders implementations by primitive, in a fixed order.
+func describeRunning(m map[string][]coefficient.KernelImpl) string {
+	prims := make([]string, 0, len(m))
+	for p := range m {
+		prims = append(prims, p)
+	}
+	sort.Strings(prims)
+	parts := make([]string, len(prims))
+	for i, p := range prims {
+		parts[i] = p + ": " + coefficient.DescribeImpls(m[p])
+	}
+	return strings.Join(parts, "; ")
 }

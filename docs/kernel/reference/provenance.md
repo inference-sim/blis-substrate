@@ -21,20 +21,28 @@ documentation describes each set and method.
 
 A coefficient can list the kernel implementations it is valid for (`kernel_impls`: library,
 variant, code hash; see [the coefficient format](../../contracts/reference/coefficients.md#kernel_impls)).
-The kernel is given the implementations the pool runs in `Inputs.Implementations`, which is
-`plan.PoolPlan.Implementations()` for a caller that holds the pool's plan. An entry that lists
-implementations is used only when one of them is running, by library, variant and code hash
-together. A different hash of the same kernel is not used, and nothing falls back to a sibling:
-the lookup takes the next entry by method rank, at worst the family's `roofline` or `assumed`
-entry, and the price reports that method. If no entry is left the kernel is not built, and the
-error names the entries it refused and the implementation each was keyed to.
+The kernel is given the implementations the pool runs for each lowered primitive in
+`Inputs.Implementations`, which is `plan.PoolPlan.ImplementationsByPrimitive()` for a caller that
+holds the pool's plan. Each coefficient name prices one primitive (`coefficient.PrimitiveOf`:
+`gemm_*` the GEMMs, `attention_decode_*` the decode attention, `collective_*_all_reduce_*` the
+all-reduce, and so on; host overheads, `hbm_derate`, fabric and memory sizes price none). An entry
+that lists implementations is used only for the primitive its name prices, and only when every
+implementation the pool runs for that primitive is one it lists, by library, variant and code hash
+together. A different hash of the same kernel is not used, a kernel that executes another
+primitive is not used, and nothing falls back to a sibling: the lookup takes the next entry by
+method rank, at worst the family's `roofline` or `assumed` entry, and the price reports that
+method. If no entry is left the kernel is not built, and the error names the entries it refused,
+the primitive, and the implementation that runs it. The kernel resolves one value per coefficient
+name, so a primitive lowered to two kernels is priced only by an entry that lists both, or by an
+unkeyed one.
 
-Each entry's `KernelMatch` says how it met what runs: `exact` when it lists an implementation that
-runs, `unkeyed` when it lists none. An unkeyed entry applies to every implementation and nothing
-shows it was measured on the one that runs, so a reader asking whether a price rests on the
-running kernel counts only `exact`. When `Inputs.Implementations` is empty, only unkeyed entries are
-used. The committed registry lists no implementation, so every entry is unkeyed and no price
-depends on `Implementations`.
+Each entry's `KernelMatch` says how it met what runs: `exact` when it lists the implementations
+that run its primitive, `unkeyed` when it lists none. `Primitive` and `Running` name the
+primitive and the implementations it was matched against. An unkeyed entry applies to every
+implementation and nothing shows it was measured on the one that runs, so a reader asking whether
+a price rests on the running kernel counts only `exact`. For a primitive with no implementation
+stated, only unkeyed entries are used. The committed registry lists no implementation, so every
+entry is unkeyed and no price depends on `Implementations`.
 
 Entries the kernel supplied itself carry the set `blis-latency-kernel` (the constant
 `KernelAssumptionSet`) and the method `assumed`. Their scope holds the value used and the

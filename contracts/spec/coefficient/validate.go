@@ -256,6 +256,10 @@ func (e Entry) validateEvidenceRecords(p *validate.Problems, at string) {
 		p.Field(at+".kernel_impls", "method %q states nothing about a kernel implementation, so it states none; "+
 			"it is what a lookup falls back to when no entry matches the one that runs", e.Method)
 	}
+	if len(e.KernelImpls) > 0 && PrimitiveOf(e.Name) == "" && e.Name != "" {
+		p.Field(at+".kernel_impls", "%q prices no lowered kernel (it binds to no primitive, coefficient.PrimitiveOf), "+
+			"so a kernel key on it could never match", e.Name)
+	}
 	if len(e.MeasuredOn) > 0 && !MayStateMeasuredOn(e.Method) {
 		p.Field(at+".measured_on", "method %q is measured on the implementations kernel_impls lists (D5), "+
 			"so it states no other; only a transferred value is measured on one kernel and used for another", e.Method)

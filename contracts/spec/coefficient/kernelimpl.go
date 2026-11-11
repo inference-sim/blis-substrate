@@ -48,23 +48,73 @@ const (
 	KernelRefused KernelMatch = "refused"
 )
 
-// MatchKernels says how the entry meets the implementations that run. An entry that lists
-// none is unkeyed. A keyed entry is exact when one of its implementations is in running, by
-// library, variant and code hash together, and refused otherwise, including when running is
-// empty: with nothing stated about what runs, a keyed entry cannot be shown to match. An
-// implementation with an empty code hash matches nothing, since a listed one always has a hash.
-func (e Entry) MatchKernels(running []KernelImpl) KernelMatch {
+// PrimitiveOf returns the lowered primitive (a plan.Primitive word) that a coefficient of this
+// name prices, or "" for a name that prices no lowered kernel: host overheads, hbm_derate, fabric,
+// memory sizes, routing and the mHC terms. It is the one place the binding is decided. A lookup
+// compares an entry's kernel_impls with the implementations of this primitive only, so a value
+// valid for one kernel cannot price a primitive another kernel executes (design VAL-8, 6.2).
+func PrimitiveOf(name string) string {
+	has := func(prefix string) bool { return strings.HasPrefix(name, prefix) }
+	switch {
+	case has("gemm_eps_max_"), has("gemm_m_half_"), has("gemm_n_half_"), has("gemm_k_half_"):
+		if strings.Contains(name, "_grouped") {
+			return "moe.grouped_gemm"
+		}
+		return "gemm"
+	case has("attention_decode_"):
+		return "attention.decode"
+	case has("attention_prefill_"):
+		return "attention.prefill"
+	case has("recurrent_decode_"), has("recurrent_prefill_"):
+		return "recurrent.update"
+	case has("collective_floor_"), has("collective_peak_rate_"), has("collective_transition_rate_"):
+		rest := name
+		for _, pre := range []string{"collective_floor_", "collective_peak_rate_", "collective_transition_rate_"} {
+			rest = strings.TrimPrefix(rest, pre)
+		}
+		for _, op := range [][2]string{{"all_reduce_", "all_reduce"}, {"all_gather_", "all_gather"},
+			{"reduce_scatter_", "reduce_scatter"}, {"alltoall_", "all2all"}} {
+			if strings.HasPrefix(rest, op[0]) {
+				return op[1]
+			}
+		}
+	case has("moe_a2a_"):
+		return "all2all"
+	case has("host_gather_"):
+		return "gather"
+	}
+	return ""
+}
+
+// MatchKernels says how the entry meets the implementations that run. running holds them by
+// lowered primitive (a plan.Primitive word). An entry that lists none is unkeyed. A keyed entry
+// is exact only when its name binds to a primitive (PrimitiveOf), the plan supplies at least one
+// implementation for that primitive, and every one of them is listed by the entry, by library,
+// variant and code hash together. Otherwise it is refused: a different hash, another kernel,
+// nothing supplied for the primitive, or a primitive that also runs a kernel the entry does not
+// cover. The last case is why "every": the kernel resolves one value per coefficient name, so a
+// value valid for kernel A cannot price the layers of the same primitive lowered to kernel B.
+func (e Entry) MatchKernels(running map[string][]KernelImpl) KernelMatch {
 	if len(e.KernelImpls) == 0 {
 		return KernelUnkeyed
 	}
-	for _, want := range e.KernelImpls {
-		for _, have := range running {
+	impls := running[PrimitiveOf(e.Name)]
+	if PrimitiveOf(e.Name) == "" || len(impls) == 0 {
+		return KernelRefused
+	}
+	for _, have := range impls {
+		found := false
+		for _, want := range e.KernelImpls {
 			if want == have {
-				return KernelExact
+				found = true
+				break
 			}
 		}
+		if !found {
+			return KernelRefused
+		}
 	}
-	return KernelRefused
+	return KernelExact
 }
 
 // Identity is what tells two entries of one set apart: the name, the scope, the method and the
@@ -93,18 +143,17 @@ func (e Entry) SourceImpls() []KernelImpl {
 }
 
 // ImplsCompatible reports whether one set of running implementations can make both entries
-// match: either is unkeyed, or some implementation one lists is equal to one the other lists,
-// or some pair they list are in different slots (a pool can run both kernels). Two entries
-// that list only different code hashes of one kernel can never both match, because a pool runs
-// one build of a kernel (ValidateRunning). The registry validator uses it to decide whether two
-// entries can be chosen between, so that the validator and the lookup agree (X15).
+// match: either is unkeyed, or they list an implementation in common (a primitive that runs only
+// that one is covered by both). Two entries of one name that list disjoint implementations never
+// both match. The registry validator uses it to decide whether two entries can be chosen
+// between, so that the validator and the lookup agree (X15).
 func ImplsCompatible(a, b Entry) bool {
 	if len(a.KernelImpls) == 0 || len(b.KernelImpls) == 0 {
 		return true
 	}
 	for _, x := range a.KernelImpls {
 		for _, y := range b.KernelImpls {
-			if x == y || x.Slot() != y.Slot() {
+			if x == y {
 				return true
 			}
 		}
@@ -158,27 +207,39 @@ func ValidateKernelImpls(p *validate.Problems, at string, impls []KernelImpl) {
 	}
 }
 
-// ValidateRunning checks the implementations a pool runs, as an engine states them. It differs
-// from ValidateKernelImpls in two ways. An implementation the engine could not identify has an
-// empty code hash and is allowed: it matches no keyed entry, which is the honest answer. And a
-// pool runs one build of each kernel, so two hashes for one library and variant are refused
-// rather than matched against whichever entry lists either.
-func ValidateRunning(impls []KernelImpl) error {
+// ValidateRunning checks the implementations a pool runs, as an engine states them, by lowered
+// primitive. It differs from ValidateKernelImpls in two ways. An implementation the engine could
+// not identify has an empty code hash and is allowed: it matches no keyed entry, which is the
+// honest answer. And a pool runs one build of each kernel, so two hashes for one library and
+// variant anywhere in the pool are refused rather than matched against whichever entry lists
+// either. A primitive named with an empty list, or a word that is not a primitive a coefficient
+// binds to, is refused.
+func ValidateRunning(running map[string][]KernelImpl) error {
+	prims := make([]string, 0, len(running))
+	for p := range running {
+		prims = append(prims, p)
+	}
+	sort.Strings(prims)
 	bySlot := map[KernelSlot]string{}
-	for i, k := range impls {
-		at := fmt.Sprintf("implementations[%d] (%s/%s)", i, k.Library, k.Variant)
-		switch {
-		case strings.TrimSpace(k.Library) == "":
-			return fmt.Errorf("%s: the library is required", at)
-		case k.CodeHash != "" && strings.TrimSpace(k.Variant) == "":
-			return fmt.Errorf("%s: a code hash needs the library's own kernel name as variant, since a hash identifies one kernel of the library", at)
-		case k.CodeHash != "" && !hexHash(k.CodeHash):
-			return fmt.Errorf("%s: code hash %q must be a lower-case hexadecimal hash of at least 12 digits", at, k.CodeHash)
+	for _, p := range prims {
+		if len(running[p]) == 0 {
+			return fmt.Errorf("primitive %q is listed with no implementation", p)
 		}
-		if prev, ok := bySlot[k.Slot()]; ok && prev != k.CodeHash {
-			return fmt.Errorf("%s: two builds of one kernel run in one pool (code hash %q and %q); a lookup matches the build that runs and a pool runs one", at, prev, k.CodeHash)
+		for i, k := range running[p] {
+			at := fmt.Sprintf("implementations[%s][%d] (%s/%s)", p, i, k.Library, k.Variant)
+			switch {
+			case strings.TrimSpace(k.Library) == "":
+				return fmt.Errorf("%s: the library is required", at)
+			case k.CodeHash != "" && strings.TrimSpace(k.Variant) == "":
+				return fmt.Errorf("%s: a code hash needs the library's own kernel name as variant, since a hash identifies one kernel of the library", at)
+			case k.CodeHash != "" && !hexHash(k.CodeHash):
+				return fmt.Errorf("%s: code hash %q must be a lower-case hexadecimal hash of at least 12 digits", at, k.CodeHash)
+			}
+			if prev, ok := bySlot[k.Slot()]; ok && prev != k.CodeHash {
+				return fmt.Errorf("%s: two builds of one kernel run in one pool (code hash %q and %q); a lookup matches the build that runs and a pool runs one", at, prev, k.CodeHash)
+			}
+			bySlot[k.Slot()] = k.CodeHash
 		}
-		bySlot[k.Slot()] = k.CodeHash
 	}
 	return nil
 }

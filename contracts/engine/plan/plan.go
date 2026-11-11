@@ -60,18 +60,28 @@ type PoolPlan struct {
 }
 
 // Implementations are the distinct kernel implementations the pool runs: those of Layers and of
-// DraftLayers, each once, sorted by library, variant, code hash and toolkit. It is what the cost
-// model matches a coefficient's kernel_impls against (design VAL-8): a caller building a kernel
-// for this pool passes it as latencykernel.Inputs.Implementations.
+// DraftLayers, each once, sorted by library, variant, code hash and toolkit: the pool-wide list a
+// Result records. The cost model matches a coefficient against the implementations of the
+// primitive it prices, which ImplementationsByPrimitive gives.
 func (p PoolPlan) Implementations() []KernelImpl {
-	seen := map[KernelImpl]bool{}
-	var out []KernelImpl
+	var all []KernelImpl
 	for _, ls := range [][]LoweredLayer{p.Layers, p.DraftLayers} {
 		for _, l := range ls {
-			if !seen[l.KernelImpl] {
-				seen[l.KernelImpl] = true
-				out = append(out, l.KernelImpl)
-			}
+			all = append(all, l.KernelImpl)
+		}
+	}
+	return distinctSorted(all)
+}
+
+// distinctSorted returns each implementation once, sorted by library, variant, code hash and
+// toolkit.
+func distinctSorted(in []KernelImpl) []KernelImpl {
+	seen := map[KernelImpl]bool{}
+	var out []KernelImpl
+	for _, k := range in {
+		if !seen[k] {
+			seen[k] = true
+			out = append(out, k)
 		}
 	}
 	sort.Slice(out, func(i, j int) bool {
@@ -87,6 +97,25 @@ func (p PoolPlan) Implementations() []KernelImpl {
 		}
 		return a.Toolkit < b.Toolkit
 	})
+	return out
+}
+
+// ImplementationsByPrimitive are the distinct kernel implementations the pool runs for each
+// lowered primitive, from Layers and DraftLayers, each list sorted as Implementations is. It is
+// what the cost model binds a coefficient to (design VAL-8): a coefficient that prices a
+// primitive is matched against the implementations of that primitive, not against everything
+// the pool runs. A caller building a kernel for this pool passes it as
+// latencykernel.Inputs.Implementations.
+func (p PoolPlan) ImplementationsByPrimitive() map[Primitive][]KernelImpl {
+	out := map[Primitive][]KernelImpl{}
+	for _, ls := range [][]LoweredLayer{p.Layers, p.DraftLayers} {
+		for _, l := range ls {
+			out[l.Primitive] = append(out[l.Primitive], l.KernelImpl)
+		}
+	}
+	for prim, impls := range out {
+		out[prim] = distinctSorted(impls)
+	}
 	return out
 }
 

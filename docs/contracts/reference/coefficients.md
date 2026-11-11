@@ -86,7 +86,9 @@ Dtype and backend are not scope dimensions. Both are part of the entry's name, a
 
 An implementation is one exact kernel: a library, the library's own name for the kernel, and the
 hash of its source. The lookup (design D5, VAL-8) matches an entry that lists implementations only
-when one of them is what the pool runs, with library, variant and code hash all equal. A different
+for the primitive its name prices (the GEMMs, the decode attention, a collective; host overheads and
+other terms that price no lowered kernel cannot be keyed), and only when every implementation the
+pool runs for that primitive is one the entry lists, with library, variant and code hash all equal. A different
 hash of the same kernel does not match, and neither does the same hash of another kernel: there is
 no fallback to a sibling. What the lookup does then is the next entry by method rank (design 9.2),
 at worst the family's `roofline` or `assumed` entry, which state no implementation; the price
@@ -95,7 +97,7 @@ reports that method.
 - An entry that lists none is **unkeyed**: it applies to whatever runs, and nothing shows it was
   measured on the kernel that runs. It prices as it always did, and a reader deciding whether a
   price rests on the running kernel (the G1 hash condition, design 11.3) does not count it.
-- With no implementation stated for the pool, only unkeyed entries match.
+- With no implementation stated for the primitive, only unkeyed entries match.
 - The two lists of an entry say different things. `kernel_impls` is where the value is valid
   and is the key. `measured_on` is where its data came from. For `measured` and `calibrated` they
   are the same by D5, so only `kernel_impls` is stated. A `transferred` value is measured on one
