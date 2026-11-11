@@ -184,6 +184,10 @@ func construct(in Inputs) (*Kernel, error) {
 	if err != nil {
 		return nil, fmt.Errorf("resolving the model graph for %s: %w", in.Chip.Name, err)
 	}
+	// The target's own graph, before any drafter joins it: the checkpoint a stated quantization
+	// must name is the target's, and the drafter's layers (its own checkpoint, at its own
+	// widths) are not part of the layout that decides it.
+	targetGraph := g
 	// A drafter named by the deployment, a checkpoint of its own, joins the target graph as
 	// its speculator; one named without its graph is refused rather than priced as free.
 	if name := draftModelName(eng); name != "" || in.Draft != nil {
@@ -267,7 +271,7 @@ func construct(in Inputs) (*Kernel, error) {
 		}
 		quantization = ""
 	}
-	quantization, quantOverride, err := statedQuantization(in.Model, quantization)
+	quantization, quantOverride, err := statedQuantization(targetGraph, quantization)
 	if err != nil {
 		return nil, err
 	}
