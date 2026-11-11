@@ -138,6 +138,30 @@ The environment variables `VLLM_FLASHINFER_ALLREDUCE_BACKEND` and `VLLM_MARLIN_U
 `prefill_schedule_interval` and `disable_hybrid_kv_cache_manager` are the engine model's, not
 the kernel's.
 
+## A stated quantization the checkpoint does not declare
+
+vLLM v0.32.0 requires a stated `--quantization` to equal the method the checkpoint declares,
+after the method classes' overrides (`vllm/config/model.py:1370-1449`). A stated value that
+names the checkpoint's own method therefore changes nothing, and the kernel prices it as an
+unstated one. Shown from the graph's stored formats, since the graph does not carry the
+declared method:
+
+- `mxfp8`, when the graph stores its weights at FP8 with the microscaling layout, one 1-byte
+  scale per 32 elements (the nodes the checkpoint leaves unquantized carry their own dtype),
+  The graph states no block shape or declared method; carrying them is the catalog deriver's,
+  and until it does a 32 x 32 FP8 checkpoint with the same resident scale would pass. The one
+  such family in the catalog, DeepSeek-V4, is overridden to `deepseek_v4_fp8` by vLLM whatever
+  is stated, and the kernel records that override. A bf16 checkpoint, or FP8 with other scales, is refused: vLLM would quantize it online or
+  refuse the mismatch, and neither is priced. `modelopt_mxfp8` is refused, because vLLM reaches
+  it only from a ModelOpt block and the graph cannot say which kind of MXFP8 checkpoint this
+  is; state `mxfp8`.
+- `gpt_oss_mxfp4` and `mxfp4`, when the graph is gpt-oss with MXFP4 routed experts and
+  everything else unquantized. vLLM resolves `mxfp4` to `gpt_oss_mxfp4` for that checkpoint,
+  and the kernel records that as an override. Either on any other graph is refused: vLLM
+  refuses the mismatch with the declared method or quantizes online.
+- `modelopt_mixed` is refused. It names a ModelOpt MIXED_PRECISION checkpoint, whose per-layer
+  algorithms the catalog deriver does not place, so no graph shows the layout.
+
 ## A coefficient is missing
 
 - A required coefficient has no entry in the sets the scenario names, or none whose scope
