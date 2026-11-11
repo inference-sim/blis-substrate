@@ -2,9 +2,14 @@ package latencykernel
 
 import (
 	"fmt"
+	"slices"
 	"strings"
+	"time"
 
 	"github.com/inference-sim/blis-substrate/contracts/kernel/enginesettings"
+	"github.com/inference-sim/blis-substrate/contracts/spec/coefficient"
+	"github.com/inference-sim/blis-substrate/contracts/spec/model"
+	"github.com/inference-sim/blis-substrate/kernel/internal/resolve"
 )
 
 // The kernel-facing settings (VLM-3, VAL-8, design §11.2): settings that change which kernel
@@ -12,8 +17,19 @@ import (
 // kernel, or refused with the measurement it needs. It is never priced as if it were
 // unstated: the kernel prices the engine's own choice only when the setting is unstated.
 //
-// unpricedSettings lists the settings whose every stated value is refused, and what would
-// price them.
+// Two things sit here. unpricedSettings lists the settings whose every stated value is
+// refused, and what would price them. applyAttentionLane prices the one stated value the
+// registry has a measurement for: attention_config.use_trtllm_attention true, whose prefill
+// runs FlashInfer's trtllm-gen kernel (vllm/utils/flashinfer.py:697-789 at 5df63a72). That
+// measurement is priced only where it is shown valid for the kernel build that runs (VAL-8).
+
+// The prefill coefficients measured on the trtllm-gen kernel alone, one pair per data-center
+// Blackwell part and per KV cache dtype of the sweep (registry/scripts/
+// emit_attention_trtllm_gen.py). A part or a dtype without the pair has no measurement.
+const (
+	trtllmGenPrefillFloor = "attention_prefill_floor_trtllm_gen_kv_"
+	trtllmGenPrefillScale = "attention_prefill_work_scale_trtllm_gen_kv_"
+)
 
 // unpricedSetting is a kernel-facing setting for which the registry holds no measurement of
 // any stated value.
@@ -141,8 +157,7 @@ var unpricedSettings = []unpricedSetting{
 	},
 }
 
-// refuseUnpricedSettings refuses the first stated setting of unpricedSettings, and a stated
-// use_trtllm_attention, which has no measured kernel yet.
+// refuseUnpricedSettings refuses the first stated setting of unpricedSettings.
 func refuseUnpricedSettings(e enginesettings.Settings) error {
 	for _, u := range unpricedSettings {
 		if v, stated := u.Stated(e); stated {
@@ -150,14 +165,172 @@ func refuseUnpricedSettings(e enginesettings.Settings) error {
 				"the kernel will not price it as the default (tracked in %s). Needed: %s", u.Field, v, u.Issue, u.Needs)
 		}
 	}
-	if t := e.UseTRTLLMAttention; t != nil {
-		return fmt.Errorf("attention_config.use_trtllm_attention is stated as \"%t\", and the registry has "+
-			"no measurement that prices it, so the kernel will not price it as the default (tracked in "+
-			useTRTLLMFalseIssue+"). Needed: decode and prefill timings of FlashInfer's trtllm-gen and "+
-			"native attention kernels on the chip, each row naming the kernel that ran", *t)
-	}
 	return nil
 }
 
 // useTRTLLMFalseIssue tracks the native-attention timing a stated false needs.
 const useTRTLLMFalseIssue = "inference-sim/blis-registry#72"
+
+// prefillPair is a prefill attention floor and the fraction of the dense ramp it reaches.
+type prefillPair struct {
+	floor time.Duration
+	scale float64
+}
+
+// prefillFor is the pair that prices one attention layer's prefill: the trtllm-gen lane's for a
+// non-latent layer when the engine runs that kernel (applyAttentionLane), the part's pooled
+// pair otherwise. The MLA and sparse-MLA backends never read use_trtllm_attention.
+func (k *Kernel) prefillFor(kind model.AttentionKind) prefillPair {
+	if k.laneRuns && !latentAttention(kind) {
+		return k.lanePair
+	}
+	return prefillPair{k.attentionPrefillFloor, k.attentionPrefillScale}
+}
+
+// trtllmGenRuns reports whether v0.32.0's FlashInfer backend runs the trtllm-gen kernel for the
+// prefill of a non-latent layer on a part that has it, from what the engine runs and not from the
+// flag alone (vllm/utils/flashinfer.py:697-789 and vllm/v1/attention/backends/flashinfer.py:1429-1433
+// at 5df63a72):
+//
+//   - decode-context parallelism: TRTLLM prefill cannot combine across ranks, so the setting is
+//     ignored (utils/flashinfer.py:733-741) and the pooled pair stands;
+//   - stated true, or a stated block size of 128 or more (the backend forces it): the kernel runs;
+//   - stated false: the native kernel runs, which nothing measured (refused);
+//   - unstated, with an auto cache dtype: the kernel runs (utils/flashinfer.py:766). With any
+//     other cache dtype and no stated block size the native kernel runs, and is priced at the
+//     pooled pair as before. An unstated block size is the engine's and is not read here.
+func (k *Kernel) trtllmGenRuns() (runs, stated bool) {
+	if k.layout.DCP > 1 {
+		return false, false
+	}
+	if t := k.engine.UseTRTLLMAttention; t != nil {
+		return *t, true
+	}
+	if k.engine.BlockSize >= 128 {
+		return true, false
+	}
+	return k.cacheDType == "" || k.cacheDType == "auto", false
+}
+
+// kvLane names the lane's cache dtype for the engine's, or "" where the sweep has none.
+func (k *Kernel) kvLane() string {
+	switch k.cacheDType {
+	case "", "auto", "bfloat16", "float16":
+		return "bf16"
+	case "fp8", "fp8_e4m3", "fp8_e5m2":
+		return "fp8"
+	}
+	return ""
+}
+
+// applyAttentionLane chooses the prefill pair of the non-latent attention layers from what the
+// engine runs, and prices the lane only when its entries are shown valid for the kernel build the
+// engine reports running (Inputs.Implementations; VAL-8). The registry's lane is transferred
+// from vLLM 0.25.0 and states no implementation, so on it the lane is not priced: a stated true
+// is refused, and an unstated setting keeps the pooled pair with the reason recorded.
+//
+// Limit: the match is against the pool's whole set of running implementations, not against the
+// prefill of the non-latent layers. Decode already runs trtllm-gen, so a pool whose decode
+// implementation is the one an entry lists matches even if its prefill ran another kernel, unless
+// the engine names prefill and decode as different variants of the library. An entry meant for
+// the prefill kernel must therefore list a variant that only the prefill uses.
+//
+// A stated true on a part or cache dtype with no measurement of the kernel is
+// refused, and so is a stated false where the model has a non-latent layer, whose native kernel
+// nothing measured; where the model has none, or decode-context parallelism ignores the setting
+// for prefill, a stated true is accepted and changes nothing.
+func (k *Kernel) applyAttentionLane(c *resolve.Coefficients, used map[model.AttentionKind]bool) error {
+	plain := false
+	for kind, u := range used {
+		plain = plain || (u && !latentAttention(kind))
+	}
+	if !plain {
+		return nil
+	}
+	runs, stated := k.trtllmGenRuns()
+	if stated && !runs {
+		return fmt.Errorf("attention_config.use_trtllm_attention is stated as \"false\", and the registry has " +
+			"no measurement that prices it, so the kernel will not price it as the default (tracked in " +
+			useTRTLLMFalseIssue + "). Needed: " +
+			"decode and prefill timings of FlashInfer's native (non-trtllm-gen) attention on the chip, " +
+			"collected at the engine's FlashInfer pin with the kernel named in each row; the registry's " +
+			"older native-path label does not say which kernel ran")
+	}
+	if !runs {
+		return nil
+	}
+	dtype := k.kvLane()
+	floor, scale := trtllmGenPrefillFloor+dtype, trtllmGenPrefillScale+dtype
+	if dtype == "" || !c.Has(floor) || !c.Has(scale) {
+		if reason := laneRefusedByImplementation(c, floor, scale); reason != "" {
+			return k.laneNotShown(stated, reason)
+		}
+		if stated {
+			return fmt.Errorf("attention_config.use_trtllm_attention is stated as \"true\" on %s with cache dtype %q, "+
+				"and the scenario's coefficient sets carry no prefill measurement of the trtllm-gen kernel "+
+				"there (%s and %s), so the kernel will not price it as the default. Needed: prefill "+
+				"attention timings of FlashInfer's trtllm-gen kernel on this chip at this cache dtype; the "+
+				"registry has them for b200, b300, gb200-nvl72 and gb300 at bf16 and fp8",
+				k.chip.Name, k.cacheDType, floor, scale)
+		}
+		if k.engine.BlockSize >= 128 && c.Has(trtllmGenPrefillFloor+"bf16") {
+			k.assume("trtllm_gen_prefill_lane", "absent", "the engine forces the trtllm-gen prefill at a "+
+				"block size of 128 or more, and the registry has no such measurement at cache dtype "+
+				k.cacheDType+", so the part's pooled pair prices it")
+		}
+		return nil
+	}
+	// The pair was measured on one build of the kernel and is used for the build the engine
+	// runs, so it is priced only when it is shown to be valid for that build (VAL-8). The
+	// lookup returns an entry that states no implementation as unkeyed, which applies to every
+	// build and shows nothing; for this kernel that is not enough, because the choice of the lane
+	// rests on an inference from settings and the pooled pair is the price that needs none.
+	for _, name := range []string{floor, scale} {
+		r, _ := c.Admitted(name)
+		if r.Match != coefficient.KernelExact {
+			return k.laneNotShown(stated, fmt.Sprintf("%s states no kernel implementation it is valid for "+
+				"(kernel_impls), so it applies to every build of the kernel and nothing shows it was measured on, "+
+				"or moved to, the one the engine runs. Needed: the code hash of the trtllm-gen prefill kernel of the "+
+				"engine's FlashInfer pin, which an engine release's kernel_impls.json would publish "+
+				"(inference-sim/blis-registry#73), stated on the entry and reported by the engine in "+
+				"Inputs.Implementations", name))
+		}
+	}
+	k.laneRuns = true
+	k.lanePair = prefillPair{time.Duration(c.ValueOr(floor, 0) * float64(time.Microsecond)), c.ValueOr(scale, 0)}
+	return nil
+}
+
+// laneNotShown is the outcome when the trtllm-gen pair cannot be shown valid for the kernel
+// that runs: a stated true is refused with the reason, and an unstated setting is priced on the
+// part's pooled pair with the reason recorded as an assumption.
+func (k *Kernel) laneNotShown(stated bool, reason string) error {
+	if stated {
+		return fmt.Errorf("attention_config.use_trtllm_attention is stated as \"true\" on %s, and the "+
+			"kernel cannot show that the trtllm-gen prefill coefficients are valid for the kernel the engine "+
+			"runs (VAL-8), so it will not price it as the default: %s", k.chip.Name, reason)
+	}
+	k.assume("trtllm_gen_prefill_lane", "pooled", "the engine runs the trtllm-gen prefill, and "+reason+
+		" The part's pooled pair prices it.")
+	return nil
+}
+
+// laneRefusedByImplementation describes the lane entries the lookup refused because they list
+// kernel implementations and none is what the engine reports running, or "" when it refused none.
+func laneRefusedByImplementation(c *resolve.Coefficients, names ...string) string {
+	var out []string
+	for _, r := range c.Refused() {
+		if slices.Contains(names, r.Entry.Name) {
+			running := "no kernel implementation"
+			if len(c.Implementations()) > 0 {
+				running = coefficient.DescribeImpls(c.Implementations())
+			}
+			out = append(out, fmt.Sprintf("%s is valid for %s, and the engine reports running %s", r.Entry.Name,
+				coefficient.DescribeImpls(r.Entry.KernelImpls), running))
+		}
+	}
+	if len(out) == 0 {
+		return ""
+	}
+	return strings.Join(out, "; ") + ". A different build or kernel of the library is not priced from it"
+}
