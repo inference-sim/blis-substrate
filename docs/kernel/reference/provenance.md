@@ -92,6 +92,7 @@ reason. They are of two kinds.
 | `adaptive_verification_survival` | A deployment enabling DSpark adaptive verification: every request's draft slots are ranked by one survival curve, the run's stated per-position rates or, from its mean acceptance length, vLLM's minimum-variance schedule (`_acceptance_length_to_rates`), where the engine ranks each request by its own online estimate. Natural acceptance spreads more, so the trimmed budget is a lower bound on the trim. |
 | `adaptive_verification_cost_curves` | A deployment enabling DSpark adaptive verification: the draft and verify cost tables the engine profiles from timed dummy steps are built, as the engine builds them, from this kernel's own NoOverlap prices of the same dummy steps, so the budget follows the kernel's prices rather than measured timings. |
 | `speculator` | The deployment speculates and the graph states no speculator, so draft passes are not priced; or the deployment names a different method from the graph's speculator, which is the one priced. |
+| `trtllm_gen_prefill_lane` | The engine runs the trtllm-gen prefill and the lane cannot be priced: its entries list no kernel implementation, or one other than what the pool reports running (VAL-8), or the engine forces the prefill with a block size of 128 or more at a cache dtype the lane does not hold (nvfp4, the packed MLA records); the part's pooled prefill pair prices it |
 
 ### Optional coefficients that were missing
 
