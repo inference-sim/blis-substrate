@@ -273,6 +273,9 @@ func construct(in Inputs) (*Kernel, error) {
 	}
 	k.servedDType = served
 
+	if err := refuseUnpricedSettings(eng); err != nil {
+		return nil, err
+	}
 	if err := checkCacheDTypes(eng.CacheDType, eng.MambaCacheDType,
 		attentionKinds(in.Model)); err != nil {
 		return nil, err
