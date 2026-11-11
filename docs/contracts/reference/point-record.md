@@ -75,7 +75,7 @@ makes it so (COV-4).
 | `policy` | string | for `router_differs` | The llm-d router policy BLIS simulated in place of the run's router. |
 | `evidence` | string | for `router_differs` | The router table's evidence for the match, as the table entry cites it. |
 
-Four conditions beside the earlier ones name what the point must say. `client_difference`, `later_record` and `resolved_differs` are in design §11.3 and §11.2; `router_differs` follows the design change in blis-design#1, which is a draft and has not merged:
+Four conditions beside the earlier ones name what the point must say. `client_difference`, `later_record` and `resolved_differs` are in design §11.3 and §11.2; `router_differs` is in design §11.3 and §11.4 as amended by blis-design#1, which is merged:
 
 `client_difference`
 :   The simulated requests differ from the ones the run's client sent (COV-12). `subject`
