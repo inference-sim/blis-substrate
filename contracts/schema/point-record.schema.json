@@ -533,6 +533,9 @@
         "detail": {
           "type": "string"
         },
+        "entry": {
+          "type": "string"
+        },
         "evidence": {
           "type": "string"
         },
