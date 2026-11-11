@@ -57,6 +57,15 @@ type Entry struct {
 	// Reason says why Policy is close enough to the router's mode, naming what the two do
 	// alike and what they do differently, or, for PolicyNone, why none is.
 	Reason string `yaml:"reason"`
+	// Difference lists each way the router's mode and Policy differ, one statement per aspect,
+	// each pointing at the citations that show it. Required for an entry whose Policy is not
+	// PolicyNone: a mapping is a claim of nearness, and the entry says exactly how near. Absent
+	// for PolicyNone, where Reason says why no policy is near.
+	Difference []Difference `yaml:"difference,omitempty"`
+	// Bound says how far the choice of policy can move each figure, measured on BLIS: the
+	// largest ratio between Policy and the alternatives, with the regime it was measured in and
+	// the evidence. Required for an entry whose Policy is not PolicyNone, absent otherwise.
+	Bound *Bound `yaml:"bound,omitempty"`
 	// Evidence cites both routers' code or documentation at pinned revisions. Each citation
 	// supports one field of the entry.
 	Evidence []Citation `yaml:"evidence"`
@@ -112,11 +121,11 @@ type Policy string
 const (
 	// PolicyRoundRobin: no scorer, so every endpoint scores alike, and the max-score picker
 	// rotates through the endpoints with a counter. The counter is one per runtime and is drawn
-	// at every pick of every profile (picker.RandFor, NextCounter), not once per request: a
-	// configuration whose request runs two profiles that each pick, such as a prefill and a decode
-	// profile, draws two, and a pool of even size then sees only every other endpoint. The policy
-	// is strict round-robin over the endpoints, listed in ID order in BLIS's hosted router, for a
-	// configuration with one pick per request.
+	// at every pick of every profile (picker.RandFor, NextCounter), not once per request, so a
+	// configuration whose request runs a prefill and a decode profile draws two. That alone
+	// would give a pool of even size every other endpoint; BLIS runs with a prefill pool of two
+	// and of four did not show it (see the guide "Router sensitivity"), so the policy is not
+	// stated to starve a pool. It is rotation over the endpoints listed in ID order.
 	PolicyRoundRobin Policy = "round-robin"
 	// PolicyLeastActiveRequests: the router's own count of in-flight requests per endpoint
 	// (inflight-load-producer), scored by active-request-scorer so the endpoint with the
