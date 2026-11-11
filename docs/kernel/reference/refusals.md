@@ -97,6 +97,41 @@ These are layouts vLLM v0.31.0 refuses at startup.
 - A quantization, CUDA graph mode or decode-context combine backend the kernel does not
   price.
 
+## A setting selects a kernel the registry has not measured
+
+A setting that changes which kernel runs changes a step's time, so the kernel prices a stated
+value from a coefficient measured on that kernel or refuses it with the measurement it needs
+(design VLM-3, VAL-8). It never prices a stated value as if it were unstated. Stating the
+engine's own default is not a choice: `linear_backend` `auto`, `attention_config.backend`
+`auto`, decoder replay on, no custom ops and no replay capture sizes price as unstated.
+
+A stated `attention_config.use_trtllm_attention` is refused too, until its kernel is measured.
+
+Every stated value of the settings below is refused. The middle column is the measurement
+that would price it, and the right-hand column the open issue that tracks it. The page and the
+code agree, setting by setting and issue by issue (`TestRefusalsPageListsTheUnpricedSettings`).
+
+<!-- unpriced settings -->
+
+| Setting | What would price it | Tracked in |
+|---|---|---|
+| `attention_config.backend` | per-backend decode and prefill attention timings on the chip, each backend at the cache dtypes it serves | inference-sim/blis-registry#72 |
+| `attention_config.mla_prefill_backend` | attention-only MLA prefill timings for FLASH_ATTN, FLASHINFER and TRTLLM_RAGGED, each at a bf16 and an fp8 query and at zero and non-zero cached prefix | inference-sim/blis-registry#67 |
+| `kernel_config.linear_backend` | GEMM timings of the kernel classes the backend selects over the registry's token-count grid | inference-sim/blis-registry#66 |
+| `compilation_config.custom_ops` | norm, activation and rotary op timings run as custom kernels and as the compiled form | inference-sim/blis-registry#71 |
+| `compilation_config.cudagraph_decoder_replay` | decode steps of a model with decoder-replay layers, replay graphs on and off | inference-sim/blis-registry#69 |
+| `compilation_config.decoder_replay_cudagraph_capture_sizes` | decode steps at each replay graph size and eager | inference-sim/blis-registry#69 |
+| `speculative_config.kv_cache_dtype` | the drafter's attention backend timed at the stated cache dtype and at the target's | inference-sim/blis-registry#68 |
+| `attention_config.minimax_m3_msa_decode_backend` | decode timings of the MiniMax-M3 sparse (MSA) attention for each decode backend | inference-sim/blis-registry#72 |
+| `attention_config.backend_per_kind` | per-backend attention timings for each KV-cache group kind the override names | inference-sim/blis-registry#72 |
+| `kernel_config.linear_backend_per_quant` | GEMM timings of the kernel class each override selects for its scheme | inference-sim/blis-registry#66 |
+| `attention_config.use_trtllm_attention` (false) | FlashInfer's native attention timed at the engine's pin, kernel named in each row | inference-sim/blis-registry#72 |
+
+The environment variables `VLLM_FLASHINFER_ALLREDUCE_BACKEND` and `VLLM_MARLIN_USE_ATOMIC_ADD`
+(inference-sim/blis-registry#70) reach the kernel through no field, and the engine model refuses them; nothing here prices them.
+`prefill_schedule_interval` and `disable_hybrid_kv_cache_manager` are the engine model's, not
+the kernel's.
+
 ## A coefficient is missing
 
 - A required coefficient has no entry in the sets the scenario names, or none whose scope
