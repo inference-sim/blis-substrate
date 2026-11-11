@@ -210,9 +210,9 @@ def entry(kind: str, kv: str, f: dict, device: str, pooled_fit: dict) -> list[st
                "and widened by half a step either side, because the optimum is only located to "
                "the grid. Rows of one shape family are correlated, so it is narrower than the "
                "data would justify.")
-    lane_note = (f"Read when the engine runs the trtllm-gen prefill at a {KV_COLUMN[kv]} cache: "
-                 f"stated use_trtllm_attention true, a stated block size of 128 or more, or an "
-                 f"auto cache (vllm/utils/flashinfer.py:697-789 at vLLM 5df63a72).")
+    lane_note = (f"The pair of the {KV_COLUMN[kv]} KV cache sweep. It is read only where the caller "
+                 f"reports, as the implementation of attention.prefill, one that this entry lists in "
+                 f"kernel_impls (VAL-8); it lists none yet, so it is not read.")
     if kind == "floor":
         value, units, ci = f["floor"], "us_per_transfer", f["floor_ci"]
         text = (f"The minimum cost of the trtllm-gen prefill attention kernel at a {KV_COLUMN[kv]} "
