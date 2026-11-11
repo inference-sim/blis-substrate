@@ -21,6 +21,7 @@ A policy is a composition of the router's scheduling plugins that it runs withou
 | Policy | Plugins | Defined in llm-d-router |
 |---|---|---|
 | `round-robin` | max-score-picker; no scorer; one counter per runtime, drawn at every pick of every profile | `pkg/epp/framework/plugins/scheduling/picker/maxscore/picker.go` and `picker/common.go` (`RotateScoredEndpoints`) |
+| `random-picker` | random-picker; no scorer; a uniform shuffle of the candidates with the runtime's random source, no counter, no state between requests | `pkg/epp/framework/plugins/scheduling/picker/random/picker.go` |
 | `least-active-requests` | inflight-load-producer; active-request-scorer; max-score-picker | `pkg/epp/framework/plugins/scheduling/scorer/activerequest/active_request.go` |
 | `default` | queue-scorer (2); kv-cache-utilization-scorer (2); prefix-cache-scorer (3); max-score-picker | `pkg/epp/config/loader/defaults.go` (`loadDefaultConfig`) |
 | `none` | no policy is close enough | |
