@@ -127,6 +127,11 @@ const (
 	// is strict round-robin over the endpoints, listed in ID order in BLIS's hosted router, for a
 	// configuration with one pick per request.
 	PolicyRoundRobin Policy = "round-robin"
+	// PolicyRandomPicker: no scorer, and the random picker shuffles the candidates uniformly with
+	// the runtime's random source and takes the first, ignoring scores. It keeps no state between
+	// requests, so successive picks are independent draws. BLIS's hosted router runs it: the
+	// picker is in the llm-d router fork BLIS pins (pkg/epp/framework/plugins/scheduling/picker/random).
+	PolicyRandomPicker Policy = "random-picker"
 	// PolicyLeastActiveRequests: the router's own count of in-flight requests per endpoint
 	// (inflight-load-producer), scored by active-request-scorer so the endpoint with the
 	// fewest scores highest, and the max-score picker; ties are rotated, not drawn at random.
@@ -157,6 +162,8 @@ func Policies() []PolicyInfo {
 		{PolicyRoundRobin, "max-score-picker; no scorer",
 			[]string{"pkg/epp/framework/plugins/scheduling/picker/maxscore/picker.go",
 				"pkg/epp/framework/plugins/scheduling/picker/common.go"}},
+		{PolicyRandomPicker, "random-picker; no scorer",
+			[]string{"pkg/epp/framework/plugins/scheduling/picker/random/picker.go"}},
 		{PolicyLeastActiveRequests, "inflight-load-producer; active-request-scorer; max-score-picker",
 			[]string{"pkg/epp/framework/plugins/scheduling/scorer/activerequest/active_request.go"}},
 		{PolicyDefault, "queue-scorer (2); kv-cache-utilization-scorer (2); prefix-cache-scorer (3); max-score-picker",
