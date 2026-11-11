@@ -267,6 +267,13 @@ func construct(in Inputs) (*Kernel, error) {
 		}
 		quantization = ""
 	}
+	quantization, quantOverride, err := statedQuantization(in.Model, quantization)
+	if err != nil {
+		return nil, err
+	}
+	if quantOverride != nil {
+		k.layout.Overrides = append(k.layout.Overrides, *quantOverride)
+	}
 	served, err := servedDType(in.Model.Global.WeightDType, quantization)
 	if err != nil {
 		return nil, err
