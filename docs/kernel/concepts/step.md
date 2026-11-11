@@ -103,6 +103,19 @@ in-graph MTP layers are neither priced nor resident, and the layer kinds only th
 the graph. A drafter graph that states no speculator, one whose hidden size is not the
 target's, and a deployment method that is not the drafter's are refused.
 
+An EAGLE3 drafter's first pass runs its layers and its token lookup over every token the
+target scheduled that step, prefill tokens included, because the drafter writes its own KV for
+each of them; only the later passes run one row per request
+(`vllm/v1/worker/gpu/spec_decode/target_dependent_ar/speculator.py`, `_prefill` and
+`_multi_step_decode`, at v0.32.0). The kernel charges that pass on the step's own shape and
+charges one single-row pass fewer, so a step where every request schedules one token is
+priced as before and a prefill chunk of 8,192 tokens pays the draft layer over 8,192 rows.
+The head runs over one row per request in every pass. An EAGLE3 graph that omits a part of that
+first pass (its layers, its token lookup, the projection of the captured target states, or the
+target layers whose states it reads) is refused as `first_draft_pass_unpriced`, never priced
+with the part left out. MTP, which the same engine class runs, is still charged as K passes of
+one row per request.
+
 **Experts.** In a mixture-of-experts layer each token is routed to a few experts. The kernel
 estimates how many distinct experts a batch touches, reads their weights, and prices their
 arithmetic. Unlike every other term, the arithmetic and the reads of the experts are *added*

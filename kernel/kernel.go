@@ -95,6 +95,9 @@ type Kernel struct {
 	draftKVBytesPerToken float64
 	// speculating is a deployment that drafts with a speculator the graph states.
 	speculating bool
+	// draftFirstPass is a drafter whose first pass runs over every token the target scheduled
+	// and is charged so (liftFirstDraftPass).
+	draftFirstPass bool
 	// adaptive is adaptive verification's resolved state, nil when the engine does not enable
 	// it (adaptive.go).
 	adaptive *adaptiveVerify

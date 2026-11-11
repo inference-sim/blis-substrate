@@ -72,6 +72,9 @@ func (k *Kernel) liftDraft(c *resolve.Coefficients, inferred func(price.PlannedL
 			"speculator; a %s drafter is not described by this graph, so it cannot be priced",
 			spec.Method, d.Method, spec.Method)
 	}
+	if err := k.liftFirstDraftPass(); err != nil {
+		return err
+	}
 	if n := k.numSpecTokens(); d.NumSpec > 0 && n != d.NumSpec {
 		// The graph sizes what depends on the draft length -- a parallel-block drafter's
 		// block, a compressor ring's entries (blis-schemas model.Cache.Entries) -- at its
@@ -120,6 +123,57 @@ func (k *Kernel) liftDraft(c *resolve.Coefficients, inferred func(price.PlannedL
 	return nil
 }
 
+// firstDraftPassMethod is the draft method whose first pass the kernel charges over the
+// target's scheduled tokens: EAGLE3. vLLM's draft "prefill" runs the draft model over every
+// token the target scheduled that step, prefill tokens included, because the drafter writes
+// its own KV for each of them, and it reuses the target's batch shape (_prefill and its call,
+// vllm/v1/worker/gpu/spec_decode/target_dependent_ar/speculator.py:432-478 and 232-295@
+// v0.32.0); only the later K - 1 passes run one row per request (_multi_step_decode, :480-530).
+// The first pass takes the first draft token from the last row of each request, so the head
+// runs over one row per request in every pass.
+//
+// MTP is run by the same class (mtp/speculator.py subclasses TargetDependentARSpeculator), so
+// it has the same first pass, and priceDraft still charges it as K passes of one row per
+// request. It is left as it was: moving it moves predictions already published, and the
+// change needs its own before-and-after. EAGLE (without the 3) has no entry in the catalog.
+const firstDraftPassMethod = "eagle3"
+
+// liftFirstDraftPass decides whether priceDraft charges the first pass over the scheduled
+// tokens, and refuses a drafter whose graph does not state all of what that pass runs, so a
+// price can never carry a part of it. The pass is the draft layers over every scheduled token,
+// the draft's own token lookup over the same rows, and, before them, the projection of the
+// captured target states (the context stack, which is charged over the scheduled tokens
+// already). A graph of this method that omits the layers, the lookup, the projection or the
+// target layers whose states it reads would price the pass without one of them and say nothing.
+func (k *Kernel) liftFirstDraftPass() error {
+	d := k.plan.Draft
+	if specMethod(d.Method) != firstDraftPassMethod || d.Drafting == model.DraftingParallelBlock {
+		return nil
+	}
+	var missing []string
+	if len(d.Layers) == 0 {
+		missing = append(missing, "draft layers")
+	}
+	if d.Embedding.Count == 0 {
+		missing = append(missing, "the draft's token lookup (speculator.embedding)")
+	}
+	if len(d.Context) == 0 {
+		missing = append(missing, "the projection of the captured target states (speculator.context_stack)")
+	}
+	if len(k.graph.Speculator.AuxHiddenStateLayers) == 0 {
+		missing = append(missing, "the target layers whose states it reads (aux_hidden_state_layers)")
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("the %s drafter's first pass runs over every token the target scheduled "+
+			"(vllm/v1/worker/gpu/spec_decode/target_dependent_ar/speculator.py:_prefill at v0.32.0), "+
+			"and its graph does not state %s, so that pass cannot be priced and a price would "+
+			"leave part of it out; first_draft_pass_unpriced",
+			d.Method, strings.Join(missing, ", "))
+	}
+	k.draftFirstPass = true
+	return nil
+}
+
 // specMethod is a speculative method's name as vLLM v0.31.0 runs it: every model-specific
 // MTP name (deepseek_mtp, nemotron_h_mtp, ... -- MTPModelTypes) is replaced with mtp
 // (vllm/config/speculative.py:39-67, 1135-1139).
@@ -161,7 +215,28 @@ func (k *Kernel) priceDraft(b kernel.Batch, s *stepShape,
 		overlap += k.priceLayers(d.Context, nil, k.draftContextKV, s, perResource)
 		kernels += d.ContextKernels
 	}
+	// The first pass of an EAGLE3 drafter: its layers and token lookup over every scheduled
+	// token (liftFirstDraftPass), on the step's own shape. It runs whether or not a request
+	// drafts, since the draft KV of a prompt chunk is written all the same; the later passes
+	// below are one row per request, and the first one's head is among them.
+	if k.draftFirstPass {
+		one := []layerKV{{}}
+		var per [numResources]float64
+		t := k.priceLayers(d.Layers, nil, k.draftLayerKV, s, &per)
+		if d.Embedding.Count > 0 {
+			t += k.priceLayers([]price.PlannedLayer{d.Embedding}, nil, one, s, &per)
+		}
+		overlap += t
+		for r := range per {
+			perResource[r] += per[r]
+		}
+	}
 	if len(drafting) == 0 {
+		if k.draftFirstPass {
+			// No pass is charged below, but the first one was launched: its layers and lookup,
+			// not its head.
+			kernels += d.Kernels - d.Head.Kernels
+		}
 		return overlap, kernels
 	}
 
@@ -180,10 +255,14 @@ func (k *Kernel) priceDraft(b kernel.Batch, s *stepShape,
 	one := []layerKV{{}}
 	var per [numResources]float64
 	t := k.priceLayers(d.Layers, nil, k.draftLayerKV, &ps, &per)
-	for _, part := range []price.PlannedLayer{d.Embedding, d.Head} {
-		if part.Count > 0 {
-			t += k.priceLayers([]price.PlannedLayer{part}, nil, one, &ps, &per)
-		}
+	if d.Embedding.Count > 0 {
+		t += k.priceLayers([]price.PlannedLayer{d.Embedding}, nil, one, &ps, &per)
+	}
+	// What one pass costs before its head: the first pass of a drafter that runs one over the
+	// scheduled tokens has been charged above for these, so one pass fewer is charged here.
+	tBody, perBody := t, per
+	if d.Head.Count > 0 {
+		t += k.priceLayers([]price.PlannedLayer{d.Head}, nil, one, &ps, &per)
 	}
 	// The draft's logits are gathered like the target's, over every draft row
 	// (compute_draft_logits, vllm/models/deepseek_v41/nvidia/dspark.py:341-347 at v0.31.0).
@@ -200,6 +279,14 @@ func (k *Kernel) priceDraft(b kernel.Batch, s *stepShape,
 		perResource[r] += float64(passes) * per[r]
 	}
 	kernels += passes * d.Kernels
+	if k.draftFirstPass {
+		// The first pass's layers and lookup were charged over the scheduled tokens above; its
+		// one-row share is not charged twice.
+		overlap -= tBody
+		for r := range perBody {
+			perResource[r] -= perBody[r]
+		}
+	}
 
 	if d.SequentialHead.Count > 0 {
 		for i := range drafting {
