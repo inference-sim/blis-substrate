@@ -322,8 +322,8 @@ func laneRefusedByImplementation(c *resolve.Coefficients, names ...string) strin
 	for _, r := range c.Refused() {
 		if slices.Contains(names, r.Entry.Name) {
 			running := "no kernel implementation"
-			if len(c.Implementations()) > 0 {
-				running = coefficient.DescribeImpls(c.Implementations())
+			if impls := c.Implementations()[coefficient.PrimitiveOf(r.Entry.Name)]; len(impls) > 0 {
+				running = coefficient.DescribeImpls(impls)
 			}
 			out = append(out, fmt.Sprintf("%s is valid for %s, and the engine reports running %s", r.Entry.Name,
 				coefficient.DescribeImpls(r.Entry.KernelImpls), running))
