@@ -191,8 +191,19 @@ declared method:
   everything else unquantized. vLLM resolves `mxfp4` to `gpt_oss_mxfp4` for that checkpoint,
   and the kernel records that as an override. Either on any other graph is refused: vLLM
   refuses the mismatch with the declared method or quantizes online.
-- `modelopt_mixed` is refused. It names a ModelOpt MIXED_PRECISION checkpoint, whose per-layer
-  algorithms the catalog deriver does not place, so no graph shows the layout.
+- `modelopt_mixed`, when the graph is MiniMax-M3 with MXFP8 linears and NVFP4 routed experts:
+  the FP8 global width with the microscaling scale, every routed-expert node at NVFP4 (and at
+  least one), the router FP32, every other weight node at the global width, and the head
+  BF16. That is what the catalog deriver places from the checkpoint's `quantized_layers` map
+  (`minimax-m3-nvfp4`). vLLM resolves a MIXED_PRECISION checkpoint to `modelopt_mixed`
+  (`ModelOptMixedPrecisionConfig.override_quantization_method`, `modelopt.py:1626-1632`), so the
+  stated value is the checkpoint's own. On any other graph it is refused: a graph with no NVFP4
+  experts (bf16 or MXFP8 alone), another architecture, or any node at another width does not
+  place a MIXED_PRECISION layout, and the checkpoint's per-layer algorithms are not known.
+  The graph carries no declared method, so it cannot tell this checkpoint from
+  MiniMax-M3.1-Flash, whose `quant_method` is `mxfp8` over the same widths: the kernel accepts
+  `modelopt_mixed` for both graphs and `mxfp8` for both, and vLLM refuses the name that is not
+  the checkpoint's own at startup, so no run states it.
 
 ## A coefficient is missing
 

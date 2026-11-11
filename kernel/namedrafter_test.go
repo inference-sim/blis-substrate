@@ -234,3 +234,30 @@ func TestEveryCatalogDrafterGraftsOntoEachTargetItNames(t *testing.T) {
 		t.Errorf("only %d target and drafter pairs found; the catalog lists more", pairs)
 	}
 }
+
+// The NVFP4 checkpoint InferenceX serves with an EAGLE3 head states quantization modelopt_mixed
+// and names the head: both must hold together, with the head priced in place of the in-graph MTP
+// at the checkpoint's own layout.
+func TestTheMixedPrecisionTargetPricesWithEitherEagle3HeadAndItsOwnQuantization(t *testing.T) {
+	d, err := load.Embedded()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, drafter := range []string{"minimax-m3-eagle3", "minimax-m3-eagle3-gqa"} {
+		for _, chip := range []string{"b200", "b300"} {
+			in := withNamedDrafter(t, d, "minimax-m3-nvfp4", drafter, chip, "eagle3", 3)
+			stated := withQuant(in, "modelopt_mixed")
+			k := mustKernel(t, stated)
+			if k.plan.Draft == nil || k.plan.Draft.Method != "eagle3" || !k.speculating {
+				t.Fatalf("%s on %s: the named head is not the priced speculator", drafter, chip)
+			}
+			if got, want := pricesOf(k), pricesOf(mustKernel(t, in)); got != want {
+				t.Errorf("%s on %s: a stated modelopt_mixed moves the price", drafter, chip)
+			}
+			// The same head on the MXFP8 target prices differently: the experts are the NVFP4 ones.
+			if pricesOf(k) == pricesOf(mustKernel(t, withNamedDrafter(t, d, "minimax-m3-mxfp8", drafter, chip, "eagle3", 3))) {
+				t.Errorf("%s on %s: the NVFP4 target prices as the MXFP8 one", drafter, chip)
+			}
+		}
+	}
+}

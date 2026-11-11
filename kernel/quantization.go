@@ -37,10 +37,24 @@ import (
 //     (architecture GptOssForCausalLM) with its routed experts at MXFP4 and everything else
 //     unquantized, which is what the checkpoint's modules_to_not_convert states.
 //   - modelopt_mixed. ModelOptMixedPrecisionConfig claims quant_algo MIXED_PRECISION and reads
-//     each layer's algorithm from quantized_layers (modelopt.py:1544-1660). The identity needs
-//     a graph that places those per-layer algorithms node by node, and the catalog deriver
-//     refuses such a checkpoint rather than place it (catalog/scripts/derive_graph.py,
-//     modelopt_placed_width), so no graph can show it. Refused.
+//     each layer's algorithm from quantized_layers (modelopt.py:1543-1660@v0.32.0). The identity
+//     needs a graph that places those per-layer algorithms node by node. The catalog deriver
+//     places one layout: MiniMax-M3's, MXFP8 on every linear and NVFP4 on the routed experts,
+//     the router FP32 and the head BF16 (catalog/scripts/derive_graph.py,
+//     minimax_m3_mixed_precision). The rule shows that layout from the graph: the MiniMax-M3
+//     architecture, FP8 with the microscaling scale as the global width, every routed expert
+//     node at NVFP4 and at least one such node. A graph with no NVFP4 experts (bf16, MXFP8
+//     alone), another architecture, or any other width on a node is not that checkpoint's
+//     layout, and the value is refused. The graph carries no declared method (see mxfp8Layout),
+//     so it cannot tell this checkpoint from MiniMax-M3.1-Flash's, which stores the same
+//     widths under quant_method mxfp8; a deployment that states the other name for either is
+//     refused by vLLM at startup and is not a run the kernel would be asked to price.
+
+// minimaxM3Architectures are the MiniMax-M3 model classes, which share one graph handler.
+var minimaxM3Architectures = map[string]bool{
+	"MiniMaxM3SparseForConditionalGeneration": true,
+	"MiniMaxM3SparseForCausalLM":              true,
+}
 
 const gptOssArchitecture = "GptOssForCausalLM"
 
@@ -98,6 +112,58 @@ func gptOssLayout(g *model.Graph) bool {
 		})
 }
 
+// mixedPrecisionLayout reports whether the graph is MiniMax-M3 with MXFP8 linears and NVFP4
+// routed experts, the layout its ModelOpt MIXED_PRECISION checkpoint stores: the global width is
+// FP8 with the microscaling scale; the routed experts (a GroupedGEMM that is not a shared
+// expert; the shared expert is a linear of the checkpoint) are NVFP4 on every layer that has
+// them, and at least one layer does; the one node allowed another width is the router, a GEMM
+// with one row per routed expert of its layer kind, which is FP32; every other weight node is
+// the global width; the head is BF16, as the checkpoint leaves it out of quantized_layers. The
+// nodes are told apart by what they are, never by their free-text role.
+func mixedPrecisionLayout(g *model.Graph) bool {
+	if !minimaxM3Architectures[g.Global.Architecture] || !mxfp8Layout(g) {
+		return false
+	}
+	routed := 0
+	for _, lk := range g.LayerKinds {
+		experts := 0
+		for _, n := range lk.Nodes {
+			if n.Op == model.OpGroupedGEMM && !n.IsSharedExpert() && n.Aliases == "" {
+				experts = n.Experts
+			}
+		}
+		for _, n := range lk.Nodes {
+			if (n.Op != model.OpGEMM && n.Op != model.OpGroupedGEMM) || n.Aliases != "" {
+				continue
+			}
+			switch {
+			case n.Op == model.OpGroupedGEMM && !n.IsSharedExpert():
+				// A routed node that also carries the shared expert would price that linear at
+				// NVFP4, where the checkpoint stores it MXFP8.
+				if nodeDType(g, n) != model.DTypeNVFP4 || n.SharedExperts > 0 {
+					return false
+				}
+				routed++
+			case n.Op == model.OpGEMM && experts > 0 && n.N == experts:
+				// One row per routed expert: the router, which the checkpoint stores FP32.
+				if nodeDType(g, n) != model.DTypeFP32 {
+					return false
+				}
+			default:
+				if nodeDType(g, n) != model.DTypeFP8 {
+					return false
+				}
+			}
+		}
+	}
+	for _, n := range g.Head {
+		if n.Op == model.OpGEMM && n.Aliases == "" && nodeDType(g, n) != model.DTypeBF16 {
+			return false
+		}
+	}
+	return routed > 0
+}
+
 // statedQuantization resolves a stated quantization against the checkpoint. It returns the
 // value the weight format is resolved from ("" when the checkpoint's own format governs), and
 // an override to record when the stated spelling differs from the one vLLM resolves to. A
@@ -138,11 +204,15 @@ func statedQuantization(g *model.Graph, stated string) (string, *resolve.Overrid
 			"or refused by vLLM as a mismatch with the method the checkpoint declares",
 			stated, g.Global.Architecture, g.Global.WeightDType)
 	case "modelopt_mixed":
+		if mixedPrecisionLayout(g) {
+			return "", nil, nil
+		}
 		return "", nil, fmt.Errorf("quantization %q is stated: it names a ModelOpt MIXED_PRECISION "+
-			"checkpoint, whose per-layer algorithms (quantized_layers) the catalog graph does not "+
-			"place, so the kernel cannot show the graph is that checkpoint's layout. Needed: a deriver "+
-			"that places MIXED_PRECISION per-module algorithms node by node, and a catalog entry "+
-			"for the checkpoint", stated)
+			"checkpoint, whose per-layer algorithms (quantized_layers) this graph does not place "+
+			"(architecture %q, weights %s): the only layout the kernel can show is MiniMax-M3's, "+
+			"MXFP8 linears under NVFP4 routed experts. Needed for another checkpoint: a deriver "+
+			"that places its per-module algorithms node by node, and a catalog entry for it",
+			stated, g.Global.Architecture, g.Global.WeightDType)
 	}
 	return stated, nil, nil
 }
