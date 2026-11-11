@@ -161,6 +161,15 @@ The environment variables `VLLM_FLASHINFER_ALLREDUCE_BACKEND` and `VLLM_MARLIN_U
 `prefill_schedule_interval` and `disable_hybrid_kv_cache_manager` are the engine model's, not
 the kernel's.
 
+## A drafter whose first pass the graph does not fully state
+
+An EAGLE3 drafter's first pass runs over every token the target scheduled
+(see [the step](../concepts/step.md)). A drafter graph of that method that does not state its
+layers, its token lookup (`speculator.embedding`), the projection of the captured target
+states (`speculator.context_stack`) or the target layers whose states it reads
+(`aux_hidden_state_layers`) is refused as `first_draft_pass_unpriced`, with the missing parts
+named, because the price would leave part of the pass out and say nothing.
+
 ## A stated quantization the checkpoint does not declare
 
 vLLM v0.32.0 requires a stated `--quantization` to equal the method the checkpoint declares,
