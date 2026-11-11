@@ -445,3 +445,90 @@ func hasSelected(k *Kernel, name string) bool {
 	}
 	return false
 }
+
+// The selected-coefficient report names, as Priced, the kernels of the operations that read the
+// entry, not every kernel that runs its primitive (VAL-8, 6.2, G1): in a pool whose full attention
+// runs kernel A and whose sliding-window layers run kernel B, attention_decode_rate_swa keyed to B
+// reports B alone, and the part-wide pair, valid for both, reports both; the Result's
+// implementations for the primitive still list A and B.
+func TestTheReportedPricedKernelsAreThoseOfTheOperationsThatReadTheEntry(t *testing.T) {
+	d, err := load.Embedded()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var in Inputs
+	for _, c := range perturbationScenarios(t, d, "gpt-oss-120b") {
+		if strings.HasPrefix(c.label, "gpt-oss-120b/h200/tp") {
+			in = c.in
+			break
+		}
+	}
+	if in.Model == nil {
+		t.Fatal("no gpt-oss-120b scenario builds on h200")
+	}
+	a := plan.KernelImpl{Library: "flashinfer", Variant: "decode_full", CodeHash: "aaaaaaaaaaaa"}
+	b := plan.KernelImpl{Library: "flashinfer", Variant: "decode_window", CodeHash: "bbbbbbbbbbbb"}
+	implA := coefficient.KernelImpl{Library: a.Library, Variant: a.Variant, CodeHash: a.CodeHash}
+	implB := coefficient.KernelImpl{Library: b.Library, Variant: b.Variant, CodeHash: b.CodeHash}
+	kinds := map[string]model.LayerKind{}
+	for _, lk := range in.Model.LayerKinds {
+		kinds[lk.ID] = lk
+	}
+	for i, id := range in.Model.Stack.Expand() {
+		impl := a
+		for _, n := range kinds[id].Nodes {
+			if n.Op == model.OpAttention && n.AttentionKind == model.AttentionSWA {
+				impl = b
+			}
+		}
+		in.Operations = append(in.Operations, plan.Operation{Layer: i, Primitive: plan.PrimAttentionDecode, Impl: impl})
+	}
+	// The h200 sliding-window pair and the part-wide pair, measured, are keyed: the sliding-window
+	// ones to B, the part-wide ones to A and B.
+	var sets []*coefficient.Set
+	for _, s := range in.Coefficients {
+		c := *s
+		c.Coefficients = append([]coefficient.Entry(nil), s.Coefficients...)
+		for j, e := range c.Coefficients {
+			if e.Method != vocab.MethodMeasured {
+				continue
+			}
+			switch e.Name {
+			case "attention_decode_rate_swa", "attention_decode_floor_swa":
+				e.KernelImpls = []coefficient.KernelImpl{implB}
+			case "attention_decode_rate", "attention_decode_floor":
+				e.KernelImpls = []coefficient.KernelImpl{implA, implB}
+			default:
+				continue
+			}
+			c.Coefficients[j] = e
+		}
+		sets = append(sets, &c)
+	}
+	in.Coefficients = sets
+	k, err := New(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dd, err := load.Embedded()
+	if err != nil {
+		t.Fatal(err)
+	}
+	k.RecordSelected(dd)
+	se := dd.Report().Result()
+	got := map[string]result.SelectedCoefficient{}
+	for _, c := range se.Coefficients {
+		got[c.Name] = c
+	}
+	swa, ok := got["attention_decode_rate_swa"]
+	if !ok || !reflect.DeepEqual(swa.Priced, []coefficient.KernelImpl{implB}) || swa.KernelMatch != coefficient.KernelExact {
+		t.Errorf("the sliding-window rate: selected %v, priced %v, match %q; want exact, priced on the windowed kernel alone", ok, swa.Priced, swa.KernelMatch)
+	}
+	wide, ok := got["attention_decode_rate"]
+	if !ok || !reflect.DeepEqual(wide.Priced, []coefficient.KernelImpl{implA, implB}) {
+		t.Errorf("the part-wide rate: selected %v, priced %v; want both kernels", ok, wide.Priced)
+	}
+	if !reflect.DeepEqual(se.Implementations[string(plan.PrimAttentionDecode)], []coefficient.KernelImpl{implA, implB}) {
+		t.Errorf("the Result's implementations for the primitive: %v", se.Implementations)
+	}
+}
