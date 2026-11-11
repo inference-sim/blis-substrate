@@ -50,31 +50,44 @@ func quantCase(t *testing.T, d *load.Data, name, chip string) Inputs {
 func flag(b bool) *bool { return &b }
 
 // The registry states no kernel hash for the trtllm-gen prefill (none is published), so its lane
-// is not priced. These tests key the lane to a fixture implementation, in test data only: the
-// hashes below are not any real kernel's.
+// is not priced. These tests key the lane to fixture implementations, in test data only: the
+// hashes below are not any real kernel's. The bf16 pair is valid for laneBF16 and the fp8 pair
+// for laneFP8, two builds of one library.
 var (
-	laneFixtureRuns = plan.KernelImpl{Library: "flashinfer", Variant: "fixture-trtllm-prefill", CodeHash: "0123456789ab"}
-	// laneFixtureSource stands for the build the 0.25.0 sweep ran, which the entries record as
-	// the implementation their data came from.
-	laneFixtureSource = coefficient.KernelImpl{Library: "flashinfer", Variant: "fixture-trtllm-prefill", CodeHash: "ba9876543210"}
+	laneBF16 = plan.KernelImpl{Library: "flashinfer", Variant: "fixture-trtllm-prefill-bf16", CodeHash: "0123456789ab"}
+	laneFP8  = plan.KernelImpl{Library: "flashinfer", Variant: "fixture-trtllm-prefill-fp8", CodeHash: "123456789abc"}
+	// laneDecode is a decode kernel of the same library and the same hash digits as laneBF16: a pool
+	// that runs it for decode must not admit a pair that prices prefill.
+	laneDecode = plan.KernelImpl{Library: "flashinfer", Variant: "fixture-trtllm-decode", CodeHash: laneBF16.CodeHash}
+	// laneSource stands for the build the 0.25.0 sweep ran, which the entries record as the
+	// implementation their data came from.
+	laneSource = coefficient.KernelImpl{Library: "flashinfer", Variant: "fixture-trtllm-prefill-bf16", CodeHash: "ba9876543210"}
 )
 
-// keyedLane states, on every lane entry of the scenario's sets, that the value is valid for impl
-// and was measured on the fixture source, and reports impl as what the pool runs.
-func keyedLane(in Inputs, impl plan.KernelImpl) Inputs {
-	return withRunning(keyLaneEntries(in, []coefficient.KernelImpl{{Library: impl.Library, Variant: impl.Variant, CodeHash: impl.CodeHash}}), impl)
+func asKey(i plan.KernelImpl) coefficient.KernelImpl {
+	return coefficient.KernelImpl{Library: i.Library, Variant: i.Variant, CodeHash: i.CodeHash}
 }
 
-func keyLaneEntries(in Inputs, target []coefficient.KernelImpl) Inputs {
-	names := append(laneNames("bf16"), laneNames("fp8")...)
+// keyedLane states, on the lane's entries of the scenario's sets, that the bf16 pair is valid for
+// laneBF16 and the fp8 pair for laneFP8, measured on the fixture source, and reports prefill as
+// the implementations of the attention.prefill primitive.
+func keyedLane(in Inputs, prefill ...plan.KernelImpl) Inputs {
+	return withPrefill(keyLaneEntries(in, map[string]plan.KernelImpl{"bf16": laneBF16, "fp8": laneFP8}), prefill...)
+}
+
+// keyLaneEntries keys the pair of each cache dtype to the implementation given for it.
+func keyLaneEntries(in Inputs, byDType map[string]plan.KernelImpl) Inputs {
 	out := make([]*coefficient.Set, len(in.Coefficients))
 	for i, s := range in.Coefficients {
 		c := *s
 		c.Coefficients = append([]coefficient.Entry(nil), s.Coefficients...)
 		for j := range c.Coefficients {
-			if e := &c.Coefficients[j]; slices.Contains(names, e.Name) {
-				e.KernelImpls = target
-				e.MeasuredOn = []coefficient.KernelImpl{laneFixtureSource}
+			e := &c.Coefficients[j]
+			for dtype, impl := range byDType {
+				if slices.Contains(laneNames(dtype), e.Name) {
+					e.KernelImpls = []coefficient.KernelImpl{asKey(impl)}
+					e.MeasuredOn = []coefficient.KernelImpl{laneSource}
+				}
 			}
 		}
 		out[i] = &c
@@ -83,9 +96,24 @@ func keyLaneEntries(in Inputs, target []coefficient.KernelImpl) Inputs {
 	return in
 }
 
-// withRunning reports the implementations the pool runs; none leaves the field unset.
-func withRunning(in Inputs, impls ...plan.KernelImpl) Inputs {
-	in.Implementations = impls
+// withPrefill reports the implementations of the attention.prefill primitive, leaving the other
+// primitives as they were; none removes the primitive.
+func withPrefill(in Inputs, impls ...plan.KernelImpl) Inputs {
+	return withRunning(in, plan.PrimAttentionPrefill, impls...)
+}
+
+// withRunning sets the implementations the pool reports for one primitive (none removes it).
+func withRunning(in Inputs, prim plan.Primitive, impls ...plan.KernelImpl) Inputs {
+	m := map[plan.Primitive][]plan.KernelImpl{}
+	for k, v := range in.Implementations {
+		m[k] = v
+	}
+	if len(impls) == 0 {
+		delete(m, prim)
+	} else {
+		m[prim] = impls
+	}
+	in.Implementations = m
 	return in
 }
 
@@ -176,68 +204,74 @@ func movedBy(t *testing.T, in Inputs, names []string) bool {
 	return false
 }
 
-// The lane is chosen by what v0.32.0's FlashInfer backend runs, not by the flag alone
-// (vllm/utils/flashinfer.py:697-789, vllm/v1/attention/backends/flashinfer.py:1429-1433): an
-// unstated setting with an auto cache, or a stated block size of 128, runs the trtllm-gen prefill
-// and prices as a stated true does; with an fp8 cache and neither, the unstated price is the
-// pooled pair and a stated true is the fp8 lane. Each lane coefficient moves the prices that read
-// it and no others (the perturbation test of the layer).
-func TestTRTLLMGenLaneIsChosenByWhatTheEngineRuns(t *testing.T) {
+// The lane is chosen by the implementation the caller reports for the prefill primitive, and by
+// nothing the settings say: not the cache dtype, the block size or use_trtllm_attention. The bf16
+// pair is valid for one build and the fp8 pair for another, so the reported build picks the pair.
+// Each lane coefficient moves the prices that read it and no others (the perturbation test of the
+// layer).
+func TestTRTLLMGenLaneIsChosenByTheReportedImplementation(t *testing.T) {
 	d, err := load.Embedded()
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, chip := range []string{"b200", "b300", "gb200-nvl72", "gb300"} {
 		t.Run(chip, func(t *testing.T) {
-			base := keyedLane(laneCase(t, d, chip), laneFixtureRuns)
+			raw := laneCase(t, d, chip)
+			pooled := pricesOf(mustKernel(t, raw))
 			bf16, fp8 := laneNames("bf16"), laneNames("fp8")
 
-			// An auto cache: unstated runs the kernel, so stated true is the same price.
-			auto := withCache(base, "", 0)
-			if pricesOf(mustKernel(t, auto)) != pricesOf(mustKernel(t, withTRTLLM(auto, true))) {
-				t.Error("an auto cache prices a stated true differently from an unstated setting: vLLM runs one kernel")
+			onBF16 := keyedLane(raw, laneBF16)
+			if pricesOf(mustKernel(t, onBF16)) == pooled {
+				t.Error("the reported bf16 build runs and the lane is not read")
 			}
-			if !movedBy(t, auto, bf16) || movedBy(t, auto, fp8) {
-				t.Error("an unstated auto-cache deployment must read the bf16 lane and not the fp8 one")
+			if !movedBy(t, onBF16, bf16) || movedBy(t, onBF16, fp8) {
+				t.Error("the bf16 build must read the bf16 pair and not the fp8 one")
 			}
-
-			// An fp8 cache: unstated runs the native kernel (pooled pair); true runs trtllm-gen.
-			f8 := withCache(base, "fp8", 0)
-			up, ud := prefillAndDecode(mustKernel(t, f8))
-			sp, sd := prefillAndDecode(mustKernel(t, withTRTLLM(f8, true)))
-			if up == sp {
-				t.Error("an fp8 cache prices a stated true as an unstated one: the lane is not read")
+			onFP8 := keyedLane(raw, laneFP8)
+			if !movedBy(t, onFP8, fp8) || movedBy(t, onFP8, bf16) {
+				t.Error("the fp8 build must read the fp8 pair and not the bf16 one")
 			}
-			if ud != sd {
-				t.Errorf("a stated true moved decode from %v to %v; v0.32.0 decodes with trtllm-gen already", ud, sd)
+			// Nothing the settings say moves the choice: with an fp8 cache, a block size of 128 or
+			// a stated true, the bf16 build still reads the bf16 pair and not the fp8 one. (The
+			// cache dtype changes other prices, so the lane is detected by its coefficients.)
+			for name, in := range map[string]Inputs{
+				"an fp8 cache":     withCache(onBF16, "fp8", 0),
+				"a block size 128": withCache(onBF16, "", 128),
+				"a stated true":    withTRTLLM(onBF16, true),
+			} {
+				if !movedBy(t, in, bf16) || movedBy(t, in, fp8) {
+					t.Errorf("%s: the choice of pair follows the setting, not the reported implementation", name)
+				}
 			}
-			if movedBy(t, f8, append(bf16, fp8...)) {
-				t.Error("an unstated fp8-cache deployment reads a lane coefficient")
-			}
-			if !movedBy(t, withTRTLLM(f8, true), fp8) || movedBy(t, withTRTLLM(f8, true), bf16) {
-				t.Error("a stated true on an fp8 cache must read the fp8 lane and not the bf16 one")
-			}
-
-			// A stated block size of 128 forces the kernel, so unstated is the same price.
-			big := withCache(base, "fp8", 128)
-			if pricesOf(mustKernel(t, big)) != pricesOf(mustKernel(t, withTRTLLM(big, true))) {
-				t.Error("a block size of 128 prices a stated true differently from an unstated setting")
-			}
-			if !movedBy(t, big, fp8) {
-				t.Error("a block size of 128 does not read the lane")
+			up, ud := prefillAndDecode(mustKernel(t, raw))
+			sp, sd := prefillAndDecode(mustKernel(t, onBF16))
+			if up == sp || ud != sd {
+				t.Errorf("the lane moves prefill %v->%v and decode %v->%v; it prices prefill only", up, sp, ud, sd)
 			}
 		})
 	}
 }
 
-// Where vLLM ignores the setting, a stated true changes nothing: latent attention never reads it,
-// and decode-context parallelism returns False for the prefill whatever it says.
-func TestTRTLLMAttentionTrueChangesNothingWhereVLLMIgnoresIt(t *testing.T) {
+// Latent attention is another kernel and keeps the pooled pair, so a stated true changes nothing
+// on a model with no non-latent layer. The kernel does not infer from the settings that
+// decode-context parallelism makes the engine ignore the setting: with a non-latent layer a
+// stated true it cannot match to the reported implementation is refused.
+func TestTRTLLMAttentionTrueOnLatentOnlyModelsChangesNothing(t *testing.T) {
 	d, err := load.Embedded()
 	if err != nil {
 		t.Fatal(err)
 	}
 	mla := quantCase(t, d, "deepseek-v3", "b200")
+	want := pricesOf(mustKernel(t, mla))
+	if got := pricesOf(mustKernel(t, withTRTLLM(mla, true))); got != want {
+		t.Error("a stated true moves a latent-only model")
+	}
+	if movedBy(t, withTRTLLM(keyedLane(mla, laneBF16), true), append(laneNames("bf16"), laneNames("fp8")...)) {
+		t.Error("a stated true reads the lane on a latent-only model")
+	}
+	if got := pricesOf(mustKernel(t, withTRTLLM(mla, false))); got != want {
+		t.Error("a stated false moves a latent-only model")
+	}
 	var dcp Inputs
 	for _, c := range perturbationScenarios(t, d, "codellama-34b-instruct-hf") {
 		if strings.HasPrefix(c.label, "codellama-34b-instruct-hf/b200/") && strings.Contains(c.label, "/dcp2/") &&
@@ -248,29 +282,19 @@ func TestTRTLLMAttentionTrueChangesNothingWhereVLLMIgnoresIt(t *testing.T) {
 	if dcp.Model == nil {
 		t.Fatal("no codellama-34b-instruct-hf scenario with decode-context parallelism 2 builds on b200")
 	}
-	for name, in := range map[string]Inputs{"mla": mla, "dcp": dcp} {
-		want := pricesOf(mustKernel(t, in))
-		if got := pricesOf(mustKernel(t, withTRTLLM(in, true))); got != want {
-			t.Errorf("%s: a stated true moves the price", name)
-		}
-		if movedBy(t, withTRTLLM(in, true), append(laneNames("bf16"), laneNames("fp8")...)) {
-			t.Errorf("%s: a stated true reads the lane", name)
-		}
-	}
-	// Latent-only: a stated false is a no-op too, while a model with a plain layer refuses it.
-	if got := pricesOf(mustKernel(t, withTRTLLM(mla, false))); got != pricesOf(mustKernel(t, mla)) {
-		t.Error("a stated false moves a latent-only model")
+	if _, err := New(withTRTLLM(dcp, true)); err == nil || !strings.Contains(err.Error(), "attention.prefill") {
+		t.Errorf("a stated true under decode-context parallelism with no reported implementation: %v", err)
 	}
 }
 
-// A stated true on a cache dtype the sweep does not hold, or with the lane removed from the sets,
-// is refused rather than priced on the pooled pair.
+// A stated true with the lane removed from the sets, or whose pairs list another build, is refused
+// rather than priced on the pooled pair.
 func TestTRTLLMAttentionTrueRefusesWhenTheSetsCarryNoLane(t *testing.T) {
 	d, err := load.Embedded()
 	if err != nil {
 		t.Fatal(err)
 	}
-	base := keyedLane(laneCase(t, d, "b200"), laneFixtureRuns)
+	base := keyedLane(laneCase(t, d, "b200"), laneBF16)
 	strip := func(in Inputs, names ...string) Inputs {
 		var sets []*coefficient.Set
 		for _, s := range in.Coefficients {
@@ -286,22 +310,27 @@ func TestTRTLLMAttentionTrueRefusesWhenTheSetsCarryNoLane(t *testing.T) {
 		in.Coefficients = sets
 		return in
 	}
-	on := withTRTLLM(withCache(base, "", 0), true)
+	on := withTRTLLM(base, true)
+	all := append(laneNames("bf16"), laneNames("fp8")...)
 	_, err = New(strip(on, laneNames("bf16")...))
 	if err == nil {
-		t.Fatal("a stated true priced with no lane entry in the sets")
+		t.Fatal("a stated true priced with no pair valid for the reported build")
 	}
-	for _, want := range []string{"use_trtllm_attention", "trtllm-gen", "b200", trtllmGenPrefillFloor + "bf16"} {
+	for _, want := range []string{"use_trtllm_attention", "trtllm-gen", "b200", trtllmGenPrefillFloor + "fp8"} {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("the refusal does not name %q: %v", want, err)
 		}
 	}
-	if _, err := New(withTRTLLM(withCache(base, "nvfp4", 0), true)); err == nil || !strings.Contains(err.Error(), "nvfp4") {
-		t.Errorf("a stated true at an nvfp4 cache: %v", err)
+	_, err = New(strip(on, all...))
+	if err == nil || !strings.Contains(err.Error(), "no trtllm-gen prefill pair") {
+		t.Errorf("a stated true with no lane in the sets: %v", err)
 	}
-	// The lane absent from the sets leaves an unstated deployment on the pooled pair.
-	if _, err := New(strip(withCache(base, "", 0), append(laneNames("bf16"), laneNames("fp8")...)...)); err != nil {
+	// The lane absent from the sets leaves an unstated deployment on the pooled pair, silently.
+	k, err := New(strip(base, all...))
+	if err != nil {
 		t.Errorf("an unstated deployment is refused without the lane: %v", err)
+	} else if why, ok := laneAssumed(k); ok {
+		t.Errorf("an assumption is recorded for a lane the sets do not carry: %s", why)
 	}
 }
 
@@ -494,19 +523,21 @@ func TestTheLaneIsForPlainLayersOnly(t *testing.T) {
 	}
 }
 
-// VAL-8: the lane is priced only when its entries are valid for the kernel build the pool runs.
-// The known-bad inputs are the sibling implementations: the same library and variant at another
-// hash, and the same hash under another variant. Each is refused through the real kernel.New.
-func TestTRTLLMGenLaneIsPricedOnlyForTheImplementationThatRuns(t *testing.T) {
+// VAL-8: the lane is priced only when its pair lists the implementation of the primitive it
+// prices. The known-bad inputs are the siblings (the same library and variant at another hash, the
+// same hash under another variant, another library) and the mixed pool, where the entry is valid
+// for a decode kernel A and prefill runs B. Each is refused through the real kernel.New.
+func TestTRTLLMGenLaneIsPricedOnlyForTheImplementationOfThePrimitiveItPrices(t *testing.T) {
 	d, err := load.Embedded()
 	if err != nil {
 		t.Fatal(err)
 	}
 	base := withCache(laneCase(t, d, "b200"), "", 0)
-	keyed := keyedLane(base, laneFixtureRuns)
+	keyed := keyedLane(base, laneBF16)
 	pooled := pricesOf(mustKernel(t, base))
 
-	// The exact implementation: the lane prices, differently from the pooled pair.
+	// The exact implementation: the lane prices, differently from the pooled pair, whether the
+	// setting is unstated or true, and the selected entries report exact for the prefill primitive.
 	for _, stated := range []bool{false, true} {
 		in := keyed
 		if stated {
@@ -519,51 +550,93 @@ func TestTRTLLMGenLaneIsPricedOnlyForTheImplementationThatRuns(t *testing.T) {
 		if why, ok := laneAssumed(k); ok {
 			t.Errorf("stated=%v: the lane is priced and an assumption says it is not: %s", stated, why)
 		}
+		found := false
 		for _, o := range k.origins {
-			if strings.HasPrefix(o.Name, trtllmGenPrefillFloor+"bf16") && o.KernelMatch != string(coefficient.KernelExact) {
-				t.Errorf("stated=%v: %s is selected as %q, want exact", stated, o.Name, o.KernelMatch)
+			if o.Name == trtllmGenPrefillFloor+"bf16" {
+				found = true
+				if o.KernelMatch != string(coefficient.KernelExact) || o.Primitive != "attention.prefill" {
+					t.Errorf("stated=%v: %s is selected as %q for %q, want exact for attention.prefill", stated, o.Name, o.KernelMatch, o.Primitive)
+				}
 			}
+		}
+		if !found {
+			t.Errorf("stated=%v: the lane's floor is not among the selected entries", stated)
 		}
 	}
 
-	siblingHash := plan.KernelImpl{Library: laneFixtureRuns.Library, Variant: laneFixtureRuns.Variant, CodeHash: "ffffffffffff"}
-	siblingVariant := plan.KernelImpl{Library: laneFixtureRuns.Library, Variant: "fixture-native-prefill", CodeHash: laneFixtureRuns.CodeHash}
-	otherLibrary := plan.KernelImpl{Library: "other-lib", Variant: laneFixtureRuns.Variant, CodeHash: laneFixtureRuns.CodeHash}
-	for name, running := range map[string][]plan.KernelImpl{
-		"a sibling hash":       {siblingHash},
-		"a sibling variant":    {siblingVariant},
-		"another library":      {otherLibrary},
-		"no implementation":    nil,
-		"decode's kernel only": {{Library: "flashinfer", Variant: "fixture-trtllm-decode", CodeHash: laneFixtureRuns.CodeHash}},
-	} {
-		in := withRunning(keyed, running...)
-		// A stated true is refused, naming the setting, the entries and what runs.
+	siblingHash := plan.KernelImpl{Library: laneBF16.Library, Variant: laneBF16.Variant, CodeHash: "ffffffffffff"}
+	siblingVariant := plan.KernelImpl{Library: laneBF16.Library, Variant: "fixture-native-prefill", CodeHash: laneBF16.CodeHash}
+	otherLibrary := plan.KernelImpl{Library: "other-lib", Variant: laneBF16.Variant, CodeHash: laneBF16.CodeHash}
+	cases := []struct {
+		name    string
+		running map[plan.Primitive][]plan.KernelImpl
+	}{
+		{"a sibling hash", map[plan.Primitive][]plan.KernelImpl{plan.PrimAttentionPrefill: {siblingHash}}},
+		{"a sibling variant", map[plan.Primitive][]plan.KernelImpl{plan.PrimAttentionPrefill: {siblingVariant}}},
+		{"another library", map[plan.Primitive][]plan.KernelImpl{plan.PrimAttentionPrefill: {otherLibrary}}},
+		{"no implementation reported", nil},
+		// The mixed pool: the pair is valid for A and the pool runs A for decode and B for prefill.
+		{"A for decode and B for prefill", map[plan.Primitive][]plan.KernelImpl{
+			plan.PrimAttentionDecode: {laneBF16}, plan.PrimAttentionPrefill: {siblingVariant}}},
+		// A decode-only report: the pair prices prefill and the pool says nothing about it.
+		{"A for decode only", map[plan.Primitive][]plan.KernelImpl{plan.PrimAttentionDecode: {laneBF16}}},
+		// Two prefill kernels: one value cannot price both.
+		{"A and B for prefill", map[plan.Primitive][]plan.KernelImpl{plan.PrimAttentionPrefill: {laneBF16, siblingVariant}}},
+	}
+	for _, c := range cases {
+		in := keyed
+		in.Implementations = c.running
+		// A stated true is refused, naming the setting, the entry, its hash and what prefill runs.
 		_, err := New(withTRTLLM(in, true))
 		if err == nil {
-			t.Errorf("%s: a stated true is priced on a lane valid for another implementation", name)
+			t.Errorf("%s: a stated true is priced on a pair valid for another implementation", c.name)
 		} else {
-			for _, want := range []string{"use_trtllm_attention", "VAL-8", trtllmGenPrefillFloor + "bf16", laneFixtureRuns.CodeHash} {
+			for _, want := range []string{"use_trtllm_attention", "VAL-8", trtllmGenPrefillFloor + "bf16", laneBF16.CodeHash} {
 				if !strings.Contains(err.Error(), want) {
-					t.Errorf("%s: the refusal does not name %q: %v", name, want, err)
+					t.Errorf("%s: the refusal does not name %q: %v", c.name, want, err)
 				}
 			}
 		}
 		// Unstated keeps the pooled pair and says why.
 		k, err := New(in)
 		if err != nil {
-			t.Errorf("%s: an unstated deployment is refused: %v", name, err)
+			t.Errorf("%s: an unstated deployment is refused: %v", c.name, err)
 			continue
 		}
 		if got := pricesOf(k); got != pooled {
-			t.Errorf("%s: an unstated deployment is not on the pooled pair", name)
+			t.Errorf("%s: an unstated deployment is not on the pooled pair", c.name)
 		}
 		if why, ok := laneAssumed(k); !ok || !strings.Contains(why, "pooled") {
-			t.Errorf("%s: the unpriced lane is not recorded as an assumption: %q", name, why)
+			t.Errorf("%s: the unpriced lane is not recorded as an assumption: %q", c.name, why)
 		}
+	}
+
+	// The regression of the review: the pairs are valid for a decode kernel A, and the pool runs A
+	// for decode and a different kernel B for prefill. The pool-wide union holds A; the primitive
+	// the pair prices does not.
+	forA := keyLaneEntries(base, map[string]plan.KernelImpl{"bf16": laneDecode, "fp8": laneDecode})
+	forA.Implementations = map[plan.Primitive][]plan.KernelImpl{
+		plan.PrimAttentionDecode: {laneDecode}, plan.PrimAttentionPrefill: {laneBF16}}
+	if _, err := New(withTRTLLM(forA, true)); err == nil || !strings.Contains(err.Error(), "attention.prefill runs") {
+		t.Errorf("a pair valid for decode kernel A prices a prefill that runs B: %v", err)
+	}
+	kA := mustKernel(t, forA)
+	if got := pricesOf(kA); got != pooled {
+		t.Error("an unstated deployment whose pair is valid for the decode kernel only is not on the pooled pair")
+	}
+
+	// A stated false contradicts a reported build the lane lists, and the setting is not priced.
+	if _, err := New(withTRTLLM(keyed, false)); err == nil || !strings.Contains(err.Error(), "contradicts") {
+		t.Errorf("a stated false with the lane's build reported: %v", err)
+	}
+	// Both pairs listing the build leave the cache dtype unknown.
+	both := keyLaneEntries(keyed, map[string]plan.KernelImpl{"bf16": laneBF16, "fp8": laneBF16})
+	if _, err := New(both); err == nil || !strings.Contains(err.Error(), "both list") {
+		t.Errorf("both pairs list the reported build: %v", err)
 	}
 }
 
-// The registry's lane states no implementation, so it is not priced whatever the pool runs: a
+// The registry's lane states no implementation, so it is not priced whatever the pool reports: a
 // stated true is refused naming the hash it needs, and an unstated setting keeps the pooled pair.
 func TestTheCommittedTRTLLMGenLaneIsNotPricedWithoutAKernelHash(t *testing.T) {
 	d, err := load.Embedded()
@@ -572,18 +645,17 @@ func TestTheCommittedTRTLLMGenLaneIsNotPricedWithoutAKernelHash(t *testing.T) {
 	}
 	for _, chip := range []string{"b200", "b300", "gb200-nvl72", "gb300"} {
 		base := withCache(laneCase(t, d, chip), "", 0)
-		for _, running := range [][]plan.KernelImpl{nil, {laneFixtureRuns}} {
-			in := withRunning(base, running...)
+		for _, in := range []Inputs{base, withPrefill(base, laneBF16), withPrefill(base, laneFP8)} {
 			_, err := New(withTRTLLM(in, true))
 			if err == nil || !strings.Contains(err.Error(), "kernel_impls") || !strings.Contains(err.Error(), "blis-registry#73") {
-				t.Errorf("%s running %v: a stated true on the unkeyed lane: %v", chip, running, err)
+				t.Errorf("%s: a stated true on the unkeyed lane: %v", chip, err)
 			}
 			k := mustKernel(t, in)
 			if _, ok := laneAssumed(k); !ok {
-				t.Errorf("%s running %v: the unpriced lane is not recorded", chip, running)
+				t.Errorf("%s: the unpriced lane is not recorded", chip)
 			}
 			if movedBy(t, in, append(laneNames("bf16"), laneNames("fp8")...)) {
-				t.Errorf("%s running %v: an unkeyed lane entry moves a price", chip, running)
+				t.Errorf("%s: an unkeyed lane entry moves a price", chip)
 			}
 		}
 	}

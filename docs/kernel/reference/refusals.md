@@ -106,36 +106,36 @@ value from a coefficient measured on that kernel or refuses it with the measurem
 engine's own default is not a choice: `linear_backend` `auto`, `attention_config.backend`
 `auto`, decoder replay on, no custom ops and no replay capture sizes price as unstated.
 
-`attention_config.use_trtllm_attention` is the one setting with a value the kernel can price,
-and what is priced is the kernel the engine runs, not the flag. FlashInfer's prefill runs the trtllm-gen
-kernel when the setting is true, when a stated block size is 128 or more, and, left unset, when
-the KV cache dtype is `auto` (`vllm/utils/flashinfer.py:697-789`,
-`vllm/v1/attention/backends/flashinfer.py:1429-1433` at v0.32.0). On b200, b300, gb200-nvl72 and
-gb300 the kernel then prices the non-latent layers' prefill on the
-[pair measured on that kernel](../../registry/reference/sets/cost-model-attention.md), the
-`attention_prefill_*_trtllm_gen_kv_bf16` pair at an `auto`, bf16 or fp16 cache and the `_kv_fp8`
-pair at an fp8 cache; an unstated setting with an fp8 cache and no block size runs the native
-kernel and keeps the part's pooled pair. A stated true is refused on a chip or cache dtype with no
-pair. It changes nothing where vLLM ignores it: latent (MLA) attention never reads it, and
-decode-context parallelism returns False for the prefill. Decode is unchanged, because v0.32.0
-decodes with that kernel already. A stated `false` is refused for a model with a non-latent layer
-(no row of the registry's sources times FlashInfer's native attention at the engine's pin).
-An unstated block size is the engine's and is not read, so an unstated deployment is on the lane
-only through its cache dtype.
+FlashInfer's trtllm-gen prefill is the one kernel the registry has a measurement of: on b200,
+b300, gb200-nvl72 and gb300 it holds a
+[pair measured on that kernel](../../registry/reference/sets/cost-model-attention.md) for the
+non-latent layers' prefill, `attention_prefill_*_trtllm_gen_kv_bf16` and `_kv_fp8`. The kernel
+does not work out from the settings whether an engine runs it: which kernel runs is the engine's
+to decide and to report (design X2, SUB-6). The caller reports the implementation of each
+lowered primitive in `Inputs.Implementations`, and the lane prices the prefill of the non-latent
+layers only when one pair lists exactly the implementation reported for `attention.prefill`
+(library, variant and code hash, VAL-8). The pair that lists it prices; the cache dtype, the
+block size and `use_trtllm_attention` do not choose it. Latent (MLA) layers keep the part's
+pooled pair, and decode is not priced from the lane.
 
-The lane is priced only when its entries are shown valid for the kernel build the engine runs
-(VAL-8). The pair was measured on vLLM 0.25.0 and is `transferred`; to be used for the build of
-v0.32.0 an entry lists that build in `kernel_impls` (library, variant and code hash) and the
-engine reports it in `Inputs.Implementations`. A sibling build, another variant at the same hash,
-or no reported implementation does not match, and nothing falls back to it. The registry's
-entries list no implementation, because no engine release publishes the kernel hashes yet
-(`kernel_impls.json`; inference-sim/blis-registry#73). So on the committed registry the lane is not
-priced: a stated `true` is refused naming that hash, and an unstated setting keeps the part's
-pooled pair, with the assumption `trtllm_gen_prefill_lane` recording why. The lane is dormant
-until the hash exists. Limit: the match is against the whole set of implementations the pool
-runs, not against the prefill alone. Decode already runs trtllm-gen, so an entry that lists a
-variant the pool's decode also runs matches even if prefill ran another kernel; the engine
-must name prefill and decode as different variants for an entry to be keyed to the prefill.
+`use_trtllm_attention` is checked against what is reported, not read to select a kernel. Stated
+`true` with no pair listing the reported prefill implementation is refused. Stated `false` is
+refused when a pair lists the reported implementation (the setting contradicts it) and, for a
+model with a non-latent layer, whenever nothing measured the native kernel. A model with no
+non-latent layer has nothing for the lane to price, and the setting is accepted. Two pairs
+listing the reported implementation are refused, since the cache dtype it serves is then unknown.
+Unstated, with no pair listing it, the pooled pair prices the prefill and the assumption
+`trtllm_gen_prefill_lane` records why.
+
+The lookup binds each pair to the primitive its name prices. A pair valid for a decode kernel A
+does not price a prefill that runs B, a pool that reports A for decode and nothing for prefill
+does not admit it, and a prefill that runs two kernels is priced only by a pair that lists both.
+
+The registry's pairs are `transferred` from vLLM 0.25.0 and list no implementation, because no
+engine release publishes kernel hashes yet (`kernel_impls.json`; inference-sim/blis-registry#73).
+So on the committed registry the lane is not priced: a stated `true` is refused naming that hash,
+and an unstated setting keeps the pooled pair. The lane is dormant until an entry lists the
+hash of the prefill kernel and blis-vllm reports it.
 
 Every other stated value of the settings below is refused. The middle column is the measurement
 that would price it, and the right-hand column the open issue that tracks it. The page and the

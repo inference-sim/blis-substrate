@@ -191,9 +191,9 @@ type Kernel struct {
 	// scale means this part has no measured prefill entries and the FLOPs fallback runs.
 	attentionPrefillFloor time.Duration
 	attentionPrefillScale float64
-	// laneRuns is whether the engine runs FlashInfer's trtllm-gen prefill for non-latent layers
-	// on a part that has a measurement of it, and lanePair the pair measured on it
-	// (applyAttentionLane).
+	// laneRuns is whether the non-latent layers' prefill is priced on the trtllm-gen lane, which
+	// holds only when a pair is shown valid for the implementation the caller reported for the
+	// prefill primitive, and lanePair that pair (applyAttentionLane).
 	laneRuns bool
 	lanePair prefillPair
 

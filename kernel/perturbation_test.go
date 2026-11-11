@@ -124,14 +124,14 @@ func perturbationScenarios(t *testing.T, d *load.Data, only ...string) []perturb
 					on := true
 					lane := st.Clone()
 					lane.UseTRTLLMAttention = &on
-					laneIn := keyedLane(in, laneFixtureRuns)
+					laneIn := keyedLane(in, laneBF16)
 					laneIn.Engine = &lane
 					if _, err := New(laneIn); err == nil {
 						out = append(out, perturbationCase{label + "/trtllm", laneIn})
 					} // And at an fp8 cache, which reads the lane's fp8 pair.
 					f8 := st.Clone()
 					f8.UseTRTLLMAttention, f8.CacheDType = &on, "fp8"
-					f8In := keyedLane(in, laneFixtureRuns)
+					f8In := keyedLane(in, laneFP8)
 					f8In.Engine = &f8
 					if _, err := New(f8In); err == nil {
 						out = append(out, perturbationCase{label + "/trtllm-fp8", f8In})
