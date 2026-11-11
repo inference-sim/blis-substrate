@@ -15,8 +15,9 @@ func TestCloneIsADeepCopy(t *testing.T) {
 		MaxModelLen: 4096, EnablePrefixCaching: &on, AsyncScheduling: &on, DisableCascadeAttn: &on,
 		DisableCustomAllReduce: &on, DCPQReplicate: &on, MaxCUDAGraphCaptureSize: &size,
 		CUDAGraphCaptureSizes: []int{1, 2, 4}, DBO: &DBO{Enabled: true},
-		EPLB:         &EPLB{Enabled: true, NumRedundantExperts: 2},
-		Speculative:  &Speculative{Method: "mtp", NumSpecTokens: 2, DraftModel: "drafter", EnableAdaptiveVerification: true},
+		EPLB: &EPLB{Enabled: true, NumRedundantExperts: 2},
+		Speculative: &Speculative{Method: "mtp", NumSpecTokens: 2, DraftModel: "drafter", EnableAdaptiveVerification: true,
+			FirstPassRows: FirstPassScheduled, PassRequests: PassRequestsAll},
 		EngramConfig: &EngramConfig{CPUOffload: &on, DPSharedMemory: &on, UseTHP: &on},
 	}
 	c := orig.Clone()
@@ -38,6 +39,7 @@ func TestCloneIsADeepCopy(t *testing.T) {
 	orig.DBO.Enabled, orig.EPLB.NumRedundantExperts, orig.Speculative.NumSpecTokens = false, 0, 0
 	orig.Speculative.DraftModel = ""
 	orig.Speculative.EnableAdaptiveVerification = false
+	orig.Speculative.FirstPassRows, orig.Speculative.PassRequests = FirstPassPerRequest, PassRequestsSampling
 	*orig.EngramConfig.CPUOffload = off
 	switch {
 	case !*c.EnablePrefixCaching || *c.MaxCUDAGraphCaptureSize != 512:
@@ -45,7 +47,8 @@ func TestCloneIsADeepCopy(t *testing.T) {
 	case !reflect.DeepEqual(c.CUDAGraphCaptureSizes, []int{1, 2, 4}):
 		t.Errorf("editing the original's capture sizes changed its clone: %v", c.CUDAGraphCaptureSizes)
 	case !c.DBO.Enabled || c.EPLB.NumRedundantExperts != 2 || c.Speculative.NumSpecTokens != 2 ||
-		c.Speculative.DraftModel != "drafter" || !c.Speculative.EnableAdaptiveVerification:
+		c.Speculative.DraftModel != "drafter" || !c.Speculative.EnableAdaptiveVerification ||
+		c.Speculative.FirstPassRows != FirstPassScheduled || c.Speculative.PassRequests != PassRequestsAll:
 		t.Error("editing the original's nested settings changed its clone")
 	case !*c.EngramConfig.CPUOffload:
 		t.Error("editing the original's Engram settings changed its clone")

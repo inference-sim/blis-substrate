@@ -424,6 +424,17 @@ name the target layers it reads is priced with the capture layers the engine tak
 target's own default, which the deriver records per drafter with the target whose depth it is.
 A model run with a drafter the catalog lacks is refused for that drafter, not priced without it.
 
+An autoregressive drafter, a named one (the EAGLE3 heads) or the graph's own (MTP), proposes K tokens
+by K passes of its layers. How many rows its first pass processes (one per request, or every token
+the target scheduled, prefill included) and for which requests the head and later passes run (the
+requests that complete their prompt, or every request) are the engine's execution decisions, not
+facts of the graph. The engine states them as `Speculative.FirstPassRows` (`per_request` or
+`scheduled`) and `Speculative.PassRequests` (`sampling` or `all`), and a deployment that speculates
+through an autoregressive drafter with either empty is refused at construction with
+`draft_passes_unstated` (an unknown word with `draft_passes_unknown`). The kernel names no engine
+or method. A parallel-block drafter (DSpark) needs neither: its context stack carries the work
+over the target's tokens.
+
 A graph names its own MTP speculator by family (`deepseek_mtp`, `minimax_m3_mtp`,
 `nemotron_h_mtp`), and a deployment states `method: mtp`: vLLM replaces every model-specific MTP
 name with `mtp` (`vllm/config/speculative.py`, v0.32.0). `derive_graph.vllm_speculative_method`

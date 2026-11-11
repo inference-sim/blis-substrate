@@ -95,7 +95,29 @@ type Speculative struct {
 	// (vllm/config/speculative.py:551-553@5df63a72). DSpark only. A plain bool, so a copy of
 	// the struct is a deep copy (Clone).
 	EnableAdaptiveVerification bool
+	// FirstPassRows and PassRequests describe an autoregressive drafter's passes as the engine
+	// runs them (see the constants below). The kernel does not know which engine or method runs
+	// which: the engine model states them, and a deployment that speculates through an
+	// autoregressive drafter with either empty is refused. A parallel-block drafter ignores them.
+	FirstPassRows string
+	PassRequests  string
 }
+
+// The words FirstPassRows and PassRequests take.
+const (
+	// FirstPassPerRequest: the drafter's first pass processes one row per request, like every
+	// later pass.
+	FirstPassPerRequest = "per_request"
+	// FirstPassScheduled: the first pass processes every token the target scheduled this step
+	// on this rank, prefill tokens included.
+	FirstPassScheduled = "scheduled"
+	// PassRequestsSampling: the head and the later passes run for the requests that complete
+	// their prompt this step.
+	PassRequestsSampling = "sampling"
+	// PassRequestsAll: the head and the later passes run for every request of the step, a
+	// request still in the middle of its prompt included.
+	PassRequestsAll = "all"
+)
 
 // EngramConfig is where an Engram table lives. Each nil field is the engine's default.
 type EngramConfig struct {

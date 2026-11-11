@@ -3,11 +3,13 @@ package latencykernel
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/inference-sim/blis-substrate/contracts/kernel"
+	"github.com/inference-sim/blis-substrate/contracts/kernel/enginesettings"
 	"github.com/inference-sim/blis-substrate/contracts/rules"
 	"github.com/inference-sim/blis-substrate/contracts/spec/model"
 
@@ -51,6 +53,9 @@ func (k *Kernel) liftDraft(c *resolve.Coefficients, inferred func(price.PlannedL
 			"the deployment speculates and the model graph states no speculator, so its draft "+
 				"passes cost nothing and its weights are not resident")
 		return nil
+	}
+	if err := refuseUnstatedDraftPasses(d, spec); err != nil {
+		return err
 	}
 	k.speculating = true
 	for _, l := range k.plan.Layers {
@@ -117,6 +122,45 @@ func (k *Kernel) liftDraft(c *resolve.Coefficients, inferred func(price.PlannedL
 	}
 	k.draftLayerKV = lift(d.Layers)
 	k.draftContextKV = lift(d.Context)
+	return nil
+}
+
+// refuseUnstatedDraftPasses refuses a deployment that speculates through an autoregressive
+// drafter, named or the model graph's own, unless the engine states how its passes run:
+// FirstPassRows (how many rows the first pass processes) and PassRequests (for which requests the
+// head and the later passes run). Both are the engine's execution decisions, not facts of the
+// catalog graph: the same graph can be run with a first pass over one row per request or over
+// every token the target scheduled, and the cost model prices what it is told and does not guess
+// (SUB-6). The reason names neither an engine nor a method. A parallel-block drafter states its
+// target-wide work as its context stack and needs neither field. The words are checked against
+// the fixed list in enginesettings.
+//
+// This layer only requires the statement; the layer that prices the passes reads the values.
+func refuseUnstatedDraftPasses(d *price.DraftPlan, spec *enginesettings.Speculative) error {
+	if d.Drafting != model.DraftingAutoregressive {
+		return nil
+	}
+	who := "the model graph's own speculator"
+	if spec.DraftModel != "" {
+		who = "draft_model " + spec.DraftModel
+	}
+	for _, f := range []struct {
+		name, value string
+		words       []string
+	}{
+		{"FirstPassRows", spec.FirstPassRows, []string{enginesettings.FirstPassPerRequest, enginesettings.FirstPassScheduled}},
+		{"PassRequests", spec.PassRequests, []string{enginesettings.PassRequestsSampling, enginesettings.PassRequestsAll}},
+	} {
+		switch {
+		case f.value == "":
+			return fmt.Errorf("draft_passes_unstated: %s drafts autoregressively and the engine "+
+				"states no %s, so its first pass over the step's tokens would be priced by "+
+				"guess; the engine model must state it (%s)", who, f.name, strings.Join(f.words, " or "))
+		case !slices.Contains(f.words, f.value):
+			return fmt.Errorf("draft_passes_unknown: %s is %q for %s; it is %s", f.name, f.value,
+				who, strings.Join(f.words, " or "))
+		}
+	}
 	return nil
 }
 
