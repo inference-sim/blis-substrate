@@ -129,6 +129,11 @@ const (
 	// round-robin does"). In a prefill/decode deployment the policy takes the profile pair and a
 	// decider (reference-configs/round-robin-pd.yaml).
 	PolicyRoundRobin Policy = "round-robin"
+	// PolicyRandomPicker: no scorer, and the random picker shuffles the candidates uniformly with
+	// the runtime's random source and takes the first, ignoring scores. It keeps no state between
+	// requests, so successive picks are independent draws. BLIS's hosted router runs it: the
+	// picker is in the llm-d router fork BLIS pins (pkg/epp/framework/plugins/scheduling/picker/random).
+	PolicyRandomPicker Policy = "random-picker"
 	// PolicyLeastActiveRequests: the router's own count of in-flight requests per endpoint
 	// (inflight-load-producer), scored by active-request-scorer so the endpoint with the
 	// fewest scores highest, and the max-score picker; endpoints with equal counts are tied and the tie is
@@ -163,6 +168,8 @@ func Policies() []PolicyInfo {
 		{PolicyRoundRobin, "max-score-picker; no scorer; ties chosen at random, not rotated; prefill/decode form: prefill and decode profiles with always-disagg-pd-decider",
 			[]string{"pkg/epp/framework/plugins/scheduling/picker/maxscore/picker.go",
 				"pkg/epp/framework/plugins/scheduling/picker/common.go"}},
+		{PolicyRandomPicker, "random-picker; no scorer; prefill/decode form: prefill and decode profiles with always-disagg-pd-decider",
+			[]string{"pkg/epp/framework/plugins/scheduling/picker/random/picker.go"}},
 		{PolicyLeastActiveRequests, "inflight-load-producer; active-request-scorer; max-score-picker; ties chosen at random; prefill/decode form: prefill and decode profiles with always-disagg-pd-decider",
 			[]string{"pkg/epp/framework/plugins/scheduling/scorer/activerequest/active_request.go"}},
 		{PolicyDefault, "queue-scorer (2); kv-cache-utilization-scorer (2); prefix-cache-scorer (3); max-score-picker; no prefill/decode form",
