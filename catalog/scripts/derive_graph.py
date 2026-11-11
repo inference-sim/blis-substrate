@@ -200,6 +200,8 @@ ATTENTION_WEIGHT_ROLES = (
     "kda_q_proj", "kda_k_proj", "kda_v_proj", "kda_b_proj",
     "kda_f_a_proj", "kda_f_b_proj", "kda_g_a_proj", "kda_g_b_proj", "kda_g_proj",
     "kda_o_proj",
+    # Kimi-K3.1's DSA layer builds the output gate as a projection of its own.
+    "mla_g_proj",
 )
 
 
@@ -1390,6 +1392,10 @@ MLA_LAYOUTS = {
                              "fused_index_norm": True},
     "DeepseekV4ForCausalLM": {"fused_a": True, "fused_norm": True},
     "KimiK3ForConditionalGeneration": {"fused_a": True, "fused_norm": True},
+    # K3.1's DSA layers fold the indexer's key norm into its cache insert (see
+    # kimi_k31_dsa_attention), so its width joins the fused latent norm's.
+    "KimiK31ForConditionalGeneration": {"fused_a": True, "fused_norm": True,
+                                        "fused_index_norm": True},
     # kimi-k3's text_config names KimiLinearForCausalLM while the outer config names
     # KimiK3ForConditionalGeneration; both resolve to vllm.models.kimi_k3, so both map
     # here rather than relying on which view the lookup happens to read.
@@ -4069,6 +4075,73 @@ def handler_nemotron_h(cfg, raw, model):
     return [catalogue[n] for n in used], compress(list(vector))
 
 
+def kimi_k3_dsa_layers(cfg: dict[str, Any], raw: dict[str, Any], model: str,
+                       full_set: set[int], offset: int) -> set[int]:
+    """The layers (1-based, as vLLM's is_dsa_layer reads them) that run DSA, or the empty set.
+
+    Only Kimi-K3.1 has the path: KimiK3DSAAttention replaces a layer's latent attention where
+    `layer_idx + 1` is in dsa_config.dsa_layers (kimi_k3/nvidia/model.py:754-755 and
+    KimiLinearConfig.is_dsa_layer at vllm-project/vllm v0.34.0rc0). A v0.32.0 architecture that
+    carries a dsa_config would have it ignored, so it is refused. The indexer is built on every
+    DSA layer (index_topk_freq other than 1 raises in vLLM, dsa.py:602-608), its key norm is the
+    fused LayerNorm and insert only with no indexer RoPE, and DSA is a variant of the latent
+    layer, so a layer that is not latent cannot be one."""
+    dsa = cfg.get("dsa_config")
+    if not dsa:
+        return set()
+    arch = architecture_of(raw, model)
+    if arch != "KimiK31ForConditionalGeneration":
+        raise DeriveError(f"{model}: {arch} declares a dsa_config, which no vLLM path of that "
+                          f"architecture reads")
+    for key, want in (("index_topk_freq", 1), ("index_rope_dim", 0)):
+        if int(dsa.get(key, want)) != want:
+            raise DeriveError(f"{model}: dsa_config.{key} is {dsa.get(key)!r}; vLLM serves "
+                              f"{want} only (the fused indexer priced here)")
+    if dsa.get("index_k_norm_type") != "layernorm":
+        raise DeriveError(f"{model}: dsa_config.index_k_norm_type is "
+                          f"{dsa.get('index_k_norm_type')!r}; the priced indexer folds a "
+                          f"LayerNorm into its key insert")
+    layers = set(int(i) for i in dsa.get("dsa_layers") or ())
+    if not layers or not {i - 1 + offset for i in layers} <= full_set or 0 in layers:
+        raise DeriveError(f"{model}: dsa_layers {sorted(layers)} are not latent-attention "
+                          f"layers of full_attn_layers {sorted(full_set)}")
+    return layers
+
+
+def kimi_k31_dsa_attention(cfg: dict[str, Any], raw: dict[str, Any], model: str,
+                           hidden: int) -> list[dict[str, Any]]:
+    """The attention nodes of a Kimi-K3.1 DSA layer (KimiK3DSAAttention, dsa.py).
+
+    The latent projections are the dense layer's, with two differences. The output gate is a
+    column-parallel g_proj of its own (dsa.py:548-555) where the dense layer folds its rows
+    into the fused A-projection (KimiK3MergedQKVGateLinear); and a DSA layer's indexer scores
+    every cached token and selects index_topk of them, so the attention reads a bounded set.
+    The indexer is the deepseek_v32 one the GLM DSA graphs already price: wq_index from the
+    latent query rank, a merged unquantized wk and weights_proj from the hidden state
+    (dsa.py:150-166), and a LayerNorm key norm folded into the key insert (_fused_k_insert,
+    dsa.py:295-318), so it is no launch of its own and its width joins the latent norms'.
+
+    NOT PRICED: vLLM's fused forward (pack_projections, dsa.py:688-734) runs [q_a | kv_a | wk |
+    weights_proj] and [q_b | wq_index] as one GEMM each where this graph states them apart; the
+    weights and bytes are the same, and the graph states two launches more a layer than that
+    path makes. It applies on an unquantized, unoffloaded NoPE layer with an fp8_ds_mla cache."""
+    dsa = cfg["dsa_config"]
+    flat = dict(cfg, index_topk=int(dsa["index_topk"]),
+                index_n_heads=int(dsa["index_num_heads"]),
+                index_head_dim=int(dsa["index_head_dim"]))
+    nodes = attention_block(flat, model, hidden, raw=raw)
+    gate_rows = (int(require(flat, "num_q_heads", model)) * int(pick(flat, "v_head_dim"))
+                 if flat.get("mla_use_output_gate") else 0)
+    at = next(i for i, n in enumerate(nodes) if n.get("role") == "qkv_a_proj")
+    if gate_rows:
+        a = dict(nodes[at], n=nodes[at]["n"] - gate_rows)
+        gate = gemm("mla_g_proj", gate_rows, hidden)
+        if "weight_dtype" in a:
+            gate["weight_dtype"] = a["weight_dtype"]
+        nodes[at:at + 1] = [a, gate]
+    return lightning_indexer(flat, model, hidden, nodes, raw)
+
+
 def handler_kimi_k3(cfg, raw, model):
     """Kimi-K3: linear attention on most layers, latent attention on a declared list,
     and a dense MLP on the leading layers.
@@ -4159,30 +4232,33 @@ def handler_kimi_k3(cfg, raw, model):
         kda_mixer = [dict(n, weight_dtype=base)
                      if n.get("role") in ATTENTION_WEIGHT_ROLES else n
                      for n in kda_mixer]
-    kda = with_moe(kda_mixer)
-    mla = with_moe(attention_block(cfg, model, hidden, raw=raw))
-    kinds = [
-        {"id": "kda_moe", "nodes": kda, "edges": chain(kda)},
-        {"id": "mla_moe", "nodes": mla, "edges": chain(mla)},
-    ]
-    first_dense = int(cfg.get("first_k_dense_replace") or 0)
-    if first_dense:
-        kda_dense = with_dense(kda_mixer)
-        mla_dense = with_dense(attention_block(cfg, model, hidden, raw=raw))
-        kinds += [
-            {"id": "kda_dense", "nodes": kda_dense, "edges": chain(kda_dense)},
-            {"id": "mla_dense", "nodes": mla_dense, "edges": chain(mla_dense)},
-        ]
     full_set = set(int(i) for i in full)
     # The published list is 1-based against a 1-indexed layer numbering; a 0-based
     # reading would shift every attention layer by one. Detected rather than assumed:
     # a 0-based list would contain 0.
     offset = 1 if 0 not in full_set else 0
+    dsa_set = kimi_k3_dsa_layers(cfg, raw, model, full_set, offset)
+    latent = lambda: attention_block(cfg, model, hidden, raw=raw, indexed=False)
+    mixers = {"kda": lambda: kda_mixer, "mla": latent}
+    if dsa_set:
+        mixers["dsa"] = lambda: kimi_k31_dsa_attention(cfg, raw, model, hidden)
+    kinds = []
+    first_dense = int(cfg.get("first_k_dense_replace") or 0)
+    for mixer, nodes in mixers.items():
+        moe = with_moe(nodes())
+        kinds.append({"id": f"{mixer}_moe", "nodes": moe, "edges": chain(moe)})
+    for mixer, nodes in mixers.items() if first_dense else ():
+        dense = with_dense(nodes())
+        kinds.append({"id": f"{mixer}_dense", "nodes": dense, "edges": chain(dense)})
     # The mixer and the MLP vary independently: which layers are attention comes from
-    # the declared list, and which are dense from first_k_dense_replace.
+    # the declared list (and which of those are sparse from dsa_layers), and which are
+    # dense from first_k_dense_replace.
     sequence = []
     for i in range(layers):
-        mixer = "mla" if (i + offset) in full_set else "kda"
+        if (i + offset) not in full_set:
+            mixer = "kda"
+        else:
+            mixer = "dsa" if (i + 1) in dsa_set else "mla"
         sequence.append(f"{mixer}_dense" if i < first_dense else f"{mixer}_moe")
     # A kind no layer uses would be a node a reader has to account for and no step runs.
     kinds = [k for k in kinds if k["id"] in set(sequence)]
@@ -5107,6 +5183,9 @@ HANDLERS = {
     "NemotronHForCausalLM": handler_nemotron_h,
     "Qwen3_5MoeForConditionalGeneration": handler_qwen3_5_moe,
     "KimiK3ForConditionalGeneration": handler_kimi_k3,
+    # The same text decoder plus a DSA indexer on the latent layers (dsa_config); its
+    # architecture is routed to vllm.models.kimi_k3 in vLLM v0.34.0rc0 (registry.py:489-492).
+    "KimiK31ForConditionalGeneration": handler_kimi_k3,
     "Glm5NextForConditionalGeneration": handler_glm5_next,
     # Muse Spark's language model is the text decoder of a multimodal checkpoint; the
     # vision and audio towers are not priced (modality text_decoder_of_multimodal).
