@@ -424,6 +424,13 @@ name the target layers it reads is priced with the capture layers the engine tak
 target's own default, which the deriver records per drafter with the target whose depth it is.
 A model run with a drafter the catalog lacks is refused for that drafter, not priced without it.
 
+A listed drafter is also refused while the cost model cannot price what it runs. An autoregressive
+drafter named by a deployment (the EAGLE3 heads) runs its first pass over every token the target
+scheduled, and the cost model prices each pass at one row per request, so the kernel refuses the
+deployment, naming blis-schemas#60, instead of returning a price that leaves that pass out. A
+parallel-block drafter (DSpark) is priced: its context stack carries the work over the target's
+tokens.
+
 A graph names its own MTP speculator by family (`deepseek_mtp`, `minimax_m3_mtp`,
 `nemotron_h_mtp`), and a deployment states `method: mtp`: vLLM replaces every model-specific MTP
 name with `mtp` (`vllm/config/speculative.py`, v0.32.0). `derive_graph.vllm_speculative_method`

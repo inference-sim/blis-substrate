@@ -34,12 +34,41 @@ func draftModelName(e enginesettings.Settings) string {
 // draftKindPrefix keeps a drafter graph's layer kinds apart from the target's.
 const draftKindPrefix = "draft."
 
+// refuseUnpricedFirstDraftPass refuses a named drafter that drafts autoregressively. The first
+// of its passes runs the draft layers over every token the target scheduled that step, prefill
+// tokens included, because the drafter writes its own KV for each of them (vllm/v1/worker/gpu/
+// spec_decode/autoregressive/speculator.py, _prefill :453-478 at v0.31.0); only the later
+// passes run one row per request. priceDraft charges every autoregressive pass at one row per
+// request, and the speculator's context stack carries only the work a graph states there (the
+// EAGLE3 fc projection), so the price would leave that pass out and carry no marker saying
+// so: about twice the draft work in pure decode at one draft token, and the chunk length
+// during prefill. A missing pricing capability is a new-capability trigger (design 12.1), not
+// an entry the kernel already prices, so the drafter is refused here until the pass is
+// priced (blis-schemas#60 states the gap and the shapes that would state it).
+//
+// A parallel-block drafter (DSpark) is not refused: it runs one pass over its draft positions
+// and its context stack runs over the target's tokens. A speculator the target graph states
+// itself (MTP) is not a named drafter and is not refused here.
+func refuseUnpricedFirstDraftPass(draft *model.Graph) error {
+	sp := draft.Speculator
+	if sp == nil || sp.Drafting != model.DraftingAutoregressive {
+		return nil
+	}
+	return fmt.Errorf("draft_model %s drafts autoregressively (method %q): its first pass runs "+
+		"the draft layers over every token the target scheduled, and this cost model prices "+
+		"each pass at one row per request, so the price would omit that pass and say nothing; "+
+		"refused until the first pass is priced (blis-schemas#60)", draft.Name, sp.Method)
+}
+
 // withDrafter returns the target graph with the drafter graph's speculator as its own, or the
 // target unchanged when draft is nil. A target that already states a speculator, or a drafter
 // graph that states none, is refused: either would leave two answers to which drafter runs.
 func withDrafter(target, draft *model.Graph) (*model.Graph, error) {
 	if draft == nil {
 		return target, nil
+	}
+	if err := refuseUnpricedFirstDraftPass(draft); err != nil {
+		return nil, err
 	}
 	if target.Speculator != nil {
 		return nil, fmt.Errorf("the deployment names draft_model %s and the target graph %s "+
