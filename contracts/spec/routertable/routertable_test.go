@@ -133,6 +133,11 @@ func TestEachFailureModeIsRefused(t *testing.T) {
 		}, "name", "make its name"},
 		{"a citation repeated", func(e *Entry) { e.Evidence = append(e.Evidence, e.Evidence[2]) }, "evidence[3]", "repeats"},
 
+		{"random-picker cited at the round-robin file", func(e *Entry) {
+			e.Policy = PolicyRandomPicker
+			e.Bound.Ratios[0].Against = []string{"round-robin"}
+		}, "evidence", "defines the policy"},
+
 		// The differences (design 11.3: the substitution says how near the stand-in is).
 		{"a mapping with no differences", func(e *Entry) { e.Difference = nil }, "difference", "required"},
 		{"a difference with no aspect", func(e *Entry) { e.Difference[0].Aspect = "" }, "difference[0].aspect", "required"},
