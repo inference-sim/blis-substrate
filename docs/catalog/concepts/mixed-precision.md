@@ -32,7 +32,7 @@ module takes the algorithm of the first entry under its prefix (`:1754-1767`); a
 projection takes the algorithm of its shards, so the fused `qkv_proj` that also holds the
 indexer's two projections is decided by `q_proj`, `k_proj` and `v_proj` (`:1734-1752`,
 `:1769-1795`). A stated `--quantization` must equal the method the checkpoint resolves to,
-which is `modelopt_mixed` (`:1626-1632`).
+which is `modelopt_mixed` (`:1626-1632`); that resolution is vLLM's, made by the engine model.
 
 ## How the deriver places it
 
@@ -54,9 +54,12 @@ The graph is the MXFP8 graph of `minimax-m3-mxfp8` with the routed experts at NV
 shared expert as a node of its own at FP8 (the same split `minimax-m3.1-flash` uses). The
 global width is FP8 with the microscaling scale, the router FP32, the head BF16.
 
-The kernel accepts a stated `quantization: modelopt_mixed` as the checkpoint's own method for
-a graph with that layout and for no other (`mixedPrecisionLayout` in `kernel/quantization.go`);
-the [refusals page](../../kernel/reference/refusals.md) lists what is refused.
+The kernel does not recognise the spelling `modelopt_mixed`: it is vLLM's name, and the cost model
+resolves no engine's setting. The engine model resolves it, refuses what vLLM refuses, and states
+the layout it serves in `Settings.ServedWeights` (for this checkpoint: linear FP8 with one scale
+byte per 32 weights, routed experts NVFP4, router FP32, head BF16, embedding BF16). The kernel
+proves the graph stores exactly that, class by class (`checkServedWeights`); the
+[refusals page](../../kernel/reference/refusals.md) lists what is refused.
 
 ## Reproduce
 
@@ -79,10 +82,6 @@ check that the graph's priced weights and scale bytes equal it, layer by layer.
   their own in the registry: they are priced on the dense NVFP4 ramp, which the kernel records
   as an assumption (`gemm_eps_max_nvfp4_grouped`, method `assumed`), so a point priced from
   this graph carries that label. No coefficient was added for it.
-- The graph carries no declared quantization method. It cannot tell this checkpoint from
-  MiniMax-M3.1-Flash, which stores the same widths under `quant_method: mxfp8`, so the kernel
-  accepts `modelopt_mixed` and `mxfp8` for both and relies on vLLM refusing the wrong name at
-  startup.
 - No MiniMax-M3 checkpoint's safetensors index (bf16, MXFP8, NVFP4) holds a tensor above layer
   59 or named for an MTP module. The graphs state an in-graph speculator because the config
   does (`num_mtp_modules`); whether the engine loads MTP from these repositories is not shown.

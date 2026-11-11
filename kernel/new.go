@@ -271,6 +271,11 @@ func construct(in Inputs) (*Kernel, error) {
 		}
 		quantization = ""
 	}
+	// The layout the engine says it serves is shown against the target's own graph, before a
+	// drafter joins it: the drafter's layers are another checkpoint's.
+	if err := checkServedWeights(targetGraph, eng.ServedWeights); err != nil {
+		return nil, err
+	}
 	quantization, quantOverride, err := statedQuantization(targetGraph, quantization)
 	if err != nil {
 		return nil, err

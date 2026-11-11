@@ -162,6 +162,15 @@ The environment variables `VLLM_FLASHINFER_ALLREDUCE_BACKEND` and `VLLM_MARLIN_U
 `prefill_schedule_interval` and `disable_hybrid_kv_cache_manager` are the engine model's, not
 the kernel's.
 
+## The weight layout the engine says it serves
+
+`Settings.ServedWeights` states, class by class (linear, linear scale, routed experts, router,
+head, embedding), the dtype the engine serves the checkpoint in. The kernel proves the target
+graph stores exactly that and refuses a difference as `served_weights_mismatch`, naming each class
+with both values. A class the graph does not contain is empty, so a graph with its router, head or
+embedding removed cannot match, and a class at another dtype cannot either. The engine model
+resolves its own quantization setting and passes the result.
+
 ## A stated quantization the checkpoint does not declare
 
 vLLM v0.32.0 requires a stated `--quantization` to equal the method the checkpoint declares,
@@ -183,19 +192,11 @@ declared method:
   everything else unquantized. vLLM resolves `mxfp4` to `gpt_oss_mxfp4` for that checkpoint,
   and the kernel records that as an override. Either on any other graph is refused: vLLM
   refuses the mismatch with the declared method or quantizes online.
-- `modelopt_mixed`, when the graph is MiniMax-M3 with MXFP8 linears and NVFP4 routed experts:
-  the FP8 global width with the microscaling scale, every routed-expert node at NVFP4 (and at
-  least one), the router FP32, every other weight node at the global width, and the head
-  BF16. That is what the catalog deriver places from the checkpoint's `quantized_layers` map
-  (`minimax-m3-nvfp4`). vLLM resolves a MIXED_PRECISION checkpoint to `modelopt_mixed`
-  (`ModelOptMixedPrecisionConfig.override_quantization_method`, `modelopt.py:1626-1632`), so the
-  stated value is the checkpoint's own. On any other graph it is refused: a graph with no NVFP4
-  experts (bf16 or MXFP8 alone), another architecture, or any node at another width does not
-  place a MIXED_PRECISION layout, and the checkpoint's per-layer algorithms are not known.
-  The graph carries no declared method, so it cannot tell this checkpoint from
-  MiniMax-M3.1-Flash, whose `quant_method` is `mxfp8` over the same widths: the kernel accepts
-  `modelopt_mixed` for both graphs and `mxfp8` for both, and vLLM refuses the name that is not
-  the checkpoint's own at startup, so no run states it.
+- `modelopt_mixed` is refused on every graph. It is vLLM's name for a ModelOpt MIXED_PRECISION
+  checkpoint, whether a stated name is the checkpoint's own is that engine's to decide, and the
+  cost model recognises no engine's spelling. The engine model resolves the setting and states
+  the layout it serves in `Settings.ServedWeights`, which the kernel proves against the graph
+  (the section above).
 
 ## A coefficient is missing
 

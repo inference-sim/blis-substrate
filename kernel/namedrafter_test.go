@@ -25,7 +25,8 @@ func withNamedDrafter(t *testing.T, d *load.Data, target, drafter, chip, method 
 	}
 	in.Draft = dr
 	return withEngine(in, func(e *enginesettings.Settings) {
-		e.Speculative = &enginesettings.Speculative{Method: method, NumSpecTokens: n, DraftModel: drafter}
+		e.Speculative = &enginesettings.Speculative{Method: method, NumSpecTokens: n, DraftModel: drafter,
+			FirstPassRows: enginesettings.FirstPassScheduled, PassRequests: enginesettings.PassRequestsAll}
 	})
 }
 
@@ -73,7 +74,8 @@ func TestANamedDrafterPricesInPlaceOfTheTargetsOwnSpeculator(t *testing.T) {
 				own := in
 				own.Draft = nil
 				own = withEngine(own, func(e *enginesettings.Settings) {
-					e.Speculative = &enginesettings.Speculative{Method: "mtp", NumSpecTokens: 3}
+					e.Speculative = &enginesettings.Speculative{Method: "mtp", NumSpecTokens: 3,
+						FirstPassRows: enginesettings.FirstPassScheduled, PassRequests: enginesettings.PassRequestsAll}
 				})
 				if pricesOf(mustKernel(t, own)) == pricesOf(k) {
 					t.Error("a named EAGLE3 drafter prices exactly as the target's own MTP")
@@ -97,7 +99,8 @@ func TestWithNoNamedDrafterTheTargetsOwnSpeculatorIsStillPriced(t *testing.T) {
 	}
 	in := quantCase(t, d, "minimax-m3-mxfp8", "b200")
 	in = withEngine(in, func(e *enginesettings.Settings) {
-		e.Speculative = &enginesettings.Speculative{Method: "mtp", NumSpecTokens: 1}
+		e.Speculative = &enginesettings.Speculative{Method: "mtp", NumSpecTokens: 1,
+			FirstPassRows: enginesettings.FirstPassScheduled, PassRequests: enginesettings.PassRequestsAll}
 	})
 	k := mustKernel(t, in)
 	if k.plan.Draft == nil || k.plan.Draft.Method != "minimax_m3_mtp" || !k.speculating {
@@ -235,9 +238,9 @@ func TestEveryCatalogDrafterGraftsOntoEachTargetItNames(t *testing.T) {
 	}
 }
 
-// The NVFP4 checkpoint InferenceX serves with an EAGLE3 head states quantization modelopt_mixed
-// and names the head: both must hold together, with the head priced in place of the in-graph MTP
-// at the checkpoint's own layout.
+// The NVFP4 checkpoint InferenceX serves with an EAGLE3 head is served in the mixed layout the
+// engine model states, and names the head: both must hold together, with the head priced in
+// place of the in-graph MTP at the checkpoint's own layout.
 func TestTheMixedPrecisionTargetPricesWithEitherEagle3HeadAndItsOwnQuantization(t *testing.T) {
 	d, err := load.Embedded()
 	if err != nil {
@@ -246,13 +249,13 @@ func TestTheMixedPrecisionTargetPricesWithEitherEagle3HeadAndItsOwnQuantization(
 	for _, drafter := range []string{"minimax-m3-eagle3", "minimax-m3-eagle3-gqa"} {
 		for _, chip := range []string{"b200", "b300"} {
 			in := withNamedDrafter(t, d, "minimax-m3-nvfp4", drafter, chip, "eagle3", 3)
-			stated := withQuant(in, "modelopt_mixed")
+			stated := withEngine(in, func(e *enginesettings.Settings) { e.ServedWeights = &mixedPrecisionServed })
 			k := mustKernel(t, stated)
 			if k.plan.Draft == nil || k.plan.Draft.Method != "eagle3" || !k.speculating {
 				t.Fatalf("%s on %s: the named head is not the priced speculator", drafter, chip)
 			}
 			if got, want := pricesOf(k), pricesOf(mustKernel(t, in)); got != want {
-				t.Errorf("%s on %s: a stated modelopt_mixed moves the price", drafter, chip)
+				t.Errorf("%s on %s: a stated served layout moves the price", drafter, chip)
 			}
 			// The same head on the MXFP8 target prices differently: the experts are the NVFP4 ones.
 			if pricesOf(k) == pricesOf(mustKernel(t, withNamedDrafter(t, d, "minimax-m3-mxfp8", drafter, chip, "eagle3", 3))) {

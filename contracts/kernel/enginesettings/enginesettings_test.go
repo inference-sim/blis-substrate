@@ -106,3 +106,13 @@ func TestCloneCopiesTheKernelFacingSettings(t *testing.T) {
 		t.Errorf("editing the original's replay sizes changed its clone: %v", c.DecoderReplayCUDAGraphCaptureSizes)
 	}
 }
+
+// The served layout is a pointer: editing it after the settings are cloned leaves the clone alone.
+func TestCloneCopiesTheServedWeights(t *testing.T) {
+	orig := Settings{ServedWeights: &ServedWeights{Linear: "fp8", Router: "fp32"}}
+	c := orig.Clone()
+	orig.ServedWeights.Linear = "bf16"
+	if c.ServedWeights.Linear != "fp8" {
+		t.Errorf("editing the original changed its clone: %+v", *c.ServedWeights)
+	}
+}
