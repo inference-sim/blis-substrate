@@ -83,9 +83,13 @@ func keyLaneEntries(in Inputs, target []coefficient.KernelImpl) Inputs {
 	return in
 }
 
-// withRunning reports the implementations the pool runs; none leaves the field unset.
+// withRunning reports the implementations the pool runs for the prefill attention the lane
+// prices; none leaves the field unset.
 func withRunning(in Inputs, impls ...plan.KernelImpl) Inputs {
-	in.Implementations = impls
+	in.Implementations = nil
+	if len(impls) > 0 {
+		in.Implementations = map[plan.Primitive][]plan.KernelImpl{plan.PrimAttentionPrefill: impls}
+	}
 	return in
 }
 
