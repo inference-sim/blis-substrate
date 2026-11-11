@@ -96,9 +96,24 @@ value from a coefficient measured on that kernel or refuses it with the measurem
 engine's own default is not a choice: `linear_backend` `auto`, `attention_config.backend`
 `auto`, decoder replay on, no custom ops and no replay capture sizes price as unstated.
 
-A stated `attention_config.use_trtllm_attention` is refused too, until its kernel is measured.
+`attention_config.use_trtllm_attention` is the one setting with a priced value, and what is
+priced is the kernel the engine runs, not the flag. FlashInfer's prefill runs the trtllm-gen
+kernel when the setting is true, when a stated block size is 128 or more, and, left unset, when
+the KV cache dtype is `auto` (`vllm/utils/flashinfer.py:697-789`,
+`vllm/v1/attention/backends/flashinfer.py:1429-1433` at v0.32.0). On b200, b300, gb200-nvl72 and
+gb300 the kernel then prices the non-latent layers' prefill on the
+[pair measured on that kernel](../../registry/reference/sets/cost-model-attention.md), the
+`attention_prefill_*_trtllm_gen_kv_bf16` pair at an `auto`, bf16 or fp16 cache and the `_kv_fp8`
+pair at an fp8 cache; an unstated setting with an fp8 cache and no block size runs the native
+kernel and keeps the part's pooled pair. A stated true is refused on a chip or cache dtype with no
+pair. It changes nothing where vLLM ignores it: latent (MLA) attention never reads it, and
+decode-context parallelism returns False for the prefill. Decode is unchanged, because v0.32.0
+decodes with that kernel already. A stated `false` is refused for a model with a non-latent layer
+(no row of the registry's sources times FlashInfer's native attention at the engine's pin).
+An unstated block size is the engine's and is not read, so an unstated deployment is on the lane
+only through its cache dtype.
 
-Every stated value of the settings below is refused. The middle column is the measurement
+Every other stated value of the settings below is refused. The middle column is the measurement
 that would price it, and the right-hand column the open issue that tracks it. The page and the
 code agree, setting by setting and issue by issue (`TestRefusalsPageListsTheUnpricedSettings`).
 

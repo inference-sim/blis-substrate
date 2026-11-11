@@ -42,7 +42,7 @@ sets, and how a cost model combines them is described under
 | `rate_basis` | string | no | What a `bytes_per_us` rate measures: `memory` (the default) or `work`. A memory rate cannot exceed the chip's datasheet memory bandwidth (SUB-5). A `work` rate counts bytes of work, such as a record counted once per query and key pair, and may exceed it; it requires a `rationale`. One of the [rate bases](vocabularies.md#rate-bases). |
 | `kernel_impls` | list | no | The kernel implementations the value is valid for ([below](#kernel_impls)). A lookup matches the entry only for one of them. Not allowed on `transferred`, `assumed` or `not_charged`. |
 | `measures` | mapping | no | What the number includes ([below](#measures)). Only on `measured` and `calibrated`. |
-| `fit_range` | list | no | The range of inputs the fit's data covered ([below](#fit_range)). Only on `measured` and `calibrated`. A price that reads the entry outside it is extrapolated and ranks with `transferred`. |
+| `fit_range` | list | no | The range of inputs the fit's data covered ([below](#fit_range)). Only on `measured`, `calibrated` and `transferred` (the rows a transferred value came from). A price that reads the entry outside it is extrapolated and ranks with `transferred`. |
 | `ci95` | `[low, high]` | no | 95% confidence interval. Must contain `value`. |
 | `sources` | list | depends on `method` | Citations, below. If present, not empty. |
 | `rationale` | string | depends on `method` | The reasoning behind a value that was not measured. |
