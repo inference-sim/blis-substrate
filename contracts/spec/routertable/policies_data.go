@@ -61,6 +61,12 @@ func roundRobinConfig() PolicyConfig {
 	return PolicyConfig{Plugins: plugins, Profiles: profiles, Evidence: commonEvidence("max-score-picker")}
 }
 
+func randomPickerConfig() PolicyConfig {
+	plugins, profiles := handlerAndFilters("random-picker")
+	plugins = append(plugins, Plugin{Type: "random-picker"})
+	return PolicyConfig{Plugins: plugins, Profiles: profiles, Evidence: commonEvidence("random-picker")}
+}
+
 func leastActiveConfig() PolicyConfig {
 	plugins, profiles := handlerAndFilters("max-score-picker",
 		ProfileRef{Plugin: "active-request-scorer", Weight: f(1), WeightOrigin: OriginSource})

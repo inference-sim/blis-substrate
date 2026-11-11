@@ -143,7 +143,7 @@ var KnownPlugins = map[string]PluginSpec{
 // ClosedPolicies are the policies the table offers, stated apart from Policies() so that a
 // policy dropped from Policies() is a failure of CheckPolicies and not a silent shrinking of
 // the list the consumers iterate. Adding a policy is a change here and in Policies().
-var ClosedPolicies = []Policy{PolicyRoundRobin, PolicyLeastActiveRequests, PolicyDefault}
+var ClosedPolicies = []Policy{PolicyRoundRobin, PolicyRandomPicker, PolicyLeastActiveRequests, PolicyDefault}
 
 // Profile names of a prefill/decode deployment.
 const (

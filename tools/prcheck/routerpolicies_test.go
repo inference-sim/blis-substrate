@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"testing"
+
+	"github.com/inference-sim/blis-substrate/contracts/spec/routertable"
 )
 
 // The dashboard reads this output, so its shape is pinned: the closed list, and for each policy
@@ -33,8 +35,8 @@ func TestRouterPoliciesPublishesTheCheckedConfigurations(t *testing.T) {
 	if err := json.Unmarshal(out.Bytes(), &got); err != nil {
 		t.Fatal(err)
 	}
-	if len(got.Closed) != 3 || len(got.Policies) != 3 {
-		t.Fatalf("want the three closed policies, got %v / %d", got.Closed, len(got.Policies))
+	if len(got.Closed) != len(routertable.ClosedPolicies) || len(got.Policies) != len(routertable.ClosedPolicies) {
+		t.Fatalf("want one configuration per closed policy %v, got %v / %d", routertable.ClosedPolicies, got.Closed, len(got.Policies))
 	}
 	for _, p := range got.Policies {
 		if len(p.Config.Plugins) == 0 || len(p.Config.Profiles) != 2 || len(p.Config.Evidence) == 0 {
