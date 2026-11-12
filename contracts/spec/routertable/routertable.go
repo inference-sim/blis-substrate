@@ -119,13 +119,10 @@ const (
 type Policy string
 
 const (
-	// PolicyRoundRobin: no scorer, so every endpoint scores alike, and the max-score picker
-	// rotates through the endpoints with a counter. The counter is one per runtime and is drawn
-	// at every pick of every profile (picker.RandFor, NextCounter), not once per request: a
-	// configuration whose request runs two profiles that each pick, such as a prefill and a decode
-	// profile, draws two, and a pool of even size then sees only every other endpoint. The policy
-	// is strict round-robin over the endpoints, listed in ID order in BLIS's hosted router, for a
-	// configuration with one pick per request.
+	// PolicyRoundRobin: no scorer, so every endpoint scores alike and the max-score picker
+	// chooses among the tied endpoints. How it chooses (a counter, an order the scheduler gives the
+	// candidates) is behaviour of a release of the router, not of this name: the catalog entries
+	// that map a router to the policy state it and cite the router tree they read it from.
 	PolicyRoundRobin Policy = "round-robin"
 	// PolicyRandomPicker: no scorer, and the random picker shuffles the candidates uniformly with
 	// the runtime's random source and takes the first, ignoring scores. It keeps no state between
@@ -134,7 +131,7 @@ const (
 	PolicyRandomPicker Policy = "random-picker"
 	// PolicyLeastActiveRequests: the router's own count of in-flight requests per endpoint
 	// (inflight-load-producer), scored by active-request-scorer so the endpoint with the
-	// fewest scores highest, and the max-score picker; ties are rotated, not drawn at random.
+	// fewest scores highest, and the max-score picker; how it breaks a tie is as for round-robin.
 	PolicyLeastActiveRequests Policy = "least-active-requests"
 	// PolicyDefault: the router's built-in configuration when none is given: queue-scorer
 	// (weight 2), kv-cache-utilization-scorer (2) and prefix-cache-scorer (3).
