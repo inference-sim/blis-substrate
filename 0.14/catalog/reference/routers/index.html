@@ -1,0 +1,5951 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The engine-independent foundation of BLIS: the contracts every BLIS repository implements or calls, the catalog of published hardware and model facts, the registry of fitted coefficients, and the cost model that prices each engine step.">
+      
+      
+      
+        <link rel="canonical" href="https://inference-sim.github.io/blis-substrate/latest/catalog/reference/routers/">
+      
+      
+        <link rel="prev" href="../workloads/">
+      
+      
+        <link rel="next" href="../storage/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Router table - blis-substrate</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,300i,400,400i,700,700i%7CIBM+Plex+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"IBM Plex Sans";--md-code-font:"IBM Plex Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#router-table" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+          <aside class="md-banner md-banner--warning">
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  These pages describe a version of blis-substrate other than the newest release.
+  <a href="../../../.."><strong>Go to the latest release.</strong></a>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),base=new URL("../../.."),outdated=__md_get("__outdated",sessionStorage,base);!0===outdated&&el&&(el.hidden=!1)</script>
+          </aside>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="blis-substrate" class="md-header__button md-logo" aria-label="blis-substrate" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            blis-substrate
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Router table
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/inference-sim/blis-substrate" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    inference-sim/blis-substrate
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../contracts/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Contracts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Catalog
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../registry/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Registry
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../kernel/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Cost model
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../contributing/changes/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="blis-substrate" class="md-nav__button md-logo" aria-label="blis-substrate" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    blis-substrate
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/inference-sim/blis-substrate" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    inference-sim/blis-substrate
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../contracts/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contracts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../contracts/concepts/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/concepts/repositories/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The BLIS repositories
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/concepts/documents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/concepts/validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/concepts/contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../contracts/guides/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/guides/checkouts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validate the catalog and the registry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/guides/authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Write a scenario and a deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/guides/go/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validate documents from Go
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/guides/router-sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Measure how far the router policy moves a figure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../contracts/reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/scenario/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/workload/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workload
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/trace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/hardware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/coefficients/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coefficient set
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/acceptance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Acceptance profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Routing profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/connectors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connector registry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation run
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/measurement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Measured run
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/result/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Result
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metric registry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/point-record/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Point record
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/schemas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON Schemas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/fields/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/router-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/kernel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engine interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/embed/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router contract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/vocabularies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabularies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engine rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command line
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../contracts/design/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design notes
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/design/model-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why a model is a graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/design/kernel-boundary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Where the kernel stops
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/design/layouts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallel layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../contracts/contributing/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Catalog
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Catalog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../using/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_2" id="__nav_3_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Using
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../using/point-blis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Point BLIS at the catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../using/releases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releases and pinning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../using/candidate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Experiment with a candidate catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../contributing/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/add-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/add-hardware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a chip, fabric or storage tier
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/add-workload/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a workload
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/checks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Checks and CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../concepts/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/repositories/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The catalog in BLIS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/declared-facts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Declared, learned, chosen
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/model-graphs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model graphs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/mixed-precision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixed-precision checkpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_5" id="__nav_3_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    File formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hardware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chips
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../networks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fabrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../workloads/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workloads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Entries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dynamo-kv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dynamo-kv
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dynamo-random" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dynamo-random
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dynamo-round-robin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dynamo-round-robin
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-policies-llm-ds-router-offers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The policies llm-d's router offers
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage tiers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../registry/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registry
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Registry
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../registry/using/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Using
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/using/releases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releases and pinning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../registry/concepts/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/concepts/coefficients/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coefficients
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/concepts/evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Where the numbers come from
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../registry/reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_5" id="__nav_4_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_5_2" id="__nav_4_5_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coefficient sets
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Coefficient sets
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-primitives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-primitives
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-collectives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-collectives
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-collectives-inferencex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-collectives-inferencex
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-fabric/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-fabric
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-offload-tiers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-offload-tiers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-attention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-attention
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-recurrent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-recurrent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-host-overheads/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-host-overheads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/acceptance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Acceptance profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/method-error/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Typical error of each method
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/format/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    File format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../registry/research/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Methodology
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Methodology
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/methodology/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Methodology
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/fitting-principles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fitting principles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reproducing-coefficients/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reproducing the coefficients
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/band-selection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choosing the overlap band
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../kernel/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cost model
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Cost model
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../kernel/concepts/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/repositories/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The kernel in BLIS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/step/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pricing a step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/parallelism/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/switch-groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Switch groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/admission-split/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The admission queue
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/hopper-dense-mxfp8-ramp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Hopper dense MXFP8 ramp
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Refuse, assume, override
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../kernel/guides/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/guides/go/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Price a batch from Go
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/guides/simulator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the kernel from a simulator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/guides/inputs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenarios and their inputs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../kernel/reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/reference/provenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provenance, Evidence, Resolved
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/reference/refusals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What New refuses
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/reference/divergences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known divergences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/reference/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/reference/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources of truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../kernel/research/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Research
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Research
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/research/accuracy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accuracy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/research/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How the laws are tested
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/changes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changes across repositories
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/documentation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Documentation and releases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/contributing/releasing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releasing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Entries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dynamo-kv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dynamo-kv
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dynamo-random" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dynamo-random
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dynamo-round-robin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dynamo-round-robin
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-policies-llm-ds-router-offers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The policies llm-d's router offers
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                <div class="section-catalog">
+    
+                  
+
+
+  
+    <a href="https://github.com/inference-sim/blis-substrate/edit/main/docs/catalog/reference/routers.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="router-table">Router table<a class="headerlink" href="#router-table" title="Permanent link">&para;</a></h1>
+<p>3 router modes BLIS does not host, each mapped to the policy of llm-d's router that stands closest to it, in <a href="https://github.com/inference-sim/blis-substrate/tree/v0.14.0/catalog/routers"><code>routers/</code></a>.</p>
+<p>BLIS hosts one router, llm-d's, and never simulates another (X4). A benchmark run measured behind another router, such as Dynamo's, is scored by simulating the llm-d policy this table names, and the point says so: it names the router the run used, the policy BLIS used and the evidence below, and it is never graded G1 and never presented as if llm-d had routed the run (point-record kind <code>router_differs</code>). This is design §11.3 and §11.4. A router mode with no entry, or an entry whose policy is <code>none</code>, stays not scored (<code>router_unsupported</code>). An entry whose policy is <code>none</code> records that the mode was examined and no policy is close enough, and says why and what would change that.</p>
+<p>An entry whose policy is not <code>none</code> also states each way the mode and the policy differ, each citing the code that shows it, and a measured bound: the largest ratio between the policy and its alternatives for each figure, with the regime it was measured in (workload kind, concurrency range, model, hardware, pool shapes), the evidence file by hash, and what the bound does not cover. The bound is a sensitivity of BLIS's own prediction to the choice of policy. It is not an error against the router's real behaviour, which no run measured. A point scored with the entry copies the differences and the bound, so a reader can decide, figure by figure, whether the substitution is small enough. How the ratios are measured is in the <a href="../../../contracts/guides/router-sensitivity/">router sensitivity guide</a>.</p>
+<p>An entry is added only with evidence: for each field it states, a citation of the router's own code or documentation at a pinned commit, and a citation of llm-d's router code that the policy rests on. A mapping is bound to the builds of the router the entry lists (<code>revisions</code>): a run on another build of the same router and mode has no mapping and stays <code>router_unsupported</code>. The table is keyed by the router, its mode and its session-affinity setting, not by the framework's label, because a router's behaviour is set by its mode. An entry's file is named for its key, <code>&lt;router&gt;-&lt;mode&gt;</code>, with <code>-affinity-&lt;seconds&gt;</code> when the setting is set, so one key cannot be stated twice. Design §11.4 keys it the same way: by the mode and session-affinity setting a run used.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Entry</th>
+<th style="text-align: left;">Router</th>
+<th style="text-align: left;">Mode</th>
+<th style="text-align: right;">Affinity TTL (s)</th>
+<th style="text-align: left;">llm-d policy</th>
+<th style="text-align: right;">Citations (router / llm-d)</th>
+<th style="text-align: right;">Largest ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>dynamo-kv</code></td>
+<td style="text-align: left;">dynamo</td>
+<td style="text-align: left;">kv</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: left;"><code>none</code></td>
+<td style="text-align: right;">4 / 1</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>dynamo-random</code></td>
+<td style="text-align: left;">dynamo</td>
+<td style="text-align: left;">random</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: left;"><code>random-picker</code></td>
+<td style="text-align: right;">4 / 2</td>
+<td style="text-align: right;">1.70</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>dynamo-round-robin</code></td>
+<td style="text-align: left;">dynamo</td>
+<td style="text-align: left;">round-robin</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: left;"><code>round-robin</code></td>
+<td style="text-align: right;">5 / 6</td>
+<td style="text-align: right;">1.65</td>
+</tr>
+</tbody>
+</table>
+<h2 id="entries">Entries<a class="headerlink" href="#entries" title="Permanent link">&para;</a></h2>
+<h3 id="dynamo-kv"><code>dynamo-kv</code><a class="headerlink" href="#dynamo-kv" title="Permanent link">&para;</a></h3>
+<p>Dynamo's kv mode scores each worker by a cost, overlap_score_weight times the blocks of the prompt the worker has not cached plus the decode blocks the router tracks as active on it, with weight 1.0 and temperature 0 by default, so the lowest cost wins and a tie goes to the smaller prefix tree. Both terms are the router's own accounting, fed by the workers' <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> events, and the router can hold a request in a queue of its own when the workers are busy (router_queue_threshold). No policy in the closed list does this. least-active-requests reads the router's own in-flight counts but has no prefix term. default adds a prefix term but weighs queue depth and <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr>-cache utilisation, which llm-d's router reads from its endpoints' metrics, as normalised scores summed with weights 2, 2 and 3, and takes the maximum; Dynamo's cost is in unnormalised block units with the two terms equally weighted per block. The sweep behind the other entries shows the policies that read load differ from each other by up to 1.70 (balanced) and 1.79 (decode-bound) in median time to first token at 64 to 256 clients, default against least-active-requests, so the choice among them is not a rounding. It has no prefix shared between requests, which is the term this mode exists for, so no bound on a stand-in for it can be measured with it. The mode stays unsupported until a composition that carries both terms is hosted and measured on a workload with shared prefixes. A run with session affinity configured is a different key and has no entry.</p>
+<p><strong>The router</strong></p>
+<ul>
+<li><a href="https://github.com/ai-dynamo/dynamo/blob/1682167d3c97f0fc8cd405dee51f17288eeaeb55/components/src/dynamo/common/configuration/groups/router_args.py#L77-L84">ai-dynamo/dynamo@1682167d3c97:components/src/dynamo/common/configuration/groups/router_args.py:77-84</a>, for the mode: The frontend's router-mode argument accepts kv among its choices, so a recipe can run it.</li>
+<li><a href="https://github.com/ai-dynamo/dynamo/blob/1682167d3c97f0fc8cd405dee51f17288eeaeb55/lib/kv-router/src/scheduling/selector.rs#L136-L143">ai-dynamo/dynamo@1682167d3c97:lib/kv-router/src/scheduling/selector.rs:136-143</a>, for the policy: The cost of a worker is overlap_score_weight times its uncached prefill blocks plus its decode blocks, in block units, unnormalised.</li>
+<li><a href="https://github.com/ai-dynamo/dynamo/blob/1682167d3c97f0fc8cd405dee51f17288eeaeb55/lib/kv-router/src/scheduling/selector.rs#L271-L311">ai-dynamo/dynamo@1682167d3c97:lib/kv-router/src/scheduling/selector.rs:271-311</a>, for the policy: At temperature 0 the lowest cost wins and a tie goes to the worker with the smaller prefix tree; at a positive temperature a worker is sampled by softmax.</li>
+<li><a href="https://github.com/ai-dynamo/dynamo/blob/1682167d3c97f0fc8cd405dee51f17288eeaeb55/lib/kv-router/src/scheduling/config.rs#L284-L312">ai-dynamo/dynamo@1682167d3c97:lib/kv-router/src/scheduling/config.rs:284-312</a>, for the policy: The defaults are overlap weight 1.0, temperature 0, router-tracked active blocks, router-tracked prefill tokens and a router queue threshold of 4.0.</li>
+</ul>
+<p><strong>llm-d's router</strong></p>
+<ul>
+<li><a href="https://github.com/inference-sim/llm-d-router/blob/b1ab0ff7c0b84090e40b874f8873e78f2ae6897c/pkg/epp/config/loader/defaults.go#L49-L90">inference-sim/llm-d-router@b1ab0ff7c0b8:pkg/epp/config/loader/defaults.go:49-90</a>, for the policy: The default configuration sums three scorers, queue depth (weight 2), <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr>-cache utilisation (2) and prefix cache (3), in one profile with the max-score picker; no scorer there reads the router's own cost of blocks.</li>
+</ul>
+<h3 id="dynamo-random"><code>dynamo-random</code><a class="headerlink" href="#dynamo-random" title="Permanent link">&para;</a></h3>
+<p>Dynamo's random mode and llm-d's random picker do the same thing: for each request, draw a uniform random index over the available workers, with no state between requests and no reading of load. Neither keeps a counter. llm-d's round-robin policy also picks at random among tied endpoints, so the two llm-d policies choose alike; Dynamo's random mode has no dependence on the order of the worker list. The remaining differences are the source of the randomness and the pools each draw serves, below. How far the choice of policy moves BLIS's figures is the bound; the first group of ratios is against round-robin, the other policy that ignores load, and the second against the policies that read load.</p>
+<p><strong>Differences</strong></p>
+<ul>
+<li>draw: Dynamo draws a random 64-bit value from the thread's generator for each request and takes it modulo the number of available instances (push_router.rs 379-392). llm-d's picker shuffles the candidates with the hosted runtime's random source and takes the first (random/picker.go 94-97, common.go 98-104). Both are uniform over the workers and independent between requests. BLIS's source is seeded from the run's seed, so a run is reproducible and is one draw of the sequence; Dynamo's is not seeded, and two runs of it differ in the sequence even on one arrival pattern. (citations 2, 4, 5)</li>
+<li>pools: Each pool draws on its own in both: Dynamo's prefill and decode routers are separate objects (random keeps no counter to share), and llm-d's random picker draws once for each pick of each profile. No shared state couples the prefill and decode picks. (citations 2, 4)</li>
+<li>frontends: Several frontends do not change the mode: independent uniform draws merged are still uniform, so Dynamo's mode is the same however many frontends a deployment runs. Nothing here differs on that account. (citations 2)</li>
+<li>load-blind: Neither reads load, so neither reacts to a worker that falls behind. A policy that does (least-active-requests, default, queue-scorer) is not this mode; the second group of ratios in the bound is what a wrong guess of the mode would cost. (citations 2, 4)</li>
+</ul>
+<p><strong>Bound</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Figure</th>
+<th style="text-align: left;">Against</th>
+<th style="text-align: left;">Regime</th>
+<th style="text-align: right;">Largest ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>ttft_p50_ms</code></td>
+<td style="text-align: left;"><code>round-robin</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.07</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p99_ms</code></td>
+<td style="text-align: left;"><code>round-robin</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.11</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tpot_p50_ms</code></td>
+<td style="text-align: left;"><code>round-robin</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.01</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>output_tok_s</code></td>
+<td style="text-align: left;"><code>round-robin</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.01</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p50_ms</code></td>
+<td style="text-align: left;"><code>round-robin</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.13</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p99_ms</code></td>
+<td style="text-align: left;"><code>round-robin</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.19</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tpot_p50_ms</code></td>
+<td style="text-align: left;"><code>round-robin</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.01</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>output_tok_s</code></td>
+<td style="text-align: left;"><code>round-robin</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.04</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p50_ms</code></td>
+<td style="text-align: left;"><code>round-robin</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.09</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p99_ms</code></td>
+<td style="text-align: left;"><code>round-robin</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.10</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tpot_p50_ms</code></td>
+<td style="text-align: left;"><code>round-robin</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.01</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>output_tok_s</code></td>
+<td style="text-align: left;"><code>round-robin</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.01</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p50_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.63</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p99_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.11</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tpot_p50_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.09</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>output_tok_s</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.12</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p50_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.22</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p99_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.70</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tpot_p50_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.04</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>output_tok_s</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.18</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p50_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.51</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p99_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.38</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tpot_p50_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.07</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>output_tok_s</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.07</td>
+</tr>
+</tbody>
+</table>
+<p>Measured by <code>registry/docs/router-sensitivity/runs.csv</code> (sha256 <code>f54dad99e89c657fb03e9484c2699303754bb2e2750dbffcaf9c670ae8cd1ec2</code>), produced by inference-sim/inference-sim at <code>780f661ef9c18a2a9928acf8a63a67667cd597c0</code>; reproduce with <code>python3 -I registry/docs/router-sensitivity/sweep.py --blis &lt;blis built from the commit&gt; --work &lt;scratch directory&gt; --out runs.csv</code>.</p>
+<p>Not measured:</p>
+<ul>
+<li>One model (minimax-m2.5) on one part (gb200-nvl72) over <abbr title="NVIDIA's inference transfer library, used to move KV caches between engines">NIXL</abbr> on ib-400g, served by vLLM 0.32.0. Another model or part moves where the pools saturate, and with it where the large ratios sit.</li>
+<li>Closed-loop clients with fixed prompt and output lengths. No run had a prefix shared between requests, a session of several turns, a spread of lengths, or an open-loop arrival rate.</li>
+<li>Concurrency 16, 64, 256 and 1024 only, and the pool shapes 1P3D, 2P3D, 3P2D and 4P1D only, with one-GPU prefill instances and four-GPU decode instances (tensor parallel 4 with expert parallelism). Counts between the swept points, and larger pools, were not run.</li>
+<li>The ratios are policy sensitivity, not substitution error. They say how far BLIS's own figures move when the policy changes, between policies inside BLIS. No run behind Dynamo was compared with a run of BLIS, so how far Dynamo's real behaviour is from either policy is not measured.</li>
+<li>The regime is exact. A point whose client count is not one of those listed, or whose model, part, engine release, fabric, instance layout or pool shape is not the one named, has no bound for this regime and stays router_unsupported; nothing is interpolated between the sampled counts, and time to first token has a sharp knee between them.</li>
+<li>Time to first token, at 64 to 256 clients, is where the ratios against the policies that read load are large. The bound does not hold tightly there, and a ranking by TTFT p50 or p99 in that regime should not rest on this substitution. Time per output token and throughput move far less, except at the extremes of concurrency.</li>
+<li>BLIS draws one seeded sequence per run, three seeds here. Dynamo's draws are unseeded, so the spread between two real runs of Dynamo on one arrival pattern is not covered; for a load-blind policy a ratio under about 1.10 is inside the seed noise of the sweep.</li>
+</ul>
+<p><strong>The router</strong></p>
+<ul>
+<li><a href="https://github.com/ai-dynamo/dynamo/blob/1682167d3c97f0fc8cd405dee51f17288eeaeb55/components/src/dynamo/common/configuration/groups/router_args.py#L77-L84">ai-dynamo/dynamo@1682167d3c97:components/src/dynamo/common/configuration/groups/router_args.py:77-84</a>, for the mode: The frontend's router-mode argument accepts random among its choices, so a recipe can run it.</li>
+<li><a href="https://github.com/ai-dynamo/dynamo/blob/1682167d3c97f0fc8cd405dee51f17288eeaeb55/lib/runtime/src/pipeline/network/egress/push_router.rs#L156-L168">ai-dynamo/dynamo@1682167d3c97:lib/runtime/src/pipeline/network/egress/push_router.rs:156-168</a>, for the mode: The router modes are an enum with round-robin as its default and random as the second mode.</li>
+<li><a href="https://github.com/ai-dynamo/dynamo/blob/1682167d3c97f0fc8cd405dee51f17288eeaeb55/lib/runtime/src/pipeline/network/egress/push_router.rs#L379-L392">ai-dynamo/dynamo@1682167d3c97:lib/runtime/src/pipeline/network/egress/push_router.rs:379-392</a>, for the policy: Random mode draws a random 64-bit value for each request and selects the available instance at that value modulo their number; it keeps no state between requests.</li>
+<li><a href="https://github.com/ai-dynamo/dynamo/blob/1682167d3c97f0fc8cd405dee51f17288eeaeb55/lib/runtime/src/component/client.rs#L166-L168">ai-dynamo/dynamo@1682167d3c97:lib/runtime/src/component/client.rs:166-168</a>, for the policy: The list the draw indexes is the client's available instances.</li>
+</ul>
+<p><strong>llm-d's router</strong></p>
+<ul>
+<li><a href="https://github.com/inference-sim/llm-d-router/blob/b1ab0ff7c0b84090e40b874f8873e78f2ae6897c/pkg/epp/framework/plugins/scheduling/picker/random/picker.go#L94-L97">inference-sim/llm-d-router@b1ab0ff7c0b8:pkg/epp/framework/plugins/scheduling/picker/random/picker.go:94-97</a>, for the policy: The random picker shuffles the candidates uniformly with the runtime's random source and ignores scores; it keeps no counter.</li>
+<li><a href="https://github.com/inference-sim/llm-d-router/blob/b1ab0ff7c0b84090e40b874f8873e78f2ae6897c/pkg/epp/framework/plugins/scheduling/picker/common.go#L98-L104">inference-sim/llm-d-router@b1ab0ff7c0b8:pkg/epp/framework/plugins/scheduling/picker/common.go:98-104</a>, for the policy: RandFor returns one random source per hosted runtime, the one the random picker draws from.</li>
+</ul>
+<h3 id="dynamo-round-robin"><code>dynamo-round-robin</code><a class="headerlink" href="#dynamo-round-robin" title="Permanent link">&para;</a></h3>
+<p>Dynamo's round-robin mode rotates strictly per request: it takes the next value of a counter and indexes the list of available workers by it, so successive requests go to successive workers and every worker gets the same number to within one. llm-d's round-robin policy does not rotate: it is the max-score picker with no scorer, every endpoint is tied, and the picker chooses among the tied endpoints at random (the hosted scheduler shuffles the candidates before each pick), as the random picker does. Neither reads load, so neither reacts to a worker that falls behind, and over a run both spread requests over every endpoint. They differ in the order: Dynamo's is a cycle and llm-d's is a random draw. The nearest llm-d policy picks at random among tied endpoints, and the random picker is equally close, so the first group of the bound is against it. How far the choice of policy moves BLIS's figures is the bound: small for time per output token and for throughput in most of the regime, large for time to first token at 64 to 256 clients when the alternative reads load. An earlier version of this entry held that no policy was close enough because llm-d's counter, drawn at every pick of every profile, would give a prefill pool of even size every other endpoint. The router's own tests and BLIS runs do not show it (the pool-balance difference), and the argument is not made here.</p>
+<p><strong>Differences</strong></p>
+<ul>
+<li>strict-rotation: Dynamo rotates strictly per request (push_router.rs 357-372): the n-th request goes to the instance at n modulo the number of available instances. The nearest llm-d policy picks at random among tied endpoints: the max-score picker rotates the tied candidates by a counter, but they reach it in a seeded random order in a hosted runtime, so the choice is uniformly random, and tests of pools of two, three and four reach every endpoint in near equal counts and not in a cycle. The router has no policy that rotates strictly. The random picker is equally close, and the first group of the bound is against it. These statements are about inference-sim/llm-d-router at commit 03246be994224ef031dfdafb966c54f60d01e933 and no other release; the policy list states none of them. (citations 1, 8, 9, 10)</li>
+<li>frontends: A Dynamo deployment can run several frontend processes, each with router objects and counters of its own that start at zero, so the sequence of requests a worker sees interleaves independent rotations; the recipes the dashboard read run several (enable_multiple_frontends). BLIS hosts one router and picks at random among tied endpoints. Which frontend a request reaches is the load balancer's choice and is not modelled. (citations 2)</li>
+<li>pool-balance: Under llm-d's policy a prefill pool is used in full, as the random choice among tied endpoints gives. With a workload that saturates the prefill pool (8,192 prompt tokens, 16 output tokens), round-robin served 25.3 to 27.0 requests per second at 16 to 1,024 clients with two prefill endpoints, against 27.1 to 27.3 under least-active-requests and 13.6 with one prefill endpoint; with four it served 46.3 to 53.3 against 53.6 to 54.4. A pool used through one endpoint would give about half. The 14 percent gap at four endpoints and 16 clients is also seen under the random picker and the default policy, so it is the arrival imbalance of a policy that ignores load. BLIS does not record which prefill endpoint served a request, so the mechanism is not confirmed. The tables are in the guide. (citations 5, 6, 7, 8)</li>
+<li>load-blind: Neither mode reads load, so neither reacts to a worker that falls behind. A policy that does (least-active-requests, default, queue-scorer) is not this mode; the second group of ratios in the bound is what a wrong guess of the mode would cost. (citations 1, 7)</li>
+</ul>
+<p><strong>Bound</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Figure</th>
+<th style="text-align: left;">Against</th>
+<th style="text-align: left;">Regime</th>
+<th style="text-align: right;">Largest ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>ttft_p50_ms</code></td>
+<td style="text-align: left;"><code>random-picker</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.07</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p99_ms</code></td>
+<td style="text-align: left;"><code>random-picker</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.11</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tpot_p50_ms</code></td>
+<td style="text-align: left;"><code>random-picker</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.01</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>output_tok_s</code></td>
+<td style="text-align: left;"><code>random-picker</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.01</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p50_ms</code></td>
+<td style="text-align: left;"><code>random-picker</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.13</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p99_ms</code></td>
+<td style="text-align: left;"><code>random-picker</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.19</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tpot_p50_ms</code></td>
+<td style="text-align: left;"><code>random-picker</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.01</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>output_tok_s</code></td>
+<td style="text-align: left;"><code>random-picker</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.04</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p50_ms</code></td>
+<td style="text-align: left;"><code>random-picker</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.09</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p99_ms</code></td>
+<td style="text-align: left;"><code>random-picker</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.10</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tpot_p50_ms</code></td>
+<td style="text-align: left;"><code>random-picker</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.01</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>output_tok_s</code></td>
+<td style="text-align: left;"><code>random-picker</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.01</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p50_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.55</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p99_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.05</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tpot_p50_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.09</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>output_tok_s</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">balanced, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.12</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p50_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.18</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p99_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.65</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tpot_p50_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.04</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>output_tok_s</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">prefill-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.16</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p50_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.41</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ttft_p99_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.26</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tpot_p50_ms</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.06</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>output_tok_s</code></td>
+<td style="text-align: left;"><code>default</code>, <code>least-active-requests</code>, <code>queue-scorer</code></td>
+<td style="text-align: left;">decode-bound, concurrency 16, 64, 256, 1024, minimax-m2.5 on gb200-nvl72 over ib-400g, engine 0.32.0, prefill tp1 pp1 dp1, decode tp4 pp1 dp1 ep, shapes 1P3D, 2P3D, 3P2D, 4P1D</td>
+<td style="text-align: right;">1.07</td>
+</tr>
+</tbody>
+</table>
+<p>Measured by <code>registry/docs/router-sensitivity/runs.csv</code> (sha256 <code>f54dad99e89c657fb03e9484c2699303754bb2e2750dbffcaf9c670ae8cd1ec2</code>), produced by inference-sim/inference-sim at <code>780f661ef9c18a2a9928acf8a63a67667cd597c0</code>; reproduce with <code>python3 -I registry/docs/router-sensitivity/sweep.py --blis &lt;blis built from the commit&gt; --work &lt;scratch directory&gt; --out runs.csv</code>.</p>
+<p>Not measured:</p>
+<ul>
+<li>One model (minimax-m2.5) on one part (gb200-nvl72) over <abbr title="NVIDIA's inference transfer library, used to move KV caches between engines">NIXL</abbr> on ib-400g, served by vLLM 0.32.0. Another model or part moves where the pools saturate, and with it where the large ratios sit.</li>
+<li>Closed-loop clients with fixed prompt and output lengths. No run had a prefix shared between requests, a session of several turns, a spread of lengths, or an open-loop arrival rate.</li>
+<li>Concurrency 16, 64, 256 and 1024 only, and the pool shapes 1P3D, 2P3D, 3P2D and 4P1D only, with one-GPU prefill instances and four-GPU decode instances (tensor parallel 4 with expert parallelism). Counts between the swept points, and larger pools, were not run.</li>
+<li>The ratios are policy sensitivity, not substitution error. They say how far BLIS's own figures move when the policy changes, between policies inside BLIS. No run behind Dynamo was compared with a run of BLIS, so how far Dynamo's real behaviour is from either policy is not measured.</li>
+<li>The regime is exact. A point whose client count is not one of those listed, or whose model, part, engine release, fabric, instance layout or pool shape is not the one named, has no bound for this regime and stays router_unsupported; nothing is interpolated between the sampled counts, and time to first token has a sharp knee between them.</li>
+<li>Time to first token, at 64 to 256 clients, is where the ratios against the policies that read load are large. The bound does not hold tightly there, and a ranking by TTFT p50 or p99 in that regime should not rest on this substitution. Time per output token and throughput move far less, except at the extremes of concurrency.</li>
+</ul>
+<p><strong>The router</strong></p>
+<ul>
+<li><a href="https://github.com/ai-dynamo/dynamo/blob/1682167d3c97f0fc8cd405dee51f17288eeaeb55/components/src/dynamo/common/configuration/groups/router_args.py#L66-L68">ai-dynamo/dynamo@1682167d3c97:components/src/dynamo/common/configuration/groups/router_args.py:66-68</a>, for the mode: The router-mode argument defaults to round-robin, so a run that sets no router mode runs it.</li>
+<li><a href="https://github.com/ai-dynamo/dynamo/blob/1682167d3c97f0fc8cd405dee51f17288eeaeb55/lib/runtime/src/pipeline/network/egress/push_router.rs#L357-L372">ai-dynamo/dynamo@1682167d3c97:lib/runtime/src/pipeline/network/egress/push_router.rs:357-372</a>, for the mode: Round-robin takes the next value of the router's counter and selects the instance at that value modulo the number of available instances.</li>
+<li><a href="https://github.com/ai-dynamo/dynamo/blob/1682167d3c97f0fc8cd405dee51f17288eeaeb55/lib/runtime/src/pipeline/network/egress/push_router.rs#L130-L131">ai-dynamo/dynamo@1682167d3c97:lib/runtime/src/pipeline/network/egress/push_router.rs:130-131</a>, for the policy: The counter is a field of the router object, so each router keeps its own.</li>
+<li><a href="https://github.com/ai-dynamo/dynamo/blob/1682167d3c97f0fc8cd405dee51f17288eeaeb55/lib/runtime/src/component/client.rs#L166-L168">ai-dynamo/dynamo@1682167d3c97:lib/runtime/src/component/client.rs:166-168</a>, for the policy: The list the counter indexes is the client's available instances, in the order the client holds them.</li>
+<li><a href="https://github.com/ai-dynamo/dynamo/blob/1682167d3c97f0fc8cd405dee51f17288eeaeb55/lib/llm/src/kv_router/prefill_router/mod.rs#L44-L49">ai-dynamo/dynamo@1682167d3c97:lib/llm/src/kv_router/prefill_router/mod.rs:44-49</a>, for the policy: The prefill router is an object of its own, with its own inner router and the router mode it was built with, so the prefill workers have a router object separate from the decode workers'.</li>
+</ul>
+<p><strong>llm-d's router</strong></p>
+<ul>
+<li><a href="https://github.com/inference-sim/llm-d-router/blob/b1ab0ff7c0b84090e40b874f8873e78f2ae6897c/pkg/epp/framework/plugins/scheduling/picker/common.go#L79-L87">inference-sim/llm-d-router@b1ab0ff7c0b8:pkg/epp/framework/plugins/scheduling/picker/common.go:79-87</a>, for the policy: NextCounter returns one monotonically increasing counter.</li>
+<li><a href="https://github.com/inference-sim/llm-d-router/blob/b1ab0ff7c0b84090e40b874f8873e78f2ae6897c/pkg/epp/framework/plugins/scheduling/picker/common.go#L98-L104">inference-sim/llm-d-router@b1ab0ff7c0b8:pkg/epp/framework/plugins/scheduling/picker/common.go:98-104</a>, for the policy: RandFor returns one source per hosted runtime, shared by every picker of every profile.</li>
+<li><a href="https://github.com/inference-sim/llm-d-router/blob/b1ab0ff7c0b84090e40b874f8873e78f2ae6897c/pkg/epp/framework/plugins/scheduling/picker/maxscore/picker.go#L108-L117">inference-sim/llm-d-router@b1ab0ff7c0b8:pkg/epp/framework/plugins/scheduling/picker/maxscore/picker.go:108-117</a>, for the policy: The max-score picker draws the counter at every pick and rotates each group of tied endpoints by it, so a second profile that picks draws another.</li>
+<li><a href="https://github.com/inference-sim/llm-d-router/blob/03246be994224ef031dfdafb966c54f60d01e933/reference-configs/README.md#L66-L93">inference-sim/llm-d-router@03246be99422:reference-configs/README.md:66-93</a>, for the policy: The router has no policy that rotates strictly, one endpoint per request. Round-robin is the max-score picker with no scorer; the candidates reach the picker in a seeded random order in a hosted runtime, so the choice is uniformly random among the tied endpoints, as the random picker's is; tests of pools of two, three and four show near equal counts and no cycle.</li>
+<li><a href="https://github.com/inference-sim/llm-d-router/blob/03246be994224ef031dfdafb966c54f60d01e933/pkg/epp/scheduling/scheduler_profile.go#L363-L370">inference-sim/llm-d-router@03246be99422:pkg/epp/scheduling/scheduler_profile.go:363-370</a>, for the policy: In a hosted runtime the scheduler sorts the scored endpoints by identifier and shuffles them with a seeded source before the picker sees them; otherwise the order is Go map order. The tie order a picker rotates is therefore random.</li>
+<li><a href="https://github.com/inference-sim/llm-d-router/blob/03246be994224ef031dfdafb966c54f60d01e933/pkg/epp/framework/plugins/scheduling/picker/maxscore/picker.go#L108-L117">inference-sim/llm-d-router@03246be99422:pkg/epp/framework/plugins/scheduling/picker/maxscore/picker.go:108-117</a>, for the policy: The max-score picker rotates each group of equal-score endpoints by a counter drawn once per pick; with the candidates in the random order above, the choice among tied endpoints is random, not a cycle.</li>
+</ul>
+<h2 id="the-policies-llm-ds-router-offers">The policies llm-d's router offers<a class="headerlink" href="#the-policies-llm-ds-router-offers" title="Permanent link">&para;</a></h2>
+<p>A policy is a composition of the router's scheduling plugins that it runs without code of BLIS's own. The list is closed and holds names only:</p>
+<table>
+<thead>
+<tr>
+<th>Policy</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>round-robin</code></td>
+<td>every endpoint is treated alike</td>
+</tr>
+<tr>
+<td><code>random-picker</code></td>
+<td>an endpoint is picked uniformly at random</td>
+</tr>
+<tr>
+<td><code>least-active-requests</code></td>
+<td>the endpoint with the fewest in-flight requests is preferred</td>
+</tr>
+<tr>
+<td><code>default</code></td>
+<td>the router's built-in configuration when none is given</td>
+</tr>
+<tr>
+<td><code>none</code></td>
+<td>no policy is close enough</td>
+</tr>
+</tbody>
+</table>
+<p>What a policy is made of (plugins, weights, tie handling, source files) changes with the router's release, so this repository does not list it. The router fork owns it; each entry above states the behaviour it relies on and cites the router tree at the build it names.</p>
+<p>The file format, and the rules a validator refuses an entry by, are in the <a href="../../../contracts/reference/router-table/">router table reference</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+  </div>
+
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../workloads/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Workloads">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Workloads
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../storage/" class="md-footer__link md-footer__link--next" aria-label="Next: Storage tiers">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Storage tiers
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Apache 2.0 · part of <a href="https://github.com/inference-sim">BLIS</a>
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/inference-sim/blis-substrate" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.footer", "search.highlight", "search.suggest", "content.code.copy", "content.tooltips", "content.action.edit", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
