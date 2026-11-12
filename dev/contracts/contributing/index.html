@@ -737,6 +737,8 @@
       
         
       
+        
+      
     
     
     
@@ -878,6 +880,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/router-sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Measure how far the router policy moves a figure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -897,6 +927,8 @@
       
         
           
+        
+      
         
       
         
@@ -1465,6 +1497,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/router-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -2360,6 +2420,8 @@
       
         
       
+        
+      
     
     
     
@@ -2505,6 +2567,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../catalog/concepts/mixed-precision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixed-precision checkpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../catalog/concepts/glossary/" class="md-nav__link">
         
   
@@ -2545,6 +2635,8 @@
       
         
           
+        
+      
         
       
         
@@ -2740,6 +2832,34 @@
     
   
     Workloads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalog/reference/routers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -3162,6 +3282,8 @@
       
         
       
+        
+      
     
     
     
@@ -3224,6 +3346,8 @@
   
     
     
+      
+        
       
         
       
@@ -3405,6 +3529,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../registry/reference/sets/cost-model-offload-tiers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-offload-tiers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../registry/reference/sets/cost-model-attention/" class="md-nav__link">
         
   
@@ -3533,6 +3685,34 @@
     
   
     Acceptance profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../registry/reference/method-error/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Typical error of each method
   
 
     
@@ -3912,6 +4092,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4065,6 +4251,90 @@
     
   
     Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kernel/concepts/switch-groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Switch groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kernel/concepts/admission-split/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The admission queue
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kernel/concepts/hopper-dense-mxfp8-ramp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Hopper dense MXFP8 ramp
   
 
     
@@ -5114,6 +5384,20 @@ them. A defect that a later layer repairs or hides shows in the full set only on
 request to <code>main</code>, so run the full set by hand on a layer you are about to approve. A newer run
 for the same pull request replaces the one in progress, and the path gates read each check run
 at its newest attempt, so a replaced or re-run attempt does not hold a gate shut or open.</p>
+<p>Every job has a <code>timeout-minutes</code>, sized from measured runs (the longest, the cost model, takes
+about 500 s), so a hung job fails in minutes and not after six hours. When the Go tests of the
+<code>contracts and validators</code> job fail, the log lists the failing tests and the output of each
+failing package.</p>
+<p><strong>The only automatic rerun.</strong> A hosted runner that is shut down under a job ends it with "The
+runner has received a shutdown signal" and exit code 143. That is the infrastructure's failure
+and a rerun of the same commit is its only remedy, so <code>.github/workflows/rerun-on-runner-shutdown.yml</code>
+reruns the failed jobs of a failed CI run once, and only when the run is on its first attempt
+and every failed job carries that message. It says what it did in the job summary and, for a
+pull request, in a comment. A failure without the message is never rerun, a second failure is
+never rerun, and <code>blis</code> (the description and thread checks) is not listed, because a retry
+would hide a flaky test or a gate. Nothing else reruns automatically, and nothing is added to
+the quarantine list for a test that fails now and then: it is fixed or reported. The decision
+is <code>DecideRerun</code> in <code>tools/prcheck/rerun.go</code>, with known-bad cases in its tests.</p>
 <p>Every validator has a negative test for each way a document can be wrong. A validator that
 cannot fail proves nothing.</p>
 <h2 id="when-a-key-changes">When a key changes<a class="headerlink" href="#when-a-key-changes" title="Permanent link">&para;</a></h2>

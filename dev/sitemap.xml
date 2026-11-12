@@ -21,6 +21,10 @@
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/concepts/mixed-precision/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
          <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/concepts/model-graphs/</loc>
          <lastmod>2026-11-12</lastmod>
     </url>
@@ -62,6 +66,10 @@
     </url>
     <url>
          <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/networks/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/routers/</loc>
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>
@@ -157,6 +165,10 @@
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/contracts/guides/router-sensitivity/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
          <loc>https://inference-sim.github.io/blis-substrate/latest/contracts/reference/</loc>
          <lastmod>2026-11-12</lastmod>
     </url>
@@ -225,6 +237,10 @@
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/contracts/reference/router-table/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
          <loc>https://inference-sim.github.io/blis-substrate/latest/contracts/reference/routing/</loc>
          <lastmod>2026-11-12</lastmod>
     </url>
@@ -269,6 +285,14 @@
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/kernel/concepts/admission-split/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/kernel/concepts/hopper-dense-mxfp8-ramp/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
          <loc>https://inference-sim.github.io/blis-substrate/latest/kernel/concepts/memory/</loc>
          <lastmod>2026-11-12</lastmod>
     </url>
@@ -286,6 +310,10 @@
     </url>
     <url>
          <loc>https://inference-sim.github.io/blis-substrate/latest/kernel/concepts/step/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/kernel/concepts/switch-groups/</loc>
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>
@@ -397,6 +425,10 @@
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/registry/reference/method-error/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
          <loc>https://inference-sim.github.io/blis-substrate/latest/registry/reference/validation/</loc>
          <lastmod>2026-11-12</lastmod>
     </url>
@@ -422,6 +454,10 @@
     </url>
     <url>
          <loc>https://inference-sim.github.io/blis-substrate/latest/registry/reference/sets/cost-model-memory/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/registry/reference/sets/cost-model-offload-tiers/</loc>
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>
@@ -465,6 +501,14 @@
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/deepseek-v4-pro-0813/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/deepseek-v4-pro-nvfp4/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
          <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/deepseek-v4.1-flash/</loc>
          <lastmod>2026-11-12</lastmod>
     </url>
@@ -501,11 +545,27 @@
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/kimi-k2.5-nvfp4/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
          <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/kimi-k2.6/</loc>
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>
          <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/kimi-k3/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/kimi-k3-dspark/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/kimi-k3.1/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/kimi-k3.1-dspark/</loc>
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>
@@ -533,6 +593,10 @@
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/minimax-m2.5-nvfp4/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
          <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/minimax-m2.7/</loc>
          <lastmod>2026-11-12</lastmod>
     </url>
@@ -541,7 +605,27 @@
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/minimax-m3-eagle3/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/minimax-m3-eagle3-gqa/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
          <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/minimax-m3-mxfp8/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/minimax-m3-nvfp4/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/minimax-m3.1-flash/</loc>
+         <lastmod>2026-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://inference-sim.github.io/blis-substrate/latest/catalog/reference/models/minimax-m3.1-flash-dspark/</loc>
          <lastmod>2026-11-12</lastmod>
     </url>
     <url>

@@ -16,7 +16,7 @@
         <link rel="prev" href="../cost-model-collectives-inferencex/">
       
       
-        <link rel="next" href="../cost-model-attention/">
+        <link rel="next" href="../cost-model-offload-tiers/">
       
       
         
@@ -731,6 +731,8 @@
       
         
       
+        
+      
     
     
     
@@ -869,6 +871,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contracts/guides/router-sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Measure how far the router policy moves a figure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -888,6 +918,8 @@
       
         
           
+        
+      
         
       
         
@@ -1453,6 +1485,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contracts/reference/router-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -2340,6 +2400,8 @@
       
         
       
+        
+      
     
     
     
@@ -2485,6 +2547,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../catalog/concepts/mixed-precision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixed-precision checkpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../catalog/concepts/glossary/" class="md-nav__link">
         
   
@@ -2525,6 +2615,8 @@
       
         
           
+        
+      
         
       
         
@@ -2720,6 +2812,34 @@
     
   
     Workloads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../catalog/reference/routers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -3155,6 +3275,8 @@
       
         
       
+        
+      
     
     
     
@@ -3222,6 +3344,8 @@
   
     
     
+      
+        
       
         
       
@@ -3413,6 +3537,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../cost-model-offload-tiers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-offload-tiers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../cost-model-attention/" class="md-nav__link">
         
   
@@ -3541,6 +3693,34 @@
     
   
     Acceptance profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../method-error/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Typical error of each method
   
 
     
@@ -3923,6 +4103,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4076,6 +4262,90 @@
     
   
     Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../kernel/concepts/switch-groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Switch groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../kernel/concepts/admission-split/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The admission queue
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../kernel/concepts/hopper-dense-mxfp8-ramp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Hopper dense MXFP8 ramp
   
 
     
@@ -4929,17 +5199,21 @@ here.</p>
 <li><code>ib-400g</code> is <code>literature</code>: published nccl-tests all_reduce results on H100 hosts with eight
   ConnectX-7 400G InfiniBand NICs each (<a href="https://github.com/NVIDIA/nccl-tests/issues/309">NVIDIA/nccl-tests#309</a>),
   as a fraction of the 400 GB/s ceiling an NVIDIA maintainer states there.</li>
+<li><code>ib-800g</code> is <code>assumed</code>, equal to <code>ib-400g</code>: no public multi-node measurement of ConnectX-8
+  (InfiniBand XDR, 800 Gb/s per GPU) was found. Only its line rate is cited, from NVIDIA's
+  Blackwell Ultra Datasheet. A handoff over <code>ib-800g</code> therefore takes half the time of the
+  same handoff over <code>ib-400g</code>; a measured 800G efficiency would change that.</li>
 <li><code>roce-200g</code> and <code>ethernet-100gbe</code> are <code>assumed</code>. No public multi-node measurement of either
   was found. Each rationale states the range the value could lie in and the one public datum
   that bounds it.</li>
 </ul>
 <p class="reg-legend"><span class="reg-legend-item"><span class="reg-m reg-m-literature" aria-hidden="true">▲</span> <code>literature</code></span> <span class="reg-legend-item"><span class="reg-m reg-m-assumed" aria-hidden="true">○</span> <code>assumed</code></span></p>
 
-<div class="reg-table-wrap"><table class="reg-table"><thead><tr><th>coefficient</th><th class="reg-num"><code>ethernet-100gbe</code></th><th class="reg-num"><code>ib-400g</code></th><th class="reg-num"><code>roce-200g</code></th></tr></thead><tbody>
-<tr><td><code title="fabric_bandwidth_efficiency">fabric_bandwidth_efficiency</code><span class="reg-units">dimensionless</span></td><td class="reg-num"><span class="reg-cell"><span class="reg-m reg-m-assumed" aria-hidden="true">○</span><span><a class="reg-v" href="https://github.com/inference-sim/blis-substrate/blob/d9d103cf3a9cb383bf3f2761f5f77818b2179d3b/registry/coefficients/cost-model-fabric.yaml#L16" title="fabric_bandwidth_efficiency · assumed · dimensionless — open the entry and its provenance">0.5</a></span></span></td><td class="reg-num"><span class="reg-cell"><span class="reg-m reg-m-literature" aria-hidden="true">▲</span><span><a class="reg-v" href="https://github.com/inference-sim/blis-substrate/blob/d9d103cf3a9cb383bf3f2761f5f77818b2179d3b/registry/coefficients/cost-model-fabric.yaml#L26" title="fabric_bandwidth_efficiency · literature · dimensionless — open the entry and its provenance">0.811</a></span></span></td><td class="reg-num"><span class="reg-cell"><span class="reg-m reg-m-assumed" aria-hidden="true">○</span><span><a class="reg-v" href="https://github.com/inference-sim/blis-substrate/blob/d9d103cf3a9cb383bf3f2761f5f77818b2179d3b/registry/coefficients/cost-model-fabric.yaml#L36" title="fabric_bandwidth_efficiency · assumed · dimensionless — open the entry and its provenance">0.811</a></span></span></td></tr>
+<div class="reg-table-wrap"><table class="reg-table"><thead><tr><th>coefficient</th><th class="reg-num"><code>ethernet-100gbe</code></th><th class="reg-num"><code>ib-400g</code></th><th class="reg-num"><code>ib-800g</code></th><th class="reg-num"><code>roce-200g</code></th></tr></thead><tbody>
+<tr><td><code title="fabric_bandwidth_efficiency">fabric_bandwidth_efficiency</code><span class="reg-units">dimensionless</span></td><td class="reg-num"><span class="reg-cell"><span class="reg-m reg-m-assumed" aria-hidden="true">○</span><span><a class="reg-v" href="https://github.com/inference-sim/blis-substrate/blob/965b05834c47882bc0f9f1a960c90327a756ef3d/registry/coefficients/cost-model-fabric.yaml#L17" title="fabric_bandwidth_efficiency · assumed · dimensionless — open the entry and its provenance">0.5</a></span></span></td><td class="reg-num"><span class="reg-cell"><span class="reg-m reg-m-literature" aria-hidden="true">▲</span><span><a class="reg-v" href="https://github.com/inference-sim/blis-substrate/blob/965b05834c47882bc0f9f1a960c90327a756ef3d/registry/coefficients/cost-model-fabric.yaml#L27" title="fabric_bandwidth_efficiency · literature · dimensionless — open the entry and its provenance">0.811</a></span></span></td><td class="reg-num"><span class="reg-cell"><span class="reg-m reg-m-assumed" aria-hidden="true">○</span><span><a class="reg-v" href="https://github.com/inference-sim/blis-substrate/blob/965b05834c47882bc0f9f1a960c90327a756ef3d/registry/coefficients/cost-model-fabric.yaml#L37" title="fabric_bandwidth_efficiency · assumed · dimensionless — open the entry and its provenance">0.811</a></span></span></td><td class="reg-num"><span class="reg-cell"><span class="reg-m reg-m-assumed" aria-hidden="true">○</span><span><a class="reg-v" href="https://github.com/inference-sim/blis-substrate/blob/965b05834c47882bc0f9f1a960c90327a756ef3d/registry/coefficients/cost-model-fabric.yaml#L47" title="fabric_bandwidth_efficiency · assumed · dimensionless — open the entry and its provenance">0.811</a></span></span></td></tr>
 </tbody></table></div>
 
-<p class="reg-caption">3 entries (1 literature, 2 assumed) across 1 coefficients and 3 parts. A dot (·) is a part the set holds no entry for. Each value links to its entry in <a href="https://github.com/inference-sim/blis-substrate/blob/d9d103cf3a9cb383bf3f2761f5f77818b2179d3b/registry/coefficients/cost-model-fabric.yaml"><code>registry/coefficients/cost-model-fabric.yaml</code></a>, where its sources, rationale and scope are recorded.</p>
+<p class="reg-caption">4 entries (1 literature, 3 assumed) across 1 coefficients and 4 parts. A dot (·) is a part the set holds no entry for. Each value links to its entry in <a href="https://github.com/inference-sim/blis-substrate/blob/965b05834c47882bc0f9f1a960c90327a756ef3d/registry/coefficients/cost-model-fabric.yaml"><code>registry/coefficients/cost-model-fabric.yaml</code></a>, where its sources, rationale and scope are recorded.</p>
 
 <p><strong>Regenerate:</strong> <code>emit_fabric.py</code>; <code>--check</code> is the drift gate, and
 <code>validator/test_fabric.py</code> requires exactly one entry in (0, 1] per catalog fabric.</p>
@@ -5004,13 +5278,13 @@ here.</p>
         
         
           
-          <a href="../cost-model-attention/" class="md-footer__link md-footer__link--next" aria-label="Next: cost-model-attention">
+          <a href="../cost-model-offload-tiers/" class="md-footer__link md-footer__link--next" aria-label="Next: cost-model-offload-tiers">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                cost-model-attention
+                cost-model-offload-tiers
               </div>
             </div>
             <div class="md-footer__button md-icon">

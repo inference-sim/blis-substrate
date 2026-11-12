@@ -729,6 +729,8 @@
       
         
       
+        
+      
     
     
     
@@ -867,6 +869,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/guides/router-sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Measure how far the router policy moves a figure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -886,6 +916,8 @@
       
         
           
+        
+      
         
       
         
@@ -1451,6 +1483,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/router-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -2338,6 +2398,8 @@
       
         
       
+        
+      
     
     
     
@@ -2483,6 +2545,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../catalog/concepts/mixed-precision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixed-precision checkpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../catalog/concepts/glossary/" class="md-nav__link">
         
   
@@ -2523,6 +2613,8 @@
       
         
           
+        
+      
         
       
         
@@ -2718,6 +2810,34 @@
     
   
     Workloads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../catalog/reference/routers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -3140,6 +3260,8 @@
       
         
       
+        
+      
     
     
     
@@ -3202,6 +3324,8 @@
   
     
     
+      
+        
       
         
       
@@ -3383,6 +3507,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-offload-tiers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-offload-tiers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../registry/reference/sets/cost-model-attention/" class="md-nav__link">
         
   
@@ -3511,6 +3663,34 @@
     
   
     Acceptance profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/method-error/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Typical error of each method
   
 
     
@@ -3895,6 +4075,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4051,6 +4237,90 @@
     
   
     Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/switch-groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Switch groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/admission-split/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The admission queue
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/hopper-dense-mxfp8-ramp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Hopper dense MXFP8 ramp
   
 
     
@@ -5057,7 +5327,7 @@ the interface itself is defined and documented in
 </tr>
 <tr>
 <td><code>Inputs</code></td>
-<td>The documents a kernel is built from: scenario, deployment, pool index, model graph, chip, fabric, storage devices, coefficient sets and engine rules.</td>
+<td>The documents a kernel is built from: scenario, deployment, pool index, model graph, chip, fabric, storage devices, coefficient sets, engine rules, <code>Operations</code>, the pool's lowered operations with the kernel that executes each (<code>plan.PoolPlan.Operations()</code>), which a coefficient that lists implementations is matched against, for the operations that read it, and <code>Implementations</code>, the same by lowered primitive when a caller cannot say which operation runs which (<a href="../provenance/#kernel-implementations">VAL-8</a>).</td>
 </tr>
 <tr>
 <td><code>Repos</code></td>
@@ -5103,7 +5373,7 @@ its arguments and safe to call from many goroutines at once.</p>
 </tr>
 <tr>
 <td><code>TierTime(tier, dir, bytes, depth)</code></td>
-<td>A transfer to or from an offload tier: the larger of the device's latency and the time to move the bytes at the slower of the device and the host link, that rate shared among the transfers queued. An unknown tier prices as the largest representable duration.</td>
+<td>A transfer to or from an offload tier: the larger of the tier's base latency and the time to move the bytes at the slower of the tier's rate and the host link, that rate shared among the transfers queued. The tier's rates and latency are the registry's <code>offload_tier_&lt;tier&gt;_read_rate</code>, <code>_write_rate</code> and <code>_base_latency</code> for the scenario's chip, not catalog figures, and they are in the set <code>cost-model-offload-tiers</code>. A tier the scenario's sets carry no terms for prices as the largest representable duration, and <code>New</code> refuses a deployment whose offload block names such a tier.</td>
 </tr>
 <tr>
 <td><code>PDTransferTime(tokens, from, to)</code></td>
@@ -5111,11 +5381,15 @@ its arguments and safe to call from many goroutines at once.</p>
 </tr>
 <tr>
 <td><code>PDTransferDemand(tokens, from, to)</code></td>
-<td>The same handoff separated into payload bytes, a fixed floor and the links it crosses, each with its rate, so a simulator running several handoffs can share the links between them. Link IDs come from the placement, so every kernel of a deployment names a link alike.</td>
+<td>The same handoff separated into payload bytes, a fixed floor and the links it crosses, each with its capacity and the number of the transfer's own flows (<code>Streams</code>) that cross it, so a simulator running several handoffs can share the links between them. Link IDs come from the placement, so every kernel of a deployment names a link alike. Where the scenario states <a href="../../concepts/switch-groups/">switch groups</a>, a handoff between groups also names the two groups' uplinks.</td>
 </tr>
 <tr>
 <td><code>AdmissionOverhead(tokens)</code></td>
 <td>Host time before a request can be scheduled: a fixed part per request and a part per prompt token.</td>
+</tr>
+<tr>
+<td><code>AdmissionDemand(tokens)</code></td>
+<td><code>AdmissionOverhead</code> as <code>Service</code> (the per-token part, held on one server of the admission queue) and <code>Delay</code> (the per-request part, waited out holding none). A simulator that queues requests queues them for <code>Service</code> only.</td>
 </tr>
 <tr>
 <td><code>OutputTokenOverhead()</code></td>

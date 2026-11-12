@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://inference-sim.github.io/blis-substrate/latest/contracts/reference/kernel/">
       
       
-        <link rel="prev" href="../fields/">
+        <link rel="prev" href="../router-table/">
       
       
         <link rel="next" href="../engine/">
@@ -737,6 +737,8 @@
       
         
       
+        
+      
     
     
     
@@ -878,6 +880,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/router-sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Measure how far the router policy moves a figure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -899,6 +929,8 @@
       
         
           
+        
+      
         
       
         
@@ -1467,6 +1499,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../router-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -2484,6 +2544,8 @@
       
         
       
+        
+      
     
     
     
@@ -2629,6 +2691,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../catalog/concepts/mixed-precision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixed-precision checkpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../catalog/concepts/glossary/" class="md-nav__link">
         
   
@@ -2669,6 +2759,8 @@
       
         
           
+        
+      
         
       
         
@@ -2864,6 +2956,34 @@
     
   
     Workloads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../catalog/reference/routers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -3286,6 +3406,8 @@
       
         
       
+        
+      
     
     
     
@@ -3348,6 +3470,8 @@
   
     
     
+      
+        
       
         
       
@@ -3529,6 +3653,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-offload-tiers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-offload-tiers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../registry/reference/sets/cost-model-attention/" class="md-nav__link">
         
   
@@ -3657,6 +3809,34 @@
     
   
     Acceptance profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/method-error/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Typical error of each method
   
 
     
@@ -4036,6 +4216,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4189,6 +4375,90 @@
     
   
     Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/switch-groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Switch groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/admission-split/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The admission queue
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/hopper-dense-mxfp8-ramp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Hopper dense MXFP8 ramp
   
 
     
@@ -5177,6 +5447,10 @@ subject of <a href="../../design/kernel-boundary/">Where the kernel stops</a>.</
 <td>CPU work before a request can be scheduled, such as tokenization. Excludes queueing.</td>
 </tr>
 <tr>
+<td><code>AdmissionDemand(promptTokens int) HostDemand</code></td>
+<td><code>AdmissionOverhead</code> split into <code>Service</code>, the time a request holds one server of the admission queue (<code>plan.HostPlan.Admission</code>), and <code>Delay</code>, the time it only waits. They sum to <code>AdmissionOverhead</code>.</td>
+</tr>
+<tr>
 <td><code>OutputTokenOverhead() time.Duration</code></td>
 <td>Host work per emitted token, such as detokenization and streaming.</td>
 </tr>
@@ -5230,6 +5504,16 @@ The stages' <code>Overlap</code> figures sum exactly to <code>Overlap</code>, an
 batches in flight occupy two stages at once: a new batch can enter every slowest-stage
 time, while each batch's output takes the whole sum. <code>kerneltest.CheckStages</code> checks the
 law.</dd>
+<dt><code>Trust</code></dt>
+<dd>How much the price rests on measurement (design VAL-3): the least trusted effective rank
+among the coefficients the price used, with the method and the entry that set it. The rank
+is a method's place in the order measured (1), calibrated, transferred, literature,
+vendor_spec, roofline, assumed (7). A price that reads an entry outside the range its fit
+covered ranks no better than transferred (3) and carries the flag <code>extrapolated</code>. An entry
+whose 95% interval is unbounded or wider than half its value ranks as assumed (7) and
+carries the flag <code>unidentified</code>; it keeps its method and its citations. The zero value
+means the implementation does not report trust. Ties go to the entry whose name sorts
+first, so the answer does not depend on the order of lookups.</dd>
 </dl>
 <h2 id="unusual-model-shapes">Unusual model shapes<a class="headerlink" href="#unusual-model-shapes" title="Permanent link">&para;</a></h2>
 <p><code>conformance/shapetest</code> holds six model graphs that each differ from the catalog's models in one
@@ -5280,6 +5564,14 @@ under a link otherwise. The resolved backend decides this, not the requested one
 <td><code>DraftPaddedTokens int</code></td>
 <td>Tokens this rank's drafter launches, after its own graph bucket and the width its data-parallel group agreed; the drafter coordinates its padding apart from the target's. The rows beyond the rank's own draft rows run the GEMMs and the <abbr title="Mixture of experts">MoE</abbr> paths and no attention. An engine that states a step as a <code>plan.StepShape</code> carries it as <code>DraftShape.Passes[rank].Padded</code>. 0 means the drafter launches only its own rows; never negative.</td>
 </tr>
+<tr>
+<td><code>TailFrom int</code></td>
+<td>The index, in the model graph's expanded layer stack, of the first layer that runs over fewer rows than the requests scheduled: layers <code>TailFrom</code> to the end run each request's <code>TailRows</code> rows. The engine states it, for the steps in which its forward pass does that (an engine can run the layers past the last one that produces <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> on each request's trailing window only). The embedding, the layers before it, the head, the drafter and the host and launch terms keep the whole batch. An engine that states a step as a <code>plan.StepShape</code> carries it as <code>StepShape.TailFrom</code>. 0 means no tail: every layer runs every scheduled token. A value at or past the stack's length leaves no layer in the tail; never negative.</td>
+</tr>
+<tr>
+<td><code>TailPadTokens int</code></td>
+<td>Rows the tail's batch is launched with beyond its own, when the engine pads it to a size of its own; as <code>PadTokens</code> does for the whole batch they run the GEMMs, the collectives and the experts, and no attention. As a step shape it is <code>PaddedShape.TailTokens</code> less the tail's rows. Read only with <code>TailFrom</code>; never negative.</td>
+</tr>
 </tbody>
 </table>
 <p>Each <code>ReqShape</code> carries the counts an engine's own scheduler reads:</p>
@@ -5307,9 +5599,13 @@ under a link otherwise. The resolved backend decides this, not the requested one
 <td><code>CachedTokens</code></td>
 <td>The prefix-cache hit, already subtracted from <code>Scheduled</code>. A count, not a rate.</td>
 </tr>
+<tr>
+<td><code>TailRows</code></td>
+<td>How many of <code>Scheduled</code> the layers from <code>Batch.TailFrom</code> run: the request's last <code>TailRows</code> tokens, at their own positions (a step shape's <code>RequestStep.TailRows</code>). 0 means all of them, as for a decode row. Never more than <code>Scheduled</code>, and refused (<code>Validate</code>) without a <code>TailFrom</code>.</td>
+</tr>
 </tbody>
 </table>
-<p><code>Batch.Tokens()</code> sums <code>Scheduled</code>, and <code>Batch.PaddedTokens()</code> adds <code>PadTokens</code>: the count the layers run. <code>Batch.Validate()</code> refuses a negative count. <code>Batch.UniformDecode(width)</code> reports whether every
+<p><code>Batch.Tokens()</code> sums <code>Scheduled</code>, and <code>Batch.PaddedTokens()</code> adds <code>PadTokens</code>: the count the layers run. <code>Batch.Validate()</code> refuses a negative count, more tail rows than scheduled tokens, and tail rows with no <code>TailFrom</code>. <code>Batch.UniformDecode(width)</code> reports whether every
 request schedules exactly <code>width</code> tokens. Some engine behavior, such as when dual-batch
 overlap engages, uses one threshold for such a batch and another for any other.</p>
 <h2 id="resolution">Resolution<a class="headerlink" href="#resolution" title="Permanent link">&para;</a></h2>
@@ -5394,6 +5690,7 @@ is divided is the simulator's to decide, and the schema does not prescribe it.</
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nx">kerneltest</span><span class="p">.</span><span class="nx">TestPDTransfer</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">k</span><span class="p">,</span><span class="w"> </span><span class="nx">kerneltest</span><span class="p">.</span><span class="nx">PDCases</span><span class="p">())</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">}</span>
 </code></pre></div>
+<p>Where the scenario states switch groups, a handoff between groups names two more links, <code>uplink/egress/group/&lt;g&gt;</code> and <code>uplink/ingress/group/&lt;h&gt;</code>; see <a href="../../../kernel/concepts/switch-groups/">Switch groups</a>.</p>
 <p><code>PDCases</code> covers a same-node, a same-rack and a cross-rack handoff at token counts from 0 to
 131,072. <code>CheckPDTransfer</code> checks one case and returns an error, for a caller with cases
 of its own; <code>TestPDTransfer</code> fails when given no cases, since it would then check nothing.
@@ -5429,7 +5726,7 @@ adds the method.</p>
 </tr>
 <tr>
 <td><code>CoefficientOrigin</code></td>
-<td>One row of the provenance trail: entry <code>Name</code>, <code>Set</code>, <code>Method</code>, <code>Scope</code>.</td>
+<td>One row of the provenance trail: entry <code>Name</code>, <code>Set</code>, <code>Method</code>, <code>Scope</code>, and <code>KernelMatch</code>: <code>exact</code> when the entry lists a kernel implementation that runs, <code>unkeyed</code> when it lists none, empty for a value the kernel supplied itself.</td>
 </tr>
 </tbody>
 </table>
@@ -5471,7 +5768,7 @@ adds the method.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../fields/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Field list">
+          <a href="../router-table/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Router table">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -5481,7 +5778,7 @@ adds the method.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Field list
+                Router table
               </div>
             </div>
           </a>

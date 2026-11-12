@@ -737,6 +737,8 @@
       
         
       
+        
+      
     
     
     
@@ -878,6 +880,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/router-sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Measure how far the router policy moves a figure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -897,6 +927,8 @@
       
         
           
+        
+      
         
       
         
@@ -1465,6 +1497,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/router-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -2473,6 +2533,8 @@
       
         
       
+        
+      
     
     
     
@@ -2618,6 +2680,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../catalog/concepts/mixed-precision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixed-precision checkpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../catalog/concepts/glossary/" class="md-nav__link">
         
   
@@ -2658,6 +2748,8 @@
       
         
           
+        
+      
         
       
         
@@ -2853,6 +2945,34 @@
     
   
     Workloads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../catalog/reference/routers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -3275,6 +3395,8 @@
       
         
       
+        
+      
     
     
     
@@ -3337,6 +3459,8 @@
   
     
     
+      
+        
       
         
       
@@ -3518,6 +3642,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-offload-tiers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-offload-tiers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../registry/reference/sets/cost-model-attention/" class="md-nav__link">
         
   
@@ -3646,6 +3798,34 @@
     
   
     Acceptance profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/method-error/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Typical error of each method
   
 
     
@@ -4025,6 +4205,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4178,6 +4364,90 @@
     
   
     Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/switch-groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Switch groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/admission-split/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The admission queue
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/hopper-dense-mxfp8-ramp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Hopper dense MXFP8 ramp
   
 
     
@@ -5107,7 +5377,7 @@ sets an arrival time, not a step time. A kernel that added it to step time would
 for latency the engine already hides.</p>
 <h2 id="host-work-is-the-kernels-too">Host work is the kernel's too<a class="headerlink" href="#host-work-is-the-kernels-too" title="Permanent link">&para;</a></h2>
 <p>Tokenization, detokenization and request teardown are CPU work, not GPU work. They are on
-the interface anyway (<code>AdmissionOverhead</code>, <code>OutputTokenOverhead</code>, <code>CompletionOverhead</code>),
+the interface anyway (<code>AdmissionOverhead</code>, <code>AdmissionDemand</code>, <code>OutputTokenOverhead</code>, <code>CompletionOverhead</code>),
 because the cost model already carries a host term for launching GPU kernels. Splitting host
 costs between two owners would leave a caller fetching some coefficients from the kernel
 and others from somewhere else.</p>

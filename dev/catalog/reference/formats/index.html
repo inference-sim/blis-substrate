@@ -729,6 +729,8 @@
       
         
       
+        
+      
     
     
     
@@ -867,6 +869,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/guides/router-sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Measure how far the router policy moves a figure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -886,6 +916,8 @@
       
         
           
+        
+      
         
       
         
@@ -1451,6 +1483,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/router-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -2349,6 +2409,8 @@
       
         
       
+        
+      
     
     
     
@@ -2497,6 +2559,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../concepts/mixed-precision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixed-precision checkpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../concepts/glossary/" class="md-nav__link">
         
   
@@ -2539,6 +2629,8 @@
       
         
           
+        
+      
         
       
         
@@ -2867,6 +2959,34 @@
     
   
     Workloads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../routers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -3289,6 +3409,8 @@
       
         
       
+        
+      
     
     
     
@@ -3351,6 +3473,8 @@
   
     
     
+      
+        
       
         
       
@@ -3532,6 +3656,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-offload-tiers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-offload-tiers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../registry/reference/sets/cost-model-attention/" class="md-nav__link">
         
   
@@ -3660,6 +3812,34 @@
     
   
     Acceptance profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/method-error/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Typical error of each method
   
 
     
@@ -4039,6 +4219,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4192,6 +4378,90 @@
     
   
     Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/switch-groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Switch groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/admission-split/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The admission queue
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/hopper-dense-mxfp8-ramp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Hopper dense MXFP8 ramp
   
 
     
@@ -5342,33 +5612,7 @@
 <h3 id="replay-workloads">Replay workloads<a class="headerlink" href="#replay-workloads" title="Permanent link">&para;</a></h3>
 <p>A replay workload states, under <code>replay:</code>, a trace-replay scenario that the <code>ReplayDefinition</code> type of <code>contracts/spec/workload</code> defines: <code>scenario</code>, <code>harness_version</code>, a <code>corpus</code> (<code>loader</code>, <code>format</code>, <code>encoding</code>, <code>source.huggingface</code>, <code>source.revision</code>, and optionally <code>source.file</code>, <code>source.split</code> and <code>sha256</code>), and the scenario's settings (<code>random_seed</code>, <code>benchmark_duration_s</code>, <code>grace_period_s</code>, <code>max_context_length</code>, the keys the scenario locks, and the acceptance selectors <code>category</code> and <code>thinking</code>). It states no <code>concurrency</code>: a scenario that binds the workload states it. Comment keys are accepted at the top level only. The schema refuses any value the harness's own scenario validator would refuse, such as a duration below 900 s for <code>inferencex-agentx-mvp</code>.</p>
 <h2 id="storage-tiers">Storage tiers<a class="headerlink" href="#storage-tiers" title="Permanent link">&para;</a></h2>
-<p><code>devices/storage.yaml</code>, one file holding every tier, keyed by tier name.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Key</th>
-<th style="text-align: left;">Unit</th>
-<th style="text-align: left;">Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><code>read_bandwidth_mb_s</code></td>
-<td style="text-align: left;">MB/s</td>
-<td style="text-align: left;">sustained read bandwidth; positive</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>write_bandwidth_mb_s</code></td>
-<td style="text-align: left;">MB/s</td>
-<td style="text-align: left;">sustained write bandwidth; positive</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>base_latency_us</code></td>
-<td style="text-align: left;">µs</td>
-<td style="text-align: left;">fixed cost of one transfer; positive</td>
-</tr>
-</tbody>
-</table>
+<p><code>devices/storage.yaml</code>, one file holding every tier, keyed by tier name. A tier is a name and a <code>_comment</code> description; it states no number. Its read rate, write rate and fixed cost per transfer are fitted or assumed, so they are registry coefficients (<code>offload_tier_&lt;tier&gt;_read_rate</code>, <code>_write_rate</code> and <code>_base_latency</code>), not catalog facts. A tier that states <code>read_bandwidth_mb_s</code>, <code>write_bandwidth_mb_s</code> or <code>base_latency_us</code> is refused.</p>
 <h2 id="measured-runs">Measured runs<a class="headerlink" href="#measured-runs" title="Permanent link">&para;</a></h2>
 <p><code>measurements/sources.yaml</code> is the licence registry: one entry per source a run may cite, with its <code>status</code> (<code>verified</code>, <code>unverified</code> or <code>refused</code>), the uses its terms permit (<code>score</code>, <code>derive_coefficients</code>, <code>redistribute</code>; none unless verified) and quoted evidence. <code>measurements/&lt;license_ref&gt;/&lt;name&gt;.yaml</code> is one measured run, a <code>MeasuredRun</code> of <code>contracts/spec/measurement</code>: its source and every input's sha256, the measured model, engine version, cluster, deployment and workload where stated, metric definitions, load-ordered points, provenance rows and differences. Its verdict is recomputed by the gate and must match. A committed run must cite a source that permits <code>redistribute</code>. These are third-party measurements recorded with their provenance; nothing here is fitted.</p>
 

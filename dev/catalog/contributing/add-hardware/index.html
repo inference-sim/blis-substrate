@@ -729,6 +729,8 @@
       
         
       
+        
+      
     
     
     
@@ -867,6 +869,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/guides/router-sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Measure how far the router policy moves a figure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -886,6 +916,8 @@
       
         
           
+        
+      
         
       
         
@@ -1451,6 +1483,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/router-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -2459,6 +2519,8 @@
       
         
       
+        
+      
     
     
     
@@ -2607,6 +2669,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../concepts/mixed-precision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixed-precision checkpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../concepts/glossary/" class="md-nav__link">
         
   
@@ -2647,6 +2737,8 @@
       
         
           
+        
+      
         
       
         
@@ -2845,6 +2937,34 @@
     
   
     Workloads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/routers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -3267,6 +3387,8 @@
       
         
       
+        
+      
     
     
     
@@ -3329,6 +3451,8 @@
   
     
     
+      
+        
       
         
       
@@ -3510,6 +3634,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-offload-tiers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-offload-tiers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../registry/reference/sets/cost-model-attention/" class="md-nav__link">
         
   
@@ -3638,6 +3790,34 @@
     
   
     Acceptance profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/method-error/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Typical error of each method
   
 
     
@@ -4017,6 +4197,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4170,6 +4356,90 @@
     
   
     Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/switch-groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Switch groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/admission-split/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The admission queue
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/hopper-dense-mxfp8-ramp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Hopper dense MXFP8 ramp
   
 
     
@@ -5108,36 +5378,38 @@
 <p>The first <code>#</code> comment line names the fabric; the <a href="../../reference/networks/">Fabrics</a> reference shows it as the description. <code>InterNodeBwGBps</code> is the line rate of the network cards serving one GPU, converted from gigabits to gigabytes per second. Set the optional <code>RDMA: true</code> when the fabric moves data between GPUs without passing it through the CPU (remote direct memory access).</p>
 <p>A fabric has no latency field, because vendors state no single figure for it.</p>
 <h2 id="a-storage-tier">A storage tier<a class="headerlink" href="#a-storage-tier" title="Permanent link">&para;</a></h2>
-<p>A storage tier is a place a <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> cache can be offloaded to, such as CPU memory or an NVMe drive. All tiers share one file, <code>devices/storage.yaml</code>, keyed by tier name:</p>
-<div class="language-yaml highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">nvme_gen4</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">read_bandwidth_mb_s</span><span class="p">:</span><span class="w"> </span><span class="nv">7.0e3</span><span class="p p-Indicator">,</span><span class="nt"> write_bandwidth_mb_s</span><span class="p">:</span><span class="w"> </span><span class="nv">5.0e3</span><span class="p p-Indicator">,</span><span class="nt"> base_latency_us</span><span class="p">:</span><span class="w"> </span><span class="nv">80.0</span><span class="p p-Indicator">}</span>
+<p>A storage tier is a place a <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> cache can be offloaded to, such as CPU memory or an NVMe drive. All tiers share one file, <code>devices/storage.yaml</code>, keyed by tier name. A tier is a name and a description, and the catalog states no number for it:</p>
+<div class="language-yaml highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">nvme_gen4</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">_comment</span><span class="p">:</span><span class="w"> </span><span class="s">"A</span><span class="nv"> </span><span class="s">PCIe</span><span class="nv"> </span><span class="s">Gen4</span><span class="nv"> </span><span class="s">NVMe</span><span class="nv"> </span><span class="s">drive,</span><span class="nv"> </span><span class="s">as</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">class</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">not</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">product.</span><span class="nv"> </span><span class="s">..."</span>
 </code></pre></div>
+<p>What a transfer to or from a tier costs is a rate in each direction and a fixed cost per transfer. Those are fitted or assumed values, never a datasheet's figure for a named device, so they are coefficients and live in the registry, not here. Each tier has three, for every chip, in the registry set <code>cost-model-offload-tiers</code>:</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Key</th>
+<th style="text-align: left;">Coefficient</th>
 <th style="text-align: left;">Unit</th>
 <th style="text-align: left;">Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>read_bandwidth_mb_s</code></td>
-<td style="text-align: left;">MB/s</td>
-<td style="text-align: left;">sustained read bandwidth</td>
+<td style="text-align: left;"><code>offload_tier_&lt;tier&gt;_read_rate</code></td>
+<td style="text-align: left;">bytes per µs (equal to MB/s)</td>
+<td style="text-align: left;">rate from the tier to the GPU</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>write_bandwidth_mb_s</code></td>
-<td style="text-align: left;">MB/s</td>
-<td style="text-align: left;">sustained write bandwidth; flash writes more slowly than it reads</td>
+<td style="text-align: left;"><code>offload_tier_&lt;tier&gt;_write_rate</code></td>
+<td style="text-align: left;">bytes per µs</td>
+<td style="text-align: left;">rate from the GPU to the tier; flash writes more slowly than it reads</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>base_latency_us</code></td>
-<td style="text-align: left;">µs</td>
+<td style="text-align: left;"><code>offload_tier_&lt;tier&gt;_base_latency</code></td>
+<td style="text-align: left;">µs per transfer</td>
 <td style="text-align: left;">fixed cost of one transfer, which dominates small transfers</td>
 </tr>
 </tbody>
 </table>
-<p>Each key names its unit, so a figure in another unit has to be converted before it can be written down. All three values must be positive. A tier may carry comment keys inside its own mapping, but not at the top level of the file.</p>
+<p>To add a tier, add its name and description here, then add the three coefficients for every catalog chip by adding the tier to <code>registry/scripts/emit_offload_tiers.py</code> and running it (the <a href="../../../registry/reproducing-coefficients/#offload-tiers">reproduction guide</a> says how, and what method each kind of figure takes). <code>TestEveryTierHasItsTermsOnEveryChip</code> fails until all of them are there. A tier that states <code>read_bandwidth_mb_s</code>, <code>write_bandwidth_mb_s</code> or <code>base_latency_us</code> is refused, with that reason. A tier may carry comment keys inside its own mapping, but not at the top level of the file.</p>
 <h2 id="then">Then<a class="headerlink" href="#then" title="Permanent link">&para;</a></h2>
 <p>Run the <a href="../checks/">checks</a> and open a pull request that cites the source of every figure.</p>
 

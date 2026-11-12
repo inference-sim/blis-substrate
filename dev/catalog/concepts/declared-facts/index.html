@@ -729,6 +729,8 @@
       
         
       
+        
+      
     
     
     
@@ -867,6 +869,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/guides/router-sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Measure how far the router policy moves a figure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -886,6 +916,8 @@
       
         
           
+        
+      
         
       
         
@@ -1451,6 +1483,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/router-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -2351,6 +2411,8 @@
       
         
       
+        
+      
     
     
     
@@ -2601,6 +2663,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../mixed-precision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixed-precision checkpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../glossary/" class="md-nav__link">
         
   
@@ -2641,6 +2731,8 @@
       
         
           
+        
+      
         
       
         
@@ -2839,6 +2931,34 @@
     
   
     Workloads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/routers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -3261,6 +3381,8 @@
       
         
       
+        
+      
     
     
     
@@ -3323,6 +3445,8 @@
   
     
     
+      
+        
       
         
       
@@ -3504,6 +3628,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-offload-tiers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-offload-tiers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../registry/reference/sets/cost-model-attention/" class="md-nav__link">
         
   
@@ -3632,6 +3784,34 @@
     
   
     Acceptance profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/method-error/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Typical error of each method
   
 
     
@@ -4011,6 +4191,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4164,6 +4350,90 @@
     
   
     Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/switch-groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Switch groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/admission-split/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The admission queue
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/hopper-dense-mxfp8-ramp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Hopper dense MXFP8 ramp
   
 
     
@@ -5110,12 +5380,21 @@
 <dt><code>derived</code></dt>
 <dd>The figures are computed from vendor figures by other arithmetic. They are still declared and still unmeasured.</dd>
 </dl>
-<p>The label applies to a whole file. The schema has no label for a figure that is neither of these, such as a capacity or <abbr title="Streaming multiprocessor: the GPU's arithmetic units">SM</abbr> count that a device reports, so a file holding one keeps the label that fits the rest of its figures and says which fields are exceptions in its comments. Every chip and fabric file is labeled <code>vendor_spec</code> today. Read a file's comments, not only its label, before relying on a figure. The <a href="../../reference/hardware/#sources">Chips</a> and <a href="../../reference/networks/#sources">Fabrics</a> references reproduce every comment.</p>
+<p>The label applies to a whole file: a field the file's <code>FieldProvenance</code> does not name has the source the label gives it, and the label has to be a source for a field. <code>vendor_spec</code> is: its figures are the datasheet's. <code>derived</code> is not, because it says how a figure was obtained and not where it was read, so a file labeled <code>derived</code> states a source for every fact it records. A field's source is one of three words, which <code>FieldProvenance</code> states by the field's name:</p>
+<dl>
+<dt><code>datasheet</code></dt>
+<dd>The vendor's datasheet states the figure.</dd>
+<dt><code>published</code></dt>
+<dd>The vendor or another public source publishes the figure outside a datasheet: a blog, a device-properties dump, a conference disclosure.</dd>
+<dt><code>measured:&lt;device&gt;</code></dt>
+<dd>The figure was read off one named device, such as the total a driver reports. The device is named in the file's comments too, and a test fails if they disagree.</dd>
+</dl>
+<p>A fitted or assumed value is none of these. It is a coefficient and belongs in the registry, and the schema refuses it here with that reason. The set of exceptions each chip records is pinned exactly by a test (<code>committedExceptions</code> in <code>contracts/spec/hardware</code>), so deleting or changing one fails it. Every chip and fabric file is labeled <code>vendor_spec</code> today. The <a href="../../reference/hardware/#sources">Chips</a> and <a href="../../reference/networks/#sources">Fabrics</a> references reproduce every comment.</p>
 <h2 id="where-the-catalog-falls-short-of-its-rule">Where the catalog falls short of its rule<a class="headerlink" href="#where-the-catalog-falls-short-of-its-rule" title="Permanent link">&para;</a></h2>
 <p>The rule is the aim, and some current entries do not yet meet it. As of this release:</p>
 <ul>
-<li>Every chip's peak rates and <abbr title="High-bandwidth memory: the GPU's own memory">HBM</abbr> bandwidth are vendor datasheet figures, but some memory capacities and <abbr title="Streaming multiprocessor: the GPU's arithmetic units">SM</abbr> counts are not. The capacities of <code>b300</code> and <code>gb300</code> are what <code>nvidia-smi</code> reports, and <code>b200</code> and <code>h200</code> record their datasheets' GB figure as GiB. The <abbr title="Streaming multiprocessor: the GPU's arithmetic units">SM</abbr> count of <code>b300</code> comes from a device-properties listing NVIDIA publishes. The <abbr title="Streaming multiprocessor: the GPU's arithmetic units">SM</abbr> count of <code>gb200-nvl72</code> rests on NVIDIA's die-level disclosure for B200. The <abbr title="Streaming multiprocessor: the GPU's arithmetic units">SM</abbr> count of <code>gb300</code> comes from a third party's record of what the device reports. No datasheet states any of these, and each chip's comments say which source applies.</li>
-<li>The storage tiers are representative device classes chosen by the simulator's authors. They cite no source.</li>
+<li>Every chip's peak rates and <abbr title="High-bandwidth memory: the GPU's own memory">HBM</abbr> bandwidth are vendor datasheet figures, but some memory capacities and <abbr title="Streaming multiprocessor: the GPU's arithmetic units">SM</abbr> counts are not, and each chip records which in <code>FieldProvenance</code>. The capacities of <code>b200</code>, <code>b300</code>, <code>gb200-nvl72</code>, <code>gb300</code>, <code>h100</code> and <code>h200</code> are what a named device's driver reports. The <abbr title="Streaming multiprocessor: the GPU's arithmetic units">SM</abbr> counts of <code>b300</code>, <code>gb200-nvl72</code> and <code>gb300</code> are what the device reports, taken from a published record of one named device. The <abbr title="Streaming multiprocessor: the GPU's arithmetic units">SM</abbr> counts of <code>a100-80</code>, <code>a100-sxm</code> and <code>b200</code> are published by NVIDIA outside a datasheet. The <code>MemoryGiB</code> of <code>a100-80</code>, <code>a100-sxm</code> and <code>l40s</code> is the datasheet's nominal capacity (80, 80 and 48) read as GiB; the CUDA driver reports less on the devices NVIDIA's published dumps cover (79.1 GiB for an A100-SXM4-80GB, 44.4 GiB for an L40S).</li>
+<li>A storage tier states no number. Its rates and latency were fitted or chosen by the simulator's authors, so they are coefficients, and they are in the registry.</li>
 <li>The workload shapes are presets chosen by the simulator's authors. They cite no trace or dataset. The replay workloads cite their corpus by repository, revision and digest.</li>
 </ul>
 <p>Each of these files says so in its own comments. A pull request that replaces one of these with a cited declared figure, or moves a chosen number to the registry, is welcome.</p>

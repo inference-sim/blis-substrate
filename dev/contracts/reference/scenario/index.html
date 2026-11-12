@@ -737,6 +737,8 @@
       
         
       
+        
+      
     
     
     
@@ -878,6 +880,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/router-sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Measure how far the router policy moves a figure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -899,6 +929,8 @@
       
         
           
+        
+      
         
       
         
@@ -1575,6 +1607,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../router-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -2468,6 +2528,8 @@
       
         
       
+        
+      
     
     
     
@@ -2613,6 +2675,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../catalog/concepts/mixed-precision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixed-precision checkpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../catalog/concepts/glossary/" class="md-nav__link">
         
   
@@ -2653,6 +2743,8 @@
       
         
           
+        
+      
         
       
         
@@ -2848,6 +2940,34 @@
     
   
     Workloads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../catalog/reference/routers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -3270,6 +3390,8 @@
       
         
       
+        
+      
     
     
     
@@ -3332,6 +3454,8 @@
   
     
     
+      
+        
       
         
       
@@ -3513,6 +3637,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-offload-tiers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-offload-tiers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../registry/reference/sets/cost-model-attention/" class="md-nav__link">
         
   
@@ -3641,6 +3793,34 @@
     
   
     Acceptance profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/method-error/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Typical error of each method
   
 
     
@@ -4020,6 +4200,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4173,6 +4359,90 @@
     
   
     Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/switch-groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Switch groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/admission-split/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The admission queue
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/hopper-dense-mxfp8-ramp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Hopper dense MXFP8 ramp
   
 
     
@@ -5250,6 +5520,18 @@ them.</p>
 <td>GPUs per rack, an NVLink domain that spans nodes. Only a chip's entry states a rack: omit it or state the entry's <code>GPUsPerRack</code>. See <a href="#packaging">Packaging</a>.</td>
 </tr>
 <tr>
+<td><code>switch_groups</code></td>
+<td>list of lists of integers</td>
+<td>no</td>
+<td>A partition of the nodes <code>0</code> to <code>nodes - 1</code> into the groups that sit under one leaf switch, each group a list of node numbers. Needs <code>uplink_oversubscription</code>. See <a href="../../../kernel/concepts/switch-groups/">Switch groups</a>.</td>
+</tr>
+<tr>
+<td><code>uplink_oversubscription</code></td>
+<td>number</td>
+<td>with <code>switch_groups</code></td>
+<td>The ratio r of a group's aggregate <abbr title="Network interface: the link between nodes">NIC</abbr> rate to its uplink's rate, at least 1. Refused without <code>switch_groups</code>.</td>
+</tr>
+<tr>
 <td><code>storage</code></td>
 <td>list of strings</td>
 <td>no</td>
@@ -5303,6 +5585,10 @@ domain is a different product, and needs its own catalog entry.</p>
 <li><code>gpus_per_rack</code> and <code>gpus_per_node</code> are both set and the first is not a multiple of the
   second;</li>
 <li>the cluster has more than one node and names no <code>fabric</code>;</li>
+<li><code>switch_groups</code> has an empty group, names a node twice (<code>switch_group_overlap</code>), names a node the
+  cluster does not have (<code>switch_group_unknown_node</code>), leaves a node out (<code>switch_group_missing_node</code>), or
+  is stated for a one-node cluster; <code>uplink_oversubscription</code> is missing with groups, not a finite
+  number, not positive, below 1, or stated without groups (each refused under its own rule name);</li>
 <li>a <code>storage</code> entry is empty or appears twice;</li>
 <li><code>workload</code> is present and is not a valid <a href="../workload/#binding">binding</a>.</li>
 <li><code>acceptance</code> is present and is not a valid <a href="../acceptance/#scenario-pin">pin</a>.</li>

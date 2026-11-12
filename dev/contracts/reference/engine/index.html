@@ -737,6 +737,8 @@
       
         
       
+        
+      
     
     
     
@@ -878,6 +880,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/router-sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Measure how far the router policy moves a figure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -899,6 +929,8 @@
       
         
           
+        
+      
         
       
         
@@ -1467,6 +1499,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../router-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -2540,6 +2600,8 @@
       
         
       
+        
+      
     
     
     
@@ -2685,6 +2747,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../catalog/concepts/mixed-precision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixed-precision checkpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../catalog/concepts/glossary/" class="md-nav__link">
         
   
@@ -2725,6 +2815,8 @@
       
         
           
+        
+      
         
       
         
@@ -2920,6 +3012,34 @@
     
   
     Workloads
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../catalog/reference/routers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Router table
   
 
     
@@ -3342,6 +3462,8 @@
       
         
       
+        
+      
     
     
     
@@ -3404,6 +3526,8 @@
   
     
     
+      
+        
       
         
       
@@ -3585,6 +3709,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../registry/reference/sets/cost-model-offload-tiers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost-model-offload-tiers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../registry/reference/sets/cost-model-attention/" class="md-nav__link">
         
   
@@ -3713,6 +3865,34 @@
     
   
     Acceptance profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registry/reference/method-error/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Typical error of each method
   
 
     
@@ -4092,6 +4272,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
     
@@ -4245,6 +4431,90 @@
     
   
     Parallelism
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/switch-groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Switch groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/admission-split/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The admission queue
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kernel/concepts/hopper-dense-mxfp8-ramp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Hopper dense MXFP8 ramp
   
 
     
@@ -5371,6 +5641,16 @@ tier). An engine that starts a transfer also implements <code>engine.Planned</co
 the <code>plan.PoolPlan</code> the transfer is priced against, and <code>PoolPlan.CheckTransfer</code> refuses a move to
 a device the plan does not list or to a node the pool does not have. <code>env.DemandFor</code> is the
 simulator's side: it runs both checks and then calls <code>TransferDemand</code> with the engine's <code>Move</code>.</p>
+<p>Admission has the same split. <code>plan.HostPlan.Admission</code> is the shape of the queue a request waits
+in before the engine admits it: <code>Servers</code> independent first-in first-out queues of
+<code>WorkersPerServer</code> servers each, stated by the engine from its own settings. <code>Environment.HostDemand</code>
+is what a request of a given prompt length asks of it: <code>Service</code>, the time it holds one server, and
+<code>Delay</code>, the time it only waits, which sum to the kernel's <code>AdmissionOverhead</code>. The simulator
+schedules a request as <code>done = Admit(arrival, Service) + Delay</code> on a queue of that shape, and knows
+nothing of the engine's own names for the servers. <code>Delay</code> is the part of the overhead that is not
+known to be work a server does (the registry gives the per-request term as a latency intercept of
+unknown origin), so charging it as <code>Delay</code> is an assumption with a bound on each side: all of it as
+<code>Service</code> is the serial model, none of it the concurrent one.</p>
 <p><code>enginetest.Drive</code> runs those checks on every started transfer, and <code>Options.Boundary</code> takes
 each one on across the simulator's side (<code>envtest.Boundary</code> does it with an Environment). An
 engine whose transfers cannot be demanded fails there, not as a zero price in a run.</p>
