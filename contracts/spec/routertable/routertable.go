@@ -133,25 +133,31 @@ const (
 
 // PolicyInfo describes a policy.
 type PolicyInfo struct {
-	Policy Policy
+	Policy Policy `json:"policy"`
 	// Plugins is the composition, as the plugin types of llm-d's router with their weights.
-	Plugins string
+	Plugins string `json:"plugins"`
 	// Sources are the files of llm-d's router, from its root, that define the composition. An
 	// entry that maps to the policy cites at least one of them.
-	Sources []string
+	Sources []string `json:"sources"`
+	// Config is the complete EPP configuration of the policy in a prefill/decode deployment.
+	Config PolicyConfig `json:"config"`
 }
 
 // Policies lists the policies llm-d's router offers, in the order they are documented. It does
-// not include PolicyNone, which is the absence of one.
+// not include PolicyNone, which is the absence of one. CheckPolicies holds the list to
+// ClosedPolicies and each configuration to the rules of PolicyConfig.
 func Policies() []PolicyInfo {
 	return []PolicyInfo{
 		{PolicyRoundRobin, "max-score-picker; no scorer",
 			[]string{"pkg/epp/framework/plugins/scheduling/picker/maxscore/picker.go",
-				"pkg/epp/framework/plugins/scheduling/picker/common.go"}},
+				"pkg/epp/framework/plugins/scheduling/picker/common.go"},
+			roundRobinConfig()},
 		{PolicyLeastActiveRequests, "inflight-load-producer; active-request-scorer; max-score-picker",
-			[]string{"pkg/epp/framework/plugins/scheduling/scorer/activerequest/active_request.go"}},
-		{PolicyDefault, "queue-scorer (2); kv-cache-utilization-scorer (2); prefix-cache-scorer (3); max-score-picker",
-			[]string{"pkg/epp/config/loader/defaults.go"}},
+			[]string{"pkg/epp/framework/plugins/scheduling/scorer/activerequest/active_request.go"},
+			leastActiveConfig()},
+		{PolicyDefault, "approx-prefix-cache-producer; queue-scorer (2); kv-cache-utilization-scorer (2); prefix-cache-scorer (3); max-score-picker",
+			[]string{"pkg/epp/config/loader/defaults.go"},
+			defaultConfig()},
 	}
 }
 

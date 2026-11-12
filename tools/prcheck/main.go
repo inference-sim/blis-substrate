@@ -55,6 +55,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/inference-sim/blis-substrate/contracts/spec/routertable"
 	"io"
 	"os"
 	"os/exec"
@@ -397,6 +398,17 @@ func run(args []string, w io.Writer) error {
 			"provenances": vocab.AllProvenances(), "source_kinds": vocab.AllSourceKinds(),
 			"source_roles": vocab.AllSourceRoles(), "licences": vocab.RedistributableLicences(),
 		})
+	case "router-policies":
+		// The router table's policies with their complete EPP configurations, as JSON, for the
+		// consumers that write an EPP file (the accuracy dashboard). It refuses a list that
+		// fails routertable.CheckPolicies, so a consumer reads only a checked list.
+		infos := routertable.Policies()
+		if p := routertable.CheckPolicies(infos); !p.OK() {
+			return fmt.Errorf("the router table's policies are not complete:\n%s", p.Error())
+		}
+		enc := json.NewEncoder(w)
+		enc.SetIndent("", " ")
+		return enc.Encode(map[string]any{"closed_policies": routertable.ClosedPolicies, "policies": infos})
 	case "status":
 		// prcheck status -repo o/n -gates .github/gates.yaml -out page.md
 		reg, err := invariants.Embedded()
