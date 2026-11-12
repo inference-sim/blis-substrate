@@ -44,13 +44,13 @@ type Switching struct {
 // refuses groups that Validate refuses, so a caller that holds a non-nil result holds a
 // partition of the nodes.
 func (c Cluster) Switching() (*Switching, error) {
-	if len(c.SwitchGroups) == 0 {
-		return nil, nil
-	}
 	p := &validate.Problems{}
 	c.validateSwitching(p)
 	if !p.OK() {
 		return nil, p
+	}
+	if len(c.SwitchGroups) == 0 {
+		return nil, nil
 	}
 	sw := &Switching{Oversubscription: c.UplinkOversubscription, groupOf: map[int]int{}}
 	for g, nodes := range c.SwitchGroups {
@@ -79,30 +79,30 @@ func (s *Switching) GroupNodes(g int) int { return len(s.Groups[g]) }
 func (c Cluster) validateSwitching(p *validate.Problems) {
 	if len(c.SwitchGroups) == 0 {
 		if c.UplinkOversubscription != 0 {
-			p.At("uplink_oversubscription").RuleErrorf(RuleOversubscriptionNoGroups,
+			refuse(p, "uplink_oversubscription", RuleOversubscriptionNoGroups,
 				"is %v, but the cluster states no switch_groups: there is no uplink to oversubscribe",
 				c.UplinkOversubscription)
 		}
 		return
 	}
 	if c.Nodes < 2 {
-		p.At("switch_groups").RuleErrorf(RuleSwitchGroupNeedsNodes,
+		refuse(p, "switch_groups", RuleSwitchGroupNeedsNodes,
 			"a cluster of %d node has no uplink between groups: state switch_groups for two or more nodes",
 			c.Nodes)
 	}
 	owner := map[int]int{}
 	for g, nodes := range c.SwitchGroups {
-		at := p.At(fmt.Sprintf("switch_groups[%d]", g))
+		at := fmt.Sprintf("switch_groups[%d]", g)
 		if len(nodes) == 0 {
-			at.RuleErrorf(RuleSwitchGroupEmpty, "lists no node: a group holds at least one")
+			refuse(p, at, RuleSwitchGroupEmpty, "lists no node: a group holds at least one")
 		}
 		for _, n := range nodes {
 			switch prev, seen := owner[n]; {
 			case n < 0 || n >= c.Nodes:
-				at.RuleErrorf(RuleSwitchGroupUnknownNode,
+				refuse(p, at, RuleSwitchGroupUnknownNode,
 					"names node %d, but the cluster has nodes 0 to %d", n, c.Nodes-1)
 			case seen:
-				at.RuleErrorf(RuleSwitchGroupOverlap,
+				refuse(p, at, RuleSwitchGroupOverlap,
 					"names node %d, which switch_groups[%d] already holds: a node sits under one switch",
 					n, prev)
 			default:
@@ -112,7 +112,7 @@ func (c Cluster) validateSwitching(p *validate.Problems) {
 	}
 	for n := 0; n < c.Nodes; n++ {
 		if _, ok := owner[n]; !ok {
-			p.At("switch_groups").RuleErrorf(RuleSwitchGroupMissingNode,
+			refuse(p, "switch_groups", RuleSwitchGroupMissingNode,
 				"leaves node %d under no switch: the groups partition all %d nodes", n, c.Nodes)
 			break
 		}
@@ -120,16 +120,24 @@ func (c Cluster) validateSwitching(p *validate.Problems) {
 	r := c.UplinkOversubscription
 	switch {
 	case r == 0:
-		p.At("uplink_oversubscription").RuleErrorf(RuleSwitchGroupNeedsRatio,
+		refuse(p, "uplink_oversubscription", RuleSwitchGroupNeedsRatio,
 			"required with switch_groups: state how oversubscribed each group's uplink is (at least 1)")
 	case math.IsNaN(r) || math.IsInf(r, 0):
-		p.At("uplink_oversubscription").RuleErrorf(RuleOversubscriptionNonFinite,
+		refuse(p, "uplink_oversubscription", RuleOversubscriptionNonFinite,
 			"must be a finite number, got %v", r)
 	case r < 0:
-		p.At("uplink_oversubscription").RuleErrorf(RuleOversubscriptionNonpos,
+		refuse(p, "uplink_oversubscription", RuleOversubscriptionNonpos,
 			"must be positive, got %v", r)
 	case r < 1:
-		p.At("uplink_oversubscription").RuleErrorf(RuleOversubscriptionBelowOne,
+		refuse(p, "uplink_oversubscription", RuleOversubscriptionBelowOne,
 			"is %v: an uplink faster than the group's NICs is not oversubscribed; state at least 1", r)
 	}
+}
+
+// refuse records a problem under a rule at a field path. validate.Problems.At returns a
+// detached collector, so the path is joined here and merged back.
+func refuse(p *validate.Problems, path, rule, format string, args ...any) {
+	one := &validate.Problems{}
+	one.RuleErrorf(rule, format, args...)
+	p.Merge(path, one)
 }
