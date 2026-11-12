@@ -271,6 +271,9 @@ func CheckPrices(k kernel.Kernel) error {
 			return fmt.Errorf("a host overhead is %v", f)
 		}
 	}
+	if a, r := k.AdmissionOverhead(1024), k.AdmissionRenderTime(1024); r < 0 || r > a {
+		return fmt.Errorf("the render time of admission is %v, outside [0, %v], the admission overhead", r, a)
+	}
 	return nil
 }
 

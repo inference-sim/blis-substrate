@@ -89,6 +89,16 @@ type Kernel interface {
 	// therefore cannot live in a pure function.
 	AdmissionOverhead(promptTokens int) time.Duration
 
+	// AdmissionRenderTime is the part of AdmissionOverhead during which one render
+	// thread of the API server is busy: the work that scales with the prompt, which
+	// vLLM runs on the renderer's thread pool (renderer_num_workers, default 1). It
+	// is never more than AdmissionOverhead. The rest, AdmissionOverhead minus this,
+	// is a delay the request waits out without holding any thread, so a caller that
+	// queues requests for render threads queues them for this time alone and adds the
+	// rest after the thread is free. A caller with no render queue uses
+	// AdmissionOverhead as before.
+	AdmissionRenderTime(promptTokens int) time.Duration
+
 	// OutputTokenOverhead is per-emitted-token host work: incremental
 	// detokenization and streaming. It runs in the output path rather than the
 	// forward pass, which is why it does not enter StepTime.

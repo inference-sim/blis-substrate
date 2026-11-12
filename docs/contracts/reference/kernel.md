@@ -27,6 +27,7 @@ subject of [Where the kernel stops](../design/kernel-boundary.md).
 | `PDTransferDemand(tokens, from, to Placement) TransferDemand` | The same handoff as payload, floor and links, for a caller arbitrating concurrent transfers. |
 | **Host work** | |
 | `AdmissionOverhead(promptTokens int) time.Duration` | CPU work before a request can be scheduled, such as tokenization. Excludes queueing. |
+| `AdmissionRenderTime(promptTokens int) time.Duration` | The part of `AdmissionOverhead` that occupies a render thread (the per-token term). The rest is a delay that holds no thread. |
 | `OutputTokenOverhead() time.Duration` | Host work per emitted token, such as detokenization and streaming. |
 | `CompletionOverhead() time.Duration` | Fixed work when a request finishes. Counts toward end-to-end latency, not time to first token. |
 | **Provenance** | |

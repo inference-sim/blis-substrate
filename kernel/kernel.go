@@ -1911,6 +1911,18 @@ func (k *Kernel) AdmissionOverhead(promptTokens int) time.Duration {
 		time.Duration(float64(k.admissionPerToken)*float64(promptTokens))
 }
 
+// AdmissionRenderTime returns the part of AdmissionOverhead that occupies a render thread:
+// the per-token term. The per-request term is a latency intercept that the registry's
+// rationale for host_admission_per_request says is not tokenisation or templating (those
+// measured 0.0153 and 0.1083 ms in all), so it is not work a thread does and it is not
+// counted here.
+func (k *Kernel) AdmissionRenderTime(promptTokens int) time.Duration {
+	if promptTokens <= 0 {
+		return 0
+	}
+	return time.Duration(float64(k.admissionPerToken) * float64(promptTokens))
+}
+
 // OutputTokenOverhead returns host time per emitted token.
 func (k *Kernel) OutputTokenOverhead() time.Duration { return k.outputTokenCost }
 

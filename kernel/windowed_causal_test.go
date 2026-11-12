@@ -126,3 +126,27 @@ func TestAdmissionOverheadIsZeroForNoTokens(t *testing.T) {
 		t.Fatalf("got %v want 0", got)
 	}
 }
+
+// The render thread is held for the per-token part alone. The per-request term is a delay
+// that holds no thread, so it must not appear in what a render queue is charged: charging it
+// there caps an endpoint at 1/(40 ms) requests a second whatever the prompt length.
+func TestAdmissionRenderTimeIsThePerTokenTermAlone(t *testing.T) {
+	k := &Kernel{admissionPerToken: 350 * time.Nanosecond, admissionPerRequest: 40 * time.Millisecond}
+	for _, tokens := range []int{1, 1024, 8192} {
+		want := time.Duration(350 * float64(tokens))
+		if got := k.AdmissionRenderTime(tokens); got != want {
+			t.Fatalf("tokens=%d: got %v want %v", tokens, got, want)
+		}
+		if k.AdmissionRenderTime(tokens) > k.AdmissionOverhead(tokens) {
+			t.Fatalf("tokens=%d: render time exceeds the admission overhead", tokens)
+		}
+	}
+	if got := k.AdmissionRenderTime(0); got != 0 {
+		t.Fatalf("no tokens: got %v want 0", got)
+	}
+	// With no per-request term the two coincide, as AdmissionOverhead did before the split.
+	k.admissionPerRequest = 0
+	if k.AdmissionRenderTime(1024) != k.AdmissionOverhead(1024) {
+		t.Fatalf("without a per-request term the render time must equal the admission overhead")
+	}
+}
