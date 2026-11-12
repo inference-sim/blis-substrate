@@ -5170,7 +5170,13 @@ rules pack checks them, not the schema. See <a href="../validation/#rule-problem
 <h2 id="numbers-are-finite">Numbers are finite<a class="headerlink" href="#numbers-are-finite" title="Permanent link">&para;</a></h2>
 <p>Every floating-point value must be finite. A <code>NaN</code> compares false to every bound and
 <code>+Inf</code> looks positive, so either would pass a range check and corrupt every calculation
-that used it. Validators reject both before they check a range.</p>
+that used it. The loaders reject both before a range is checked, and <code>-Inf</code> with them.</p>
+<p>One kind of field is the exception: a number whose meaning includes "no limit". Such a field
+says so in its Go type with the struct tag <code>infinity:"allowed"</code>, and holds <code>+Inf</code>, written
+<code>.inf</code> in YAML. Today that is <code>grace_period_s</code> alone, where <code>.inf</code> waits indefinitely. <code>NaN</code>
+and <code>-Inf</code> are refused in it as everywhere. A JSON Result has no infinity, so it writes the
+string <code>"inf"</code> for such a field and reads it back; the string is that field's infinity and
+nothing else's.</p>
 <h2 id="zero-means-unset-except-in-tri-state-keys">Zero means unset, except in tri-state keys<a class="headerlink" href="#zero-means-unset-except-in-tri-state-keys" title="Permanent link">&para;</a></h2>
 <p>Most optional numeric keys treat zero as "not stated": a <code>block_size</code> of 0 means the engine
 chooses. That works because no meaningful value of those keys is zero.</p>

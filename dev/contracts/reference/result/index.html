@@ -5385,6 +5385,10 @@ character is <code>{</code> is read as JSON, anything else as YAML. A Result is 
 <code>result.Marshal</code>, not <code>encoding/json</code>, which reads none of these keys and drops a pool's
 engine block. Given the same input, options and data, the simulator reproduces the document
 byte for byte outside <code>runtime</code>, <code>rerun_of</code> and <code>revision_changes</code>.</p>
+<p>A number is finite, with one exception: <code>grace_period_s</code>, in the replay definition a Result
+records, may be infinite, and <code>.inf</code> waits indefinitely. YAML writes it <code>.inf</code> and JSON writes the
+string <code>"inf"</code>; either reads back as infinity, in that field only (<a href="../../concepts/contracts/#numbers-are-finite">Numbers are
+finite</a>).</p>
 <div class="language-json highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Result"</span><span class="p">,</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">"schema_version"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>

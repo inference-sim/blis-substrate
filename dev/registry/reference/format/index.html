@@ -5188,7 +5188,7 @@ Where this page and the schema disagree, the schema is right.</p>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="nt">rationale</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">      </span><span class="no">The fraction of this part's bfloat16 peak a large, well-shaped matmul asymptotically reaches, on vLLM's own linear kernel rather than the generic `torch_flow` path the TRT-LLM sweep measures. Envelope rather than mean: a cost model predicts what a well-shaped GEMM achieves. Least-squares residual 0.0629 over 74 token counts.</span>
 </code></pre></div>
-<p class="reg-caption">Quoted from <a href="https://github.com/inference-sim/blis-substrate/blob/bc8c95d1210167c5f987e74d40049c905a4f3ae5/registry/coefficients/cost-model-primitives.yaml#L627">the committed file</a> at build time.</p>
+<p class="reg-caption">Quoted from <a href="https://github.com/inference-sim/blis-substrate/blob/d9d103cf3a9cb383bf3f2761f5f77818b2179d3b/registry/coefficients/cost-model-primitives.yaml#L627">the committed file</a> at build time.</p>
 
 <p>Unknown keys are errors at every level: top level, entry, scope and source. A misspelled
 field is rejected, not ignored.</p>
@@ -5286,16 +5286,17 @@ entry cites a source, and every <code>assumed</code> entry carries a substantial
 the committed sets use each one, counted when this page was built.</p>
 <h3 id="units">Units<a class="headerlink" href="#units" title="Permanent link">&para;</a></h3>
 <p><code>dimensionless</code>, <code>us_per_layer</code>, <code>us_per_request</code>, <code>us_per_step</code>, <code>us_per_hop</code>,
-<code>us_per_transfer</code>, <code>us_per_load</code>, <code>us_per_token</code>, <code>bytes_per_us</code>, <code>bytes_per_rank</code>,
+<code>us_per_transfer</code>, <code>us_per_load</code>, <code>us_per_token</code>, <code>bytes_per_us</code>, <code>bytes_per_rank</code>, <code>bytes_per_token</code>,
 <code>tokens</code>, <code>sm_count</code>. In use:</p>
 <div class="reg-table-wrap"><table class="reg-table"><thead><tr><th>term</th><th class="reg-num">entries</th></tr></thead><tbody>
 <tr><td><code>bytes_per_us</code></td><td class="reg-num">644</td></tr>
 <tr><td><code>us_per_transfer</code></td><td class="reg-num">373</td></tr>
 <tr><td><code>dimensionless</code></td><td class="reg-num">70</td></tr>
 <tr><td><code>tokens</code></td><td class="reg-num">53</td></tr>
-<tr><td><code>bytes_per_rank</code></td><td class="reg-num">41</td></tr>
+<tr><td><code>bytes_per_rank</code></td><td class="reg-num">39</td></tr>
 <tr><td><code>us_per_token</code></td><td class="reg-num">10</td></tr>
 <tr><td><code>us_per_request</code></td><td class="reg-num">5</td></tr>
+<tr><td><code>bytes_per_token</code></td><td class="reg-num">2</td></tr>
 <tr><td><code>us_per_layer</code></td><td class="reg-num">1</td></tr>
 <tr><td><code>us_per_step</code></td><td class="reg-num">1</td></tr>
 </tbody></table></div>

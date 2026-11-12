@@ -5326,6 +5326,10 @@ but not at the top level of the file, where every key is a class.</p>
 <li><code>TFlopsFP8</code> or <code>TFlopsNVFP4</code> is negative;</li>
 <li><code>TFlopsFP8</code> is positive but not above <code>TFlopsPeak</code>; no shipped part has an FP8 peak at or
   below its BF16 peak, so this is almost always a transcription slip;</li>
+<li>a peak is a sparse figure entered as dense: <code>TFlopsFP8</code> is more than 3.5 times <code>TFlopsPeak</code>,
+  <code>TFlopsNVFP4</code> is more than 3.5 times <code>TFlopsFP8</code>, or <code>TFlopsNVFP4</code> does not exceed <code>TFlopsFP8</code>
+  (design SUB-16: catalog peaks are dense figures, and their ratios between data types are the
+  datasheet's; the shipped parts run 2.0 to 3.11);</li>
 <li><code>GPUsPerRack</code> is not a multiple of <code>GPUsPerNode</code>, when both are set;</li>
 <li><code>IntraRackBwGBps</code> is set without <code>GPUsPerRack</code>;</li>
 <li><code>ComputeCapability</code> is set but is not <code>major.minor</code>.</li>

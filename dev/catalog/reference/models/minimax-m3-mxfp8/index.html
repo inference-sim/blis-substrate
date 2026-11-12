@@ -5054,7 +5054,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=gqa, n_q=64, n_kv=4, d_h=128</td>
+<td style="text-align: left;">holds_engine_kv=True, kind=gqa, n_q=64, n_kv=4, d_h=128</td>
 </tr>
 <tr>
 <td style="text-align: right;">3</td>
@@ -5139,14 +5139,14 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;">block_index_scores</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=gqa, n_q=4, n_kv=1, d_h=128, caches=[{'name': 'index', 'kind': 'index', 'owned': True, 'bytes_per_entry': 256}]</td>
+<td style="text-align: left;">holds_engine_kv=False, kind=gqa, n_q=4, n_kv=1, d_h=128, caches=[{'name': 'index', 'kind': 'index', 'owned': True, 'bytes_per_entry': 256}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">4</td>
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=swa, n_q=64, n_kv=4, d_h=128, window=2176</td>
+<td style="text-align: left;">holds_engine_kv=True, kind=swa, n_q=64, n_kv=4, d_h=128, window=2176</td>
 </tr>
 <tr>
 <td style="text-align: right;">5</td>
@@ -5174,7 +5174,7 @@
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=3072, k=6144, experts=128, top_k=4, shared_experts=1</td>
+<td style="text-align: left;">shared=False, n=3072, k=6144, experts=128, top_k=4, shared_experts=1</td>
 </tr>
 <tr>
 <td style="text-align: right;">9</td>

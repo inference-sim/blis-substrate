@@ -1569,6 +1569,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#unusual-model-shapes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unusual model shapes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#batches" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5017,6 +5028,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#unusual-model-shapes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unusual model shapes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#batches" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5209,6 +5231,17 @@ batches in flight occupy two stages at once: a new batch can enter every slowest
 time, while each batch's output takes the whole sum. <code>kerneltest.CheckStages</code> checks the
 law.</dd>
 </dl>
+<h2 id="unusual-model-shapes">Unusual model shapes<a class="headerlink" href="#unusual-model-shapes" title="Permanent link">&para;</a></h2>
+<p><code>conformance/shapetest</code> holds six model graphs that each differ from the catalog's models in one
+structural way: every layer windowed, every layer recurrent, <abbr title="Multi-head latent attention, which caches one compressed vector per token">MLA</abbr> only, a draft layer declared
+last, a single layer, and no attention at all (design SUB-10). Every shape is a valid graph.
+An implementation either prices a shape or refuses it with its own reason, and never both or
+neither. A priced shape holds to the size law of its cache kind, read from the graph: a shape
+with no cache holds nothing per sequence; a state-only shape holds its state; a windowed shape
+holds some and stops growing at the window; a growing cache grows with context. No size or
+price is negative, and every step is positive and under an hour, with <code>Overlap</code> not above
+<code>NoOverlap</code>. <code>shapetest.Run(t, build)</code> runs the suite, and the cost model, blis-vllm and
+blis-sglang each run it.</p>
 <p>A configuration whose conclusion changes between the two bounds needs a measurement rather
 than a prediction.</p>
 <p>The resources are:</p>
@@ -5233,7 +5266,7 @@ under a link otherwise. The resolved backend decides this, not the requested one
 </tr>
 <tr>
 <td><code>DecodeThreshold int</code></td>
-<td>Engine configuration that selects the attention kernel for each request.</td>
+<td>Engine configuration that selects the attention kernel for each request. An engine that states a step as a <code>plan.StepShape</code> carries the same figure as <code>StepShape.DecodeQueryLen</code> (a request scheduling at most that many tokens is a decode; unstated reads as 1), and <code>latencykernel.BatchOf</code> turns a step shape into a <code>Batch</code> with it. The cost model supplies no threshold of its own.</td>
 </tr>
 <tr>
 <td><code>SMBudget int</code></td>
@@ -5242,6 +5275,10 @@ under a link otherwise. The resolved backend decides this, not the requested one
 <tr>
 <td><code>PadTokens int</code></td>
 <td>Tokens this data-parallel rank pads its step with under vLLM's DP lockstep: every rank runs the group's largest token count, and a rank with nothing scheduled runs a dummy batch of pad alone. Pad tokens run the GEMMs, the <abbr title="Mixture of experts">MoE</abbr> dispatch and combine and the expert paths, but never the logits, the LM head, the vocabulary all-gather or sampling. They are not requests. 0 means none; never negative.</td>
+</tr>
+<tr>
+<td><code>DraftPaddedTokens int</code></td>
+<td>Tokens this rank's drafter launches, after its own graph bucket and the width its data-parallel group agreed; the drafter coordinates its padding apart from the target's. The rows beyond the rank's own draft rows run the GEMMs and the <abbr title="Mixture of experts">MoE</abbr> paths and no attention. An engine that states a step as a <code>plan.StepShape</code> carries it as <code>DraftShape.Passes[rank].Padded</code>. 0 means the drafter launches only its own rows; never negative.</td>
 </tr>
 </tbody>
 </table>

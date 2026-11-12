@@ -5197,7 +5197,7 @@ the router's outbound HTTP (engine metrics, prompt rendering).</p>
 </tr>
 <tr>
 <td><code>WantsKVEvents</code>, <code>IngestKVEvents</code>, <code>ClearKVEvents</code></td>
-<td>Engines' <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> events, in vLLM's vocabulary (<code>BlockStored</code>, <code>BlockRemoved</code>, <code>AllBlocksCleared</code>).</td>
+<td>Engines' <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> events, in vLLM's vocabulary (<code>BlockStored</code>, <code>BlockRemoved</code>, <code>AllBlocksCleared</code>). A batch names the engine that published it in <code>KVBatch.Engine</code>, <code>vllm</code> or <code>sglang</code>; unset means <code>vllm</code>, and a router refuses any other value instead of decoding it as vLLM's.</td>
 </tr>
 <tr>
 <td><code>Stop()</code></td>

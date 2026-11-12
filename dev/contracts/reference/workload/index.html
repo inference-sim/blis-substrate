@@ -5532,7 +5532,7 @@ the run's choices:</p>
 <td><code>workload</code></td>
 <td>string</td>
 <td>no</td>
-<td>A catalog replay workload under <code>workloads/</code>, by file name. Set, the binding may state only <code>concurrency</code>, <code>random_seed</code>, <code>benchmark_duration_s</code>, <code>grace_period_s</code>, <code>max_context_length</code> and <code>acceptance</code>, which override the entry's; <code>ValidateAgainstCatalog</code> loads the entry and <code>ResolveReplay</code> merges the two.</td>
+<td>A catalog replay workload under <code>workloads/</code>, by file name. Set, the binding may state only <code>concurrency</code>, <code>random_seed</code>, <code>benchmark_duration_s</code>, <code>grace_period_s</code>, <code>max_context_length</code>, <code>acceptance</code> and <code>routing</code>, which override the entry's; <code>ValidateAgainstCatalog</code> loads the entry and <code>ResolveReplay</code> merges the two.</td>
 </tr>
 <tr>
 <td><code>concurrency</code></td>
@@ -6911,7 +6911,7 @@ invalid if</p>
 <li><code>scenario</code> or <code>harness_version</code> is empty or not transcribed, or <code>concurrency</code> is less
   than 1;</li>
 <li><code>benchmark_duration_s</code> is not finite, negative, or below 900;</li>
-<li><code>grace_period_s</code> is negative or NaN;</li>
+<li><code>grace_period_s</code> is negative or NaN (<code>.inf</code> is allowed: it waits indefinitely);</li>
 <li><code>cache_bust</code> is other than <code>first_turn_prefix</code>, or <code>system_idle_gap_cap_s</code> other than 10;</li>
 <li>a <code>trajectory_start</code> bound lies outside [0, 1], or <code>min_ratio</code> exceeds <code>max_ratio</code>;</li>
 <li><code>warmup.mode</code> is unknown; a <code>cache_pressure</code> warmup does not state exactly one of

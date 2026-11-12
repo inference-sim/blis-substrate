@@ -5200,7 +5200,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}]</td>
+<td style="text-align: left;">holds_engine_kv=True, kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">8</td>
@@ -5263,7 +5263,7 @@
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
+<td style="text-align: left;">shared=False, n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
 </tr>
 <tr>
 <td style="text-align: right;">17</td>
@@ -5411,7 +5411,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}]</td>
+<td style="text-align: left;">holds_engine_kv=True, kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">15</td>
@@ -5474,7 +5474,7 @@
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
+<td style="text-align: left;">shared=False, n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
 </tr>
 <tr>
 <td style="text-align: right;">24</td>
@@ -5629,7 +5629,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;">block_index_scores</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=32, n_kv=1, d_h=128, compress_ratio=2, tp=replicated, caches=[{'name': 'index', 'kind': 'index', 'owned': True, 'bytes_per_entry': 132, 'tokens_per_entry': 2, 'block_size': 64, 'page_alignment': 576}]</td>
+<td style="text-align: left;">holds_engine_kv=False, kind=sparse_mla, n_q=32, n_kv=1, d_h=128, compress_ratio=2, tp=replicated, caches=[{'name': 'index', 'kind': 'index', 'owned': True, 'bytes_per_entry': 132, 'tokens_per_entry': 2, 'block_size': 64, 'page_alignment': 576}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">16</td>
@@ -5650,7 +5650,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, index_topk=512, compress_ratio=2, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}, {'name': 'compressed', 'kind': 'kv', 'owned': True, 'bytes_per_entry': 584, 'tokens_per_entry': 2, 'block_size': 64, 'page_alignment': 576}, {'name': 'compressor_ring', 'kind': 'state', 'owned': True, 'bytes_per_entry': 4096, 'entries': 8}]</td>
+<td style="text-align: left;">holds_engine_kv=True, kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, index_topk=512, compress_ratio=2, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}, {'name': 'compressed', 'kind': 'kv', 'owned': True, 'bytes_per_entry': 584, 'tokens_per_entry': 2, 'block_size': 64, 'page_alignment': 576}, {'name': 'compressor_ring', 'kind': 'state', 'owned': True, 'bytes_per_entry': 4096, 'entries': 8}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">19</td>
@@ -5720,7 +5720,7 @@
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
+<td style="text-align: left;">shared=False, n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
 </tr>
 <tr>
 <td style="text-align: right;">29</td>
@@ -5819,7 +5819,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, index_topk=512, compress_ratio=2, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}, {'name': 'compressed', 'kind': 'kv', 'owned': False, 'bytes_per_entry': 584, 'tokens_per_entry': 2}]</td>
+<td style="text-align: left;">holds_engine_kv=True, kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, index_topk=512, compress_ratio=2, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}, {'name': 'compressed', 'kind': 'kv', 'owned': False, 'bytes_per_entry': 584, 'tokens_per_entry': 2}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">8</td>
@@ -5889,7 +5889,7 @@
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
+<td style="text-align: left;">shared=False, n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
 </tr>
 <tr>
 <td style="text-align: right;">18</td>
@@ -6093,7 +6093,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;">block_index_scores</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=32, n_kv=1, d_h=128, compress_ratio=2, tp=replicated, caches=[{'name': 'index', 'kind': 'index', 'owned': True, 'bytes_per_entry': 132, 'tokens_per_entry': 2, 'block_size': 64, 'page_alignment': 576}]</td>
+<td style="text-align: left;">holds_engine_kv=False, kind=sparse_mla, n_q=32, n_kv=1, d_h=128, compress_ratio=2, tp=replicated, caches=[{'name': 'index', 'kind': 'index', 'owned': True, 'bytes_per_entry': 132, 'tokens_per_entry': 2, 'block_size': 64, 'page_alignment': 576}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">23</td>
@@ -6114,7 +6114,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, index_topk=512, compress_ratio=2, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}, {'name': 'compressed', 'kind': 'kv', 'owned': True, 'bytes_per_entry': 584, 'tokens_per_entry': 2, 'block_size': 64, 'page_alignment': 576}, {'name': 'compressor_ring', 'kind': 'state', 'owned': True, 'bytes_per_entry': 4096, 'entries': 8}]</td>
+<td style="text-align: left;">holds_engine_kv=True, kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, index_topk=512, compress_ratio=2, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}, {'name': 'compressed', 'kind': 'kv', 'owned': True, 'bytes_per_entry': 584, 'tokens_per_entry': 2, 'block_size': 64, 'page_alignment': 576}, {'name': 'compressor_ring', 'kind': 'state', 'owned': True, 'bytes_per_entry': 4096, 'entries': 8}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">26</td>
@@ -6184,7 +6184,7 @@
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
+<td style="text-align: left;">shared=False, n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
 </tr>
 <tr>
 <td style="text-align: right;">36</td>
@@ -6339,7 +6339,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;">block_index_scores</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=32, n_kv=1, d_h=128, compress_ratio=1, tp=replicated, caches=[{'name': 'index', 'kind': 'index', 'owned': True, 'bytes_per_entry': 132, 'block_size': 64, 'page_alignment': 576}]</td>
+<td style="text-align: left;">holds_engine_kv=False, kind=sparse_mla, n_q=32, n_kv=1, d_h=128, compress_ratio=1, tp=replicated, caches=[{'name': 'index', 'kind': 'index', 'owned': True, 'bytes_per_entry': 132, 'block_size': 64, 'page_alignment': 576}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">16</td>
@@ -6374,7 +6374,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, index_topk=512, compress_ratio=1, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}, {'name': 'compressed', 'kind': 'kv', 'owned': True, 'bytes_per_entry': 584, 'block_size': 64, 'page_alignment': 576}]</td>
+<td style="text-align: left;">holds_engine_kv=True, kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, index_topk=512, compress_ratio=1, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}, {'name': 'compressed', 'kind': 'kv', 'owned': True, 'bytes_per_entry': 584, 'block_size': 64, 'page_alignment': 576}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">21</td>
@@ -6444,7 +6444,7 @@
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
+<td style="text-align: left;">shared=False, n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
 </tr>
 <tr>
 <td style="text-align: right;">31</td>
@@ -6543,7 +6543,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, index_topk=512, compress_ratio=1, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}, {'name': 'compressed', 'kind': 'kv', 'owned': False, 'bytes_per_entry': 584}]</td>
+<td style="text-align: left;">holds_engine_kv=True, kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, index_topk=512, compress_ratio=1, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}, {'name': 'compressed', 'kind': 'kv', 'owned': False, 'bytes_per_entry': 584}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">8</td>
@@ -6613,7 +6613,7 @@
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
+<td style="text-align: left;">shared=False, n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
 </tr>
 <tr>
 <td style="text-align: right;">18</td>
@@ -6733,7 +6733,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;">block_index_scores</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=32, n_kv=1, d_h=128, compress_ratio=1, tp=replicated, caches=[{'name': 'index', 'kind': 'index', 'owned': False, 'bytes_per_entry': 132}]</td>
+<td style="text-align: left;">holds_engine_kv=False, kind=sparse_mla, n_q=32, n_kv=1, d_h=128, compress_ratio=1, tp=replicated, caches=[{'name': 'index', 'kind': 'index', 'owned': False, 'bytes_per_entry': 132}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">11</td>
@@ -6761,7 +6761,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, index_topk=512, compress_ratio=1, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}, {'name': 'compressed', 'kind': 'kv', 'owned': False, 'bytes_per_entry': 584}]</td>
+<td style="text-align: left;">holds_engine_kv=True, kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=128, index_topk=512, compress_ratio=1, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}, {'name': 'compressed', 'kind': 'kv', 'owned': False, 'bytes_per_entry': 584}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">15</td>
@@ -6831,7 +6831,7 @@
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
+<td style="text-align: left;">shared=False, n=2304, k=5120, experts=384, top_k=6, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
 </tr>
 <tr>
 <td style="text-align: right;">25</td>
@@ -6930,7 +6930,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=133, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}]</td>
+<td style="text-align: left;">holds_engine_kv=True, kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=133, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">8</td>
@@ -6993,7 +6993,7 @@
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2304, k=5120, experts=128, top_k=3, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
+<td style="text-align: left;">shared=False, n=2304, k=5120, experts=128, top_k=3, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
 </tr>
 <tr>
 <td style="text-align: right;">17</td>
@@ -7092,7 +7092,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=133, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}]</td>
+<td style="text-align: left;">holds_engine_kv=True, kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=133, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">8</td>
@@ -7155,7 +7155,7 @@
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2304, k=5120, experts=128, top_k=3, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
+<td style="text-align: left;">shared=False, n=2304, k=5120, experts=128, top_k=3, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
 </tr>
 <tr>
 <td style="text-align: right;">17</td>
@@ -7254,7 +7254,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=133, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}]</td>
+<td style="text-align: left;">holds_engine_kv=True, kind=sparse_mla, n_q=64, n_kv=1, d_h=512, qk_rope_head_dim=64, window=133, caches=[{'name': 'swa', 'kind': 'window', 'owned': True, 'bytes_per_entry': 584, 'window': 128, 'block_size': 32, 'page_alignment': 576}]</td>
 </tr>
 <tr>
 <td style="text-align: right;">8</td>
@@ -7317,7 +7317,7 @@
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2304, k=5120, experts=128, top_k=3, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
+<td style="text-align: left;">shared=False, n=2304, k=5120, experts=128, top_k=3, weight_dtype=mxfp4, under_sequence_parallel=token_sharded</td>
 </tr>
 <tr>
 <td style="text-align: right;">17</td>

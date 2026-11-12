@@ -1583,7 +1583,18 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Methods">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requests-enginerequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requests: engine.Request
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Requests: engine.Request">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1610,6 +1621,45 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transfers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transfers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Transfers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-pull-that-moves-nothing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A pull that moves nothing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limits-deferred-to-m3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits, deferred to M3
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -5020,7 +5070,18 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Methods">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requests-enginerequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requests: engine.Request
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Requests: engine.Request">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -5047,6 +5108,45 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transfers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transfers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Transfers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-pull-that-moves-nothing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A pull that moves nothing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limits-deferred-to-m3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits, deferred to M3
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -5184,8 +5284,29 @@ interface in its own repository with no change here or in the simulator.</p>
 <td><code>Snapshot() State</code></td>
 <td>Current state (waiting, running, in-flight, <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> capacity), a copy the caller may keep.</td>
 </tr>
+<tr>
+<td><code>Plan() plan.PoolPlan</code> (<code>engine.Planned</code>, optional)</td>
+<td>The pool plan the engine's transfers are priced against; required of an engine that starts a transfer.</td>
+</tr>
+<tr>
+<td><code>Fields() fields.FieldList</code></td>
+<td>The field list of the engine release this engine models: every configuration field and environment variable it reads, with its status and estimation rule (design VLM-3, SGL-3). The substrate defines the method and the shape of a list (<a href="../fields/">the field list</a>) and holds no engine's fields. The same list on every call, valid under <code>FieldList.Validate</code>, naming the engine kind and upstream release. <code>inference-sim fields</code> prints what the registered engine returns, without reading it.</td>
+</tr>
 </tbody>
 </table>
+<h2 id="requests-enginerequest">Requests: <code>engine.Request</code><a class="headerlink" href="#requests-enginerequest" title="Permanent link">&para;</a></h2>
+<p>A request carries its identity, prompt, assigned output and scheduling facts. The LoRA fields
+follow vLLM's <code>LoRARequest</code>: <code>Adapter</code> is its <code>lora_name</code> and <code>AdapterPath</code> its <code>lora_path</code>.
+vLLM puts both, as <code>("lora", lora_name, lora_path)</code>, into the hash of every prefix-cache block
+of a LoRA request (<code>_gen_lora_extra_hash_keys</code> in <code>vllm/v1/core/kv_cache_utils.py</code>, v0.32.0),
+so an engine that models that hash needs the path as well as the name; the integer adapter ID
+does not enter it. Both are empty for the base model. <code>Request.Validate</code> refuses a path with no
+adapter name, and <code>Add</code> of the reference FIFO engine calls it.</p>
+<p>A request that is a disaggregated decode (<code>RemotePrefill</code>) also states <code>Peer</code>, the node and rack
+of the engine holding its <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr>. A P/D proxy hands a vLLM decode engine the prefill's address in
+<code>kv_transfer_params</code>; a decode engine cannot learn where it pulls from any other way, and the
+links of the pull depend on it. <code>Request.Validate</code> refuses a remote prefill with no peer and a
+peer on any other request.</p>
 <p>Calls are sequential: a simulator never calls an engine from two goroutines, and an engine
 starts none.</p>
 <h3 id="pipeline-stages">Pipeline stages<a class="headerlink" href="#pipeline-stages" title="Permanent link">&para;</a></h3>
@@ -5217,6 +5338,63 @@ and stays in flight until <code>Complete</code> names it. Any number of batches 
 which is how vLLM's engine core consumes its batch queue: it appends each scheduled batch at
 one end and takes results from the other. A batch that runs nothing (<code>Empty</code>) is not in
 flight, but may still start transfers.</p>
+<h2 id="transfers">Transfers<a class="headerlink" href="#transfers" title="Permanent link">&para;</a></h2>
+<p>An engine reports each asynchronous <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> move once, as an <code>engine.Transfer</code> among a batch's
+<code>TransfersStarted</code>. The simulator asks the Environment what the move demands of the fabric
+(<code>Environment.TransferDemand</code>, design section 6.2); it does not derive that from the report.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ID</code>, <code>Request</code></td>
+<td>The transfer's life: the simulator reports its end with <code>TransferDone(ID, ...)</code>, and <code>Request</code> is the request it serves.</td>
+</tr>
+<tr>
+<td><code>Kind</code>, <code>Tokens</code>, <code>Blocks</code>, <code>Tier</code></td>
+<td>The engine's own report: load or store, size, and the offload tier as the engine's configuration names it. Empty <code>Tier</code> is a move between pools.</td>
+</tr>
+<tr>
+<td><code>Move</code></td>
+<td>The same move as the cost model prices it (<code>plan.Transfer</code>): the catalog device the tier name stands for, the node and rack that send and receive, and which way the bytes go.</td>
+</tr>
+</tbody>
+</table>
+<p>Only the engine knows what a tier name means or where its ranks sit, so the engine states
+<code>Move</code> and the simulator fills nothing in. <code>Transfer.Validate</code> refuses a report that disagrees
+with its <code>Move</code> (tokens, direction, a tier name on a move between pools or none on a move to a
+tier). An engine that starts a transfer also implements <code>engine.Planned</code>, whose <code>Plan</code> returns
+the <code>plan.PoolPlan</code> the transfer is priced against, and <code>PoolPlan.CheckTransfer</code> refuses a move to
+a device the plan does not list or to a node the pool does not have. <code>env.DemandFor</code> is the
+simulator's side: it runs both checks and then calls <code>TransferDemand</code> with the engine's <code>Move</code>.</p>
+<p><code>enginetest.Drive</code> runs those checks on every started transfer, and <code>Options.Boundary</code> takes
+each one on across the simulator's side (<code>envtest.Boundary</code> does it with an Environment). An
+engine whose transfers cannot be demanded fails there, not as a zero price in a run.</p>
+<h3 id="a-pull-that-moves-nothing">A pull that moves nothing<a class="headerlink" href="#a-pull-that-moves-nothing" title="Permanent link">&para;</a></h3>
+<p>A remote prefill can find all of its <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> already here. Its pull then has <code>Tokens</code> 0 and <code>Blocks</code> 0,
+and <code>Transfer.Validate</code>, <code>plan.Transfer.Validate</code> and <code>env.DemandFor</code> accept it, for a move
+between pools only. The demand is zero bytes with no link and no floor: no division happens, and
+no handshake is charged, because the design prices none. A load or store to a tier of nothing is
+an engine bug and is refused. A negative size is refused everywhere.</p>
+<h3 id="limits-deferred-to-m3">Limits, deferred to M3<a class="headerlink" href="#limits-deferred-to-m3" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>A pool that spans nodes</strong> (<a href="https://github.com/inference-sim/blis-substrate/issues/48">inference-sim/blis-substrate#48</a>).
+  <code>plan.Transfer</code> has one <code>From</code> and one <code>To</code>, but a vLLM offload job runs on every worker, each
+  moving its own shard on its own node. Today an engine states the node that holds the tier
+  (the first node of the pool when each node holds one), and the cost model prices that node's
+  link. The demand is right for a one-node pool and does not fan out across nodes. The choice
+  between one transfer per node and a lead rank with fan-out is open.</li>
+<li><strong>A hybrid model's <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> groups</strong> (<a href="https://github.com/inference-sim/blis-substrate/issues/49">inference-sim/blis-substrate#49</a>).
+  vLLM's offload worker copies each <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> cache group's blocks over that group's layers only, so
+  a hybrid model moves fewer bytes than its blocks times the pool's stride. <code>plan.Transfer</code>
+  has one <code>Tokens</code>, so the per-group sizes are lost at the boundary and the demand is sized from
+  <code>Tokens</code>. Until a field carries them, the engine's own <code>TransferTime</code> and the
+  <code>TransferPricer</code> and <code>GroupTransferPricer</code> interfaces stay, and are retired when it does.</li>
+</ul>
 <h2 id="the-wake-protocol">The wake protocol<a class="headerlink" href="#the-wake-protocol" title="Permanent link">&para;</a></h2>
 <ul>
 <li>The simulator calls <code>NextWake</code> after every state-changing call (<code>Add</code>, <code>Schedule</code>,
