@@ -5495,7 +5495,7 @@ mechanical one — see the lane table in <a href="../methodology/"><code>methodo
 <code>data/&lt;org&gt;--&lt;model&gt;/&lt;system&gt;/&lt;framework&gt;/&lt;version&gt;/&lt;parallelism&gt;/{manifest.json,fpm/,measurements/}</code>.
 The per-leaf measurement Parquets under <code>measurements/</code> are what this registry validates
 against; the three configs the HuggingFace datasets-server exposes
-(<code>catalog/configurations</code>, <code>fpm/files</code>, <code>measurements/files</code>, 326 rows in total) are
+(the <code>catalog</code>, <code>fpm</code> and <code>measurements</code> file-index configs, 326 rows in total) are
 <strong>file indexes, not measurements</strong> — a reader who stops at those will conclude the dataset
 is three hundred rows.</p>
 <p>At the revision this registry validated against, the measurement Parquets hold <strong>85,484

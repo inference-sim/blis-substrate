@@ -4946,7 +4946,7 @@
 latency estimate: the coefficients a cost model fits from measurements or, where no
 measurement exists, assumes. Each coefficient records how it was obtained and which
 hardware it applies to, so an estimate can be traced back to the evidence it rests on.</p>
-<p>At revision <a href="https://github.com/inference-sim/blis-substrate/tree/fe6eab10b9795933de38122ba55e5299dcb20b5e"><code>fe6eab10b979</code></a>, the registry holds 1,198
+<p>At revision <a href="https://github.com/inference-sim/blis-substrate/tree/bc8c95d1210167c5f987e74d40049c905a4f3ae5"><code>bc8c95d12101</code></a>, the registry holds 1,198
 coefficient entries in 8 sets, covering
 12 GPU parts. By method: 901
 <code>measured</code>, 51 <code>vendor_spec</code> (transcribed from NVIDIA's
@@ -5000,7 +5000,7 @@ behind each decision, and the claims later withdrawn.</p>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="nt">rationale</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">      </span><span class="no">The token count at which the ramp reaches half its asymptote, so it sets how fast a widening batch approaches peak. Fitted jointly with gemm_eps_max_bf16 on the same envelope; residual 0.0673.</span>
 </code></pre></div>
-<p class="reg-caption">Quoted from <a href="https://github.com/inference-sim/blis-substrate/blob/fe6eab10b9795933de38122ba55e5299dcb20b5e/registry/coefficients/cost-model-primitives.yaml#L49">the committed file</a> at build time.</p>
+<p class="reg-caption">Quoted from <a href="https://github.com/inference-sim/blis-substrate/blob/bc8c95d1210167c5f987e74d40049c905a4f3ae5/registry/coefficients/cost-model-primitives.yaml#L49">the committed file</a> at build time.</p>
 
 <p>It is a measured, fitted constant of the <abbr title="General matrix multiply">GEMM</abbr> efficiency ramp, scoped to two names for
 the same A100 silicon, citing the exact sweep it was fitted on. The

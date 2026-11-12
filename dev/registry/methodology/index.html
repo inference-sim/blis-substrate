@@ -6367,7 +6367,7 @@ dataset constrains</strong>:</p>
   does not change with the dataset.</li>
 </ul>
 <p>So FPM <strong>may</strong> fit a term that is itself about composition — the overlap-band choice
-(<code>docs/band-selection.md</code>), the attention-DP funnel factor, a per-step host constant —
+(<code>docs/registry/band-selection.md</code>), the attention-DP funnel factor, a per-step host constant —
 because those are properties of the whole forward pass and FPM measures the whole forward
 pass. It <strong>may not</strong> fit an attention rate or a <abbr title="General matrix multiply">GEMM</abbr> asymptote, because nothing in a
 whole-pass total identifies those separately.</p>
@@ -7268,7 +7268,7 @@ GB300 (21), H200 (13), GB200 (4), B300_SXM (4). So:</p>
   the cleanest possible pairing. An earlier revision of this section said the catalog had
   no <code>gb300</code> chip; it has carried one since blis-catalog#23, and this registry carries
   102 GB300 coefficients including the KDA pair. The dataset's own
-  <code>catalog/index.json</code> lists both artifacts as <code>aic_fpm_forward_perf</code> with
+  catalog index lists both artifacts as <code>aic_fpm_forward_perf</code> with
   <code>phases: [decode, prefill]</code>, 5,266 and 4,874 rows at <code>tep8</code>.</li>
 </ul>
 <p>What blocks the scoring now is a <strong>rank width</strong>, not a chip. The <code>tep8</code> artifact is
@@ -7504,7 +7504,7 @@ needs its own diagnosis rather than being folded into this one. Stating the limi
 point: one mechanism explains the MiniMax ordering, and a second, unidentified term is
 still live on GLM.</p>
 <h3 id="94-a-committed-figure-this-corrected">9.4 A committed figure this corrected<a class="headerlink" href="#94-a-committed-figure-this-corrected" title="Permanent link">&para;</a></h3>
-<p><code>docs/band-selection.md</code> reports NoOverlap's signed mean as −3.44% over 219 points and
+<p><code>docs/registry/band-selection.md</code> reports NoOverlap's signed mean as −3.44% over 219 points and
 calls it "nearly unbiased". Scoring every pure-decode grid point in the m27 tep4 artifact
 rather than the 45 the old band sweep reached gives <strong>−22.93%</strong> (1,500 points), or
 <strong>−19.27%</strong> restricted to batches within the scenario's declared <code>max_num_seqs</code> of 256

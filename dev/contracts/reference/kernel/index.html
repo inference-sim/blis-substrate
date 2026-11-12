@@ -5350,7 +5350,7 @@ so an implementation that computes <code>PDTransferTime</code> from its own dema
 by construction.</p>
 <p>The kernel states the links; it never sees other transfers. How a shared link's bandwidth
 is divided is the simulator's to decide, and the schema does not prescribe it.</p>
-<p>Package <code>kernel/kerneltest</code> checks the law against any implementation, the way
+<p>Package <code>contracts/conformance/kerneltest</code> checks the law against any implementation, the way
 <code>testing/fstest</code> checks a file system:</p>
 <div class="language-go highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kd">func</span><span class="w"> </span><span class="nx">TestPDTransferLaw</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="nx">k</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">newKernel</span><span class="p">(</span><span class="nx">t</span><span class="p">)</span><span class="w"> </span><span class="c1">// the implementation under test</span>

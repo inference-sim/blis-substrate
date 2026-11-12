@@ -4901,6 +4901,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#which-checks-run-on-a-pull-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which checks run on a pull request
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -5083,6 +5100,20 @@ quotes; and the documentation checks described in
 <a href="../../contributing/documentation/#what-keeps-the-pages-correct">Documentation and releases</a>.
 CI runs the same set, with the race detector, in the <code>contracts</code> job of
 <code>.github/workflows/ci.yml</code>.</p>
+<h3 id="which-checks-run-on-a-pull-request">Which checks run on a pull request<a class="headerlink" href="#which-checks-run-on-a-pull-request" title="Permanent link">&para;</a></h3>
+<p>A pull request whose base is <code>main</code> runs the full set: <code>.github/workflows/ci.yml</code> with its
+<code>required</code> check, <code>.github/workflows/rederive.yml</code> and
+<code>.github/workflows/ledger-candidate.yml</code> where their paths change. A pull request on any other
+base, a layer of a stack, runs <code>.github/workflows/ci-light.yml</code>: format, vet, build, the lint
+on what the layer changes, the tests of the Go packages it changes, and the generated-file and
+data checks. The description, commit and private-name checks (<code>pr / blis checks</code>, <code>scan</code>) run on
+every pull request. The full set runs on any branch by hand (<code>gh workflow run ci.yml --ref
+&lt;branch&gt;</code>). Retargeting a pull request to <code>main</code> is a change of base, which GitHub reports as
+the pull-request activity <code>edited</code>; the full workflows list <code>edited</code>, so the retarget starts
+them. A defect that a later layer repairs or hides shows in the full set only on the pull
+request to <code>main</code>, so run the full set by hand on a layer you are about to approve. A newer run
+for the same pull request replaces the one in progress, and the path gates read each check run
+at its newest attempt, so a replaced or re-run attempt does not hold a gate shut or open.</p>
 <p>Every validator has a negative test for each way a document can be wrong. A validator that
 cannot fail proves nothing.</p>
 <h2 id="when-a-key-changes">When a key changes<a class="headerlink" href="#when-a-key-changes" title="Permanent link">&para;</a></h2>
