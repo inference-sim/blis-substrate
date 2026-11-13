@@ -5458,7 +5458,7 @@ Where this page and the schema disagree, the schema is right.</p>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="nt">rationale</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">      </span><span class="no">The fraction of this part's bfloat16 peak a large, well-shaped matmul asymptotically reaches, on vLLM's own linear kernel rather than the generic `torch_flow` path the TRT-LLM sweep measures. Envelope rather than mean: a cost model predicts what a well-shaped GEMM achieves. Least-squares residual 0.0629 over 74 token counts.</span>
 </code></pre></div>
-<p class="reg-caption">Quoted from <a href="https://github.com/inference-sim/blis-substrate/blob/965b05834c47882bc0f9f1a960c90327a756ef3d/registry/coefficients/cost-model-primitives.yaml#L627">the committed file</a> at build time.</p>
+<p class="reg-caption">Quoted from <a href="https://github.com/inference-sim/blis-substrate/blob/00817b10798cbc00f560e51921c30c7084fa5e0c/registry/coefficients/cost-model-primitives.yaml#L627">the committed file</a> at build time.</p>
 
 <p>Unknown keys are errors at every level: top level, entry, scope and source. A misspelled
 field is rejected, not ignored.</p>
