@@ -6,9 +6,11 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"runtime"
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/inference-sim/blis-substrate/contracts/kernel"
@@ -76,70 +78,105 @@ func perturbationScenarios(t *testing.T, d *load.Data, only ...string) []perturb
 		offload += fmt.Sprintf("    - {tier: %s, bytes: 1073741824}\n", dev.Name)
 	}
 	sets := "[cost-model-primitives, cost-model-collectives, cost-model-host-overheads, cost-model-attention, cost-model-recurrent, cost-model-memory, cost-model-fabric, cost-model-offload-tiers]"
-	var out []perturbationCase
+	type pair struct{ model, chip string }
+	var pairs []pair
 	for _, m := range d.Models() {
 		if len(only) > 0 && !slices.Contains(only, m) {
 			continue
 		}
 		for _, c := range d.Chips() {
-			ch, _ := d.Chip(c)
-			// Layouts: tensor parallel alone at 2, 4 and 8; and expert parallel over data parallel
-			// ranks, which is where all-to-all, reduce-scatter and the expert all-gathers run.
-			for _, lay := range perturbationLayouts {
-				tp, dp, ep := lay.tp, lay.dp, lay.ep
-				built := false
-				for _, st := range perturbationSettings(lay) {
-					st.MaxNumSeqs, st.MaxNumBatchedTokens, st.MaxModelLen = 64, 8192, 8192
-					perNode := 8
-					if ch != nil && ch.GPUsPerNode > 0 {
-						perNode = ch.GPUsPerNode
-					}
-					nodes := (tp*dp + perNode - 1) / perNode
-					packaging := fmt.Sprintf("  gpus_per_node: %d\n", perNode)
-					if ch != nil && ch.GPUsPerNode > 0 {
-						packaging = ""
-					}
-					body := fmt.Sprintf("kind: Scenario\nname: p\nmodel: %s\ncoefficients: %s\nengine_version: \"0.32.0\"\ncluster:\n  hardware: %s\n  fabric: ib-400g\n  nodes: %d\n%s---\nkind: Deployment\nname: d\npools:\n  - role: colocated\n    nodes: %d\n    parallel: {tp: %d, pp: 1, dp: %d, enable_expert_parallel: %t%s}\n%s", m, sets, c, nodes, packaging, nodes, tp, dp, ep, ctxPar(lay), offload)
-					dir := t.TempDir()
-					if err := os.WriteFile(filepath.Join(dir, "s.yaml"), []byte(body), 0o644); err != nil {
-						t.Fatal(err)
-					}
-					stCopy := st
-					r := Repos{Scenarios: dir, Data: d, Rules: func(string) rules.EngineRules { return windowedRules{} },
-						EngineSettings: func(*deployment.Deployment, int) (enginesettings.Settings, error) { return stCopy, nil }}
-					in, err := OpenInputs("s.yaml", r, 0)
-					if err != nil {
-						continue
-					}
-					if _, err := New(in); err != nil {
-						continue
-					}
-					label := fmt.Sprintf("%s/%s/tp%d/dp%d/ep%t/dcp%d/pcp%d/bs%d", m, c, tp, dp, ep, lay.dcp, lay.pcp, st.BlockSize)
-					out = append(out, perturbationCase{label, in})
-					// The same scenario with the trtllm-gen prefill lane priced, where the chip
-					// carries it: the lane's bf16 pair is read at an auto cache and the fp8 pair
-					// only at an fp8 cache, so each is perturbed here. The registry's lane states no
-					// kernel implementation and is not priced (VAL-8), so these cases key it to a
-					// fixture implementation that the pool reports running.
-					laneIn := keyedLane(in, laneBF16)
-					if _, err := New(laneIn); err == nil {
-						out = append(out, perturbationCase{label + "/trtllm", laneIn})
-					} // And at an fp8 cache, which reads the lane's fp8 pair.
-					f8 := st.Clone()
-					f8.CacheDType = "fp8"
-					f8In := keyedLane(in, laneFP8)
-					f8In.Engine = &f8
-					if _, err := New(f8In); err == nil {
-						out = append(out, perturbationCase{label + "/trtllm-fp8", f8In})
-					}
-					built = true
-					break
-				}
-				_ = built
-			}
+			pairs = append(pairs, pair{m, c})
 		}
 	}
+	// Each (model, chip) pair is built on its own, so the pairs are built on every CPU; the
+	// results are joined in the order of the pairs, the order the sequential loop produced.
+	built := make([][]perturbationCase, len(pairs))
+	errs := make([]error, len(pairs))
+	var wg sync.WaitGroup
+	next := make(chan int)
+	for w := 0; w < runtime.GOMAXPROCS(0); w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := range next {
+				built[i], errs[i] = perturbationScenariosFor(t, d, pairs[i].model, pairs[i].chip, offload, sets)
+			}
+		}()
+	}
+	for i := range pairs {
+		next <- i
+	}
+	close(next)
+	wg.Wait()
+	var out []perturbationCase
+	for i := range pairs {
+		if errs[i] != nil {
+			t.Fatal(errs[i])
+		}
+		out = append(out, built[i]...)
+	}
 	return out
+}
+
+// perturbationScenariosFor builds the scenarios of one model on one chip.
+func perturbationScenariosFor(t *testing.T, d *load.Data, m, c, offload, sets string) ([]perturbationCase, error) {
+	var out []perturbationCase
+	ch, _ := d.Chip(c)
+	// Layouts: tensor parallel alone at 2, 4 and 8; and expert parallel over data parallel
+	// ranks, which is where all-to-all, reduce-scatter and the expert all-gathers run.
+	for _, lay := range perturbationLayouts {
+		tp, dp, ep := lay.tp, lay.dp, lay.ep
+		built := false
+		for _, st := range perturbationSettings(lay) {
+			st.MaxNumSeqs, st.MaxNumBatchedTokens, st.MaxModelLen = 64, 8192, 8192
+			perNode := 8
+			if ch != nil && ch.GPUsPerNode > 0 {
+				perNode = ch.GPUsPerNode
+			}
+			nodes := (tp*dp + perNode - 1) / perNode
+			packaging := fmt.Sprintf("  gpus_per_node: %d\n", perNode)
+			if ch != nil && ch.GPUsPerNode > 0 {
+				packaging = ""
+			}
+			body := fmt.Sprintf("kind: Scenario\nname: p\nmodel: %s\ncoefficients: %s\nengine_version: \"0.32.0\"\ncluster:\n  hardware: %s\n  fabric: ib-400g\n  nodes: %d\n%s---\nkind: Deployment\nname: d\npools:\n  - role: colocated\n    nodes: %d\n    parallel: {tp: %d, pp: 1, dp: %d, enable_expert_parallel: %t%s}\n%s", m, sets, c, nodes, packaging, nodes, tp, dp, ep, ctxPar(lay), offload)
+			dir := t.TempDir()
+			if err := os.WriteFile(filepath.Join(dir, "s.yaml"), []byte(body), 0o644); err != nil {
+				return nil, err
+			}
+			stCopy := st
+			r := Repos{Scenarios: dir, Data: d, Rules: func(string) rules.EngineRules { return windowedRules{} },
+				EngineSettings: func(*deployment.Deployment, int) (enginesettings.Settings, error) { return stCopy, nil }}
+			in, err := OpenInputs("s.yaml", r, 0)
+			if err != nil {
+				continue
+			}
+			if _, err := New(in); err != nil {
+				continue
+			}
+			label := fmt.Sprintf("%s/%s/tp%d/dp%d/ep%t/dcp%d/pcp%d/bs%d", m, c, tp, dp, ep, lay.dcp, lay.pcp, st.BlockSize)
+			out = append(out, perturbationCase{label, in})
+			// The same scenario with the trtllm-gen prefill lane priced, where the chip
+			// carries it: the lane's bf16 pair is read at an auto cache and the fp8 pair
+			// only at an fp8 cache, so each is perturbed here. The registry's lane states no
+			// kernel implementation and is not priced (VAL-8), so these cases key it to a
+			// fixture implementation that the pool reports running.
+			laneIn := keyedLane(in, laneBF16)
+			if _, err := New(laneIn); err == nil {
+				out = append(out, perturbationCase{label + "/trtllm", laneIn})
+			} // And at an fp8 cache, which reads the lane's fp8 pair.
+			f8 := st.Clone()
+			f8.CacheDType = "fp8"
+			f8In := keyedLane(in, laneFP8)
+			f8In.Engine = &f8
+			if _, err := New(f8In); err == nil {
+				out = append(out, perturbationCase{label + "/trtllm-fp8", f8In})
+			}
+			built = true
+			break
+		}
+		_ = built
+	}
+	return out, nil
 }
 
 // perturbationLayouts are the parallel layouts the perturbation prices: tensor parallel alone,
@@ -240,29 +277,67 @@ func TestEveryCoefficientFamilyChangesSomePriceOrIsListed(t *testing.T) {
 	}
 	priced := map[string]bool{}
 	read := map[string]bool{}
+	// The scenarios are independent of each other: a family is priced when some scenario's price
+	// moves, a union, so the order the scenarios are visited in and how many run at once change
+	// no result. They run on every CPU, which cuts the wall-clock of this test, the longest in
+	// the package, by about the CPU count.
+	var (
+		mu      sync.Mutex
+		wg      sync.WaitGroup
+		failure string
+	)
+	next := make(chan perturbationCase)
+	fail := func(format string, args ...any) {
+		mu.Lock()
+		defer mu.Unlock()
+		if failure == "" {
+			failure = fmt.Sprintf(format, args...)
+		}
+	}
+	for w := 0; w < runtime.GOMAXPROCS(0); w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for s := range next {
+				base, err := New(s.in)
+				if err != nil {
+					fail("%s: %v", s.label, err)
+					continue
+				}
+				want := pricesOf(base)
+				for _, sel := range base.selected {
+					name := sel.Entry.Name
+					fam := family(name)
+					mu.Lock()
+					read[fam] = true
+					skip := priced[fam] || sel.Entry.Value == 0
+					mu.Unlock()
+					if skip {
+						continue
+					}
+					in := s.in
+					in.Coefficients = perturbed(s.in.Coefficients, name)
+					k, err := New(in)
+					if err != nil {
+						fail("%s: scaling %s by 0.8 makes the kernel refuse: %v", s.label, name, err)
+						continue
+					}
+					if pricesOf(k) != want {
+						mu.Lock()
+						priced[fam] = true
+						mu.Unlock()
+					}
+				}
+			}
+		}()
+	}
 	for _, s := range scenarios {
-		base, err := New(s.in)
-		if err != nil {
-			t.Fatalf("%s: %v", s.label, err)
-		}
-		want := pricesOf(base)
-		for _, sel := range base.selected {
-			name := sel.Entry.Name
-			fam := family(name)
-			read[fam] = true
-			if priced[fam] || sel.Entry.Value == 0 {
-				continue
-			}
-			in := s.in
-			in.Coefficients = perturbed(s.in.Coefficients, name)
-			k, err := New(in)
-			if err != nil {
-				t.Fatalf("%s: scaling %s by 0.8 makes the kernel refuse: %v", s.label, name, err)
-			}
-			if pricesOf(k) != want {
-				priced[fam] = true
-			}
-		}
+		next <- s
+	}
+	close(next)
+	wg.Wait()
+	if failure != "" {
+		t.Fatal(failure)
 	}
 	all := map[string]bool{}
 	for _, set := range []string{"cost-model-primitives", "cost-model-collectives", "cost-model-host-overheads",
