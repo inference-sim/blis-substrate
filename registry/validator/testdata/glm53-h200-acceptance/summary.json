@@ -1,0 +1,57 @@
+{
+ "archive": "glm53-h200-underpricing-data-20261109.tar.gz",
+ "archive_sha256": "2f8dadd0f6c482e47510fa16c6a416e75b5a0622e7a538280a7d41d0ce6d412e",
+ "counters": {
+  "16": {
+   "accepted_per_position": [
+    1298782,
+    1081599,
+    913709
+   ],
+   "drafts": 1547316
+  },
+  "8": {
+   "accepted_per_position": [
+    1179154,
+    981409,
+    829156
+   ],
+   "drafts": 1405091
+  }
+ },
+ "files": {
+  "glm53-h200-underpricing-data-20261109/A_agentic_100pct/inference-perf/per_request_lifecycle_metrics.json": "7f07fca512b0b741b6830663904b71562d1cda494998c613890521b2e8c597c3",
+  "glm53-h200-underpricing-data-20261109/A_agentic_100pct/metrics-initial.prom": "b55c934e77e6c684e62401f381a4a2d38e0d2379ada47b953d901ac375df4618",
+  "glm53-h200-underpricing-data-20261109/A_agentic_10pct/inference-perf/per_request_lifecycle_metrics.json": "2473cf101b0d95b4ea0c3e25fc58329ed466c20721c4c8ddf6a0d8de9c6e777d",
+  "glm53-h200-underpricing-data-20261109/A_agentic_10pct/metrics-initial.prom": "833488a2e9efe2c67e14c30b7c050a7d8cd7bf4034247aeba1aae4ca22de563b",
+  "glm53-h200-underpricing-data-20261109/A_agentic_50pct/inference-perf/per_request_lifecycle_metrics.json": "4eef5ad482214dcd2ef370468bdb5e01ad482f215701014c8697472754ed03a2",
+  "glm53-h200-underpricing-data-20261109/A_agentic_50pct/metrics-initial.prom": "3ca7eb76d952248ac81f14b1f3628914284ffffc4bae0d05ce2925f15231f6fd",
+  "glm53-h200-underpricing-data-20261109/A_agentic_75pct/metrics-initial.prom": "4911c4c8093ce4a9403f42f8f9b48e58f927b9d6c467ba1e0d1a6bd72f4acf40"
+ },
+ "held_out_cells": [
+  4,
+  12
+ ],
+ "min_emissions": 21,
+ "source": "https://github.com/inference-sim/inference-sim/issues/2094",
+ "spread": {
+  "16": {
+   "requests": 9361,
+   "sum_inverse_emissions": 73.90095839067428,
+   "sum_mean": 30010.80142726412,
+   "sum_mean_squared": 97006.85037336325
+  },
+  "2": {
+   "requests": 10542,
+   "sum_inverse_emissions": 82.44582287553126,
+   "sum_mean": 33727.37404959066,
+   "sum_mean_squared": 108770.7488792716
+  },
+  "8": {
+   "requests": 8542,
+   "sum_inverse_emissions": 66.76096980580034,
+   "sum_mean": 27395.75196501428,
+   "sum_mean_squared": 88578.70734849262
+  }
+ }
+}
