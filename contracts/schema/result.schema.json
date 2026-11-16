@@ -1311,6 +1311,15 @@
           ],
           "type": "string"
         },
+        "preempted_at_us": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "preemptions": {
+          "type": "integer"
+        },
         "prompt_tokens": {
           "type": "integer"
         },

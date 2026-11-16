@@ -766,6 +766,17 @@ func (r *Result) validateRows(p *validate.Problems) {
 			p.Field(at+".first_token_us", "is %d: ttft_us %d must equal first_token_us - arrival_us (%d)",
 				*row.FirstTokenUs, *row.TTFTUs, *row.FirstTokenUs-row.ArrivalUs)
 		}
+		if row.Preemptions < 0 {
+			p.Field(at+".preemptions", "must not be negative")
+		}
+		if len(row.PreemptedAtUs) != 0 && len(row.PreemptedAtUs) != row.Preemptions {
+			p.Field(at+".preempted_at_us", "has %d times but preemptions is %d", len(row.PreemptedAtUs), row.Preemptions)
+		}
+		for j, t := range row.PreemptedAtUs {
+			if t < row.ArrivalUs || (j > 0 && t < row.PreemptedAtUs[j-1]) {
+				p.Field(at+".preempted_at_us", "time %d is before the request's arrival or the previous preemption", t)
+			}
+		}
 		if row.TPOTUs != nil && (math.IsNaN(*row.TPOTUs) || math.IsInf(*row.TPOTUs, 0) || *row.TPOTUs < 0) {
 			p.Field(at+".tpot_us", "must be a finite number, not negative")
 		}

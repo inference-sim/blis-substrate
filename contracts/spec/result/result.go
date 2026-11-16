@@ -720,6 +720,14 @@ type RequestRow struct {
 	// sequence.
 	LengthCapped bool `yaml:"length_capped,omitempty"`
 
+	// Preemptions is how many times the engine preempted the request: freed its KV blocks
+	// and returned it to the waiting queue, to recompute its tokens when it runs again.
+	// PreemptedAtUs holds the simulated time of each, in order; its length equals
+	// Preemptions. The instance is the row's Instance. Both are absent for a request never
+	// preempted.
+	Preemptions   int     `yaml:"preemptions,omitempty"`
+	PreemptedAtUs []int64 `yaml:"preempted_at_us,omitempty"`
+
 	// Phase is the request's benchmark phase, when the workload marks phases.
 	Phase Phase `yaml:"phase,omitempty"`
 	// Instance is the engine instance that served it.
