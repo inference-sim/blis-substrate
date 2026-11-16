@@ -12,7 +12,8 @@ const SpeculativeAcceptance = "speculative_acceptance"
 // resolution that supplied it (design D8, SIM-10). It is here, beside the record's type, so the
 // simulator that writes it and the harness that reads it agree on every field.
 //
-// The values are the acceptance length and the acceptance rate. The source follows the layer:
+// The values are the acceptance length and the acceptance rate, and, for a chain schedule, the
+// per-request spread it draws with (request_logit_sd). The source follows the layer:
 // the command line, the scenario or the workload when the value was stated, or profile when a
 // registry or scenario profile supplied it. A profile lookup records the profile it used, as
 // set and key; and, because it can borrow, how it found the value: the step, the key fields that
@@ -25,6 +26,11 @@ func AcceptanceProperty(r acceptance.Resolution) WorkloadProperty {
 			"acceptance_length": r.AcceptanceLength,
 			"acceptance_rate":   r.AcceptanceRate(),
 		},
+	}
+	if r.Schedule == acceptance.ScheduleChain {
+		// A drawn acceptance changes every request's progress, so the spread it was drawn
+		// with is recorded beside the mean (SIM-10). A mean schedule records nothing more.
+		w.Values["request_logit_sd"] = r.RequestLogitSD
 	}
 	switch r.Layer {
 	case acceptance.LayerCLI:

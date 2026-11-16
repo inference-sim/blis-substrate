@@ -597,3 +597,33 @@ func TestAcceptancePropertyRecordsEveryResolution(t *testing.T) {
 		}
 	}
 }
+
+// A chain schedule draws acceptance, so the Result records the spread it drew with; a mean
+// schedule records only the mean.
+func TestAcceptancePropertyRecordsAChainsSpread(t *testing.T) {
+	prof := acceptance.Profile{Model: "m", SpeculativeMethod: "mtp", NumSpecTokens: 3, Thinking: acceptance.ThinkingOn,
+		Category: "agentic", AcceptanceLength: 3.13, PerPositionRates: []float64{0.84, 0.70, 0.59},
+		Schedule: acceptance.ScheduleChain, RequestLogitSD: 0.4, Method: "measured"}
+	resolve := func(p acceptance.Profile) WorkloadProperty {
+		res, err := acceptance.Resolve(acceptance.Request{Model: "m", SpeculativeMethod: "mtp", NumSpecTokens: 3,
+			Registry: []*acceptance.ProfileSet{{Kind: acceptance.Kind, Name: "s", Profiles: []acceptance.Profile{p}}},
+			Workload: acceptance.Workload{Category: "agentic", Thinking: acceptance.ThinkingOn}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return AcceptanceProperty(res)
+	}
+	w := resolve(prof)
+	if sd, ok := w.Values["request_logit_sd"]; !ok || sd != 0.4 {
+		t.Errorf("a chain records request_logit_sd %v (present %v), want 0.4", sd, ok)
+	}
+	r := valid()
+	r.Input.WorkloadProperties = []WorkloadProperty{w}
+	if pr := r.Validate(); !pr.OK() {
+		t.Errorf("a chain's property is refused:\n%s", pr.Error())
+	}
+	prof.Schedule, prof.RequestLogitSD = "", 0
+	if _, ok := resolve(prof).Values["request_logit_sd"]; ok {
+		t.Errorf("a mean schedule records request_logit_sd")
+	}
+}

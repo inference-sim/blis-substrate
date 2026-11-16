@@ -67,7 +67,12 @@ type Resolution struct {
 	// RatesDerived.
 	PerPositionRates []float64
 	RatesDerived     bool
-	Layer            Layer
+	// Schedule and RequestLogitSD are the profile's, when an exact-key profile supplied the
+	// value. A stated value and a borrowed one carry no schedule, the mean: a spread is fitted
+	// for its own key and does not travel with a borrowed value.
+	Schedule       Schedule
+	RequestLogitSD float64
+	Layer          Layer
 
 	// Set and Profile are the profile set and entry a profile layer resolved to.
 	Set     string
@@ -100,6 +105,15 @@ type Resolution struct {
 
 // Borrowed reports whether the value came from a profile that is not the run's exact key.
 func (r Resolution) Borrowed() bool { return r.Step != "" && r.Step != StepExact }
+
+// Chain returns the chain schedule the resolution states, or nil when its schedule is the
+// mean.
+func (r Resolution) Chain() (*Chain, error) {
+	if r.Schedule != ScheduleChain {
+		return nil, nil
+	}
+	return NewChain(r.PerPositionRates, r.RequestLogitSD)
+}
 
 // AcceptanceRate is the accepted fraction of drafts, (AL-1)/K.
 func (r Resolution) AcceptanceRate() float64 {
@@ -231,8 +245,8 @@ func resolveKey(layer Layer, sets []*ProfileSet, req Request, key Key) (Resoluti
 		return Resolution{}, false, fmt.Errorf("%s acceptance: profile %s: %w", layer, key, err)
 	}
 	r := Resolution{AcceptanceLength: prof.AcceptanceLength, PerPositionRates: rates,
-		RatesDerived: derived, Layer: layer, Set: set, Profile: prof,
-		Step: StepExact, Used: []Used{{Set: set, Profile: prof}}}
+		RatesDerived: derived, Schedule: prof.Schedule, RequestLogitSD: prof.RequestLogitSD,
+		Layer: layer, Set: set, Profile: prof, Step: StepExact, Used: []Used{{Set: set, Profile: prof}}}
 	if prof.Provenance != nil {
 		r.Source = prof.Provenance.Source
 		if req.Hardware != "" && prof.Provenance.Hardware != "" &&
