@@ -1271,6 +1271,9 @@
         "e2e_us": {
           "type": "integer"
         },
+        "ended_us": {
+          "type": "integer"
+        },
         "fate": {
           "enum": [
             "completed",

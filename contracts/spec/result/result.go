@@ -706,6 +706,10 @@ type RequestRow struct {
 	FirstTokenUs *int64 `yaml:"first_token_us,omitempty"`
 	// GatewayQueueDelayUs is the time spent in the router's flow-control queue.
 	GatewayQueueDelayUs *int64 `yaml:"gateway_queue_delay_us,omitempty"`
+	// EndedUs is the simulated time at which the request's fate was written: when it
+	// completed, was dropped (DropReason says why), timed out, or was cut off by the
+	// horizon (then the horizon). Absent in a Result written before it was added.
+	EndedUs *int64 `yaml:"ended_us,omitempty"`
 	// CompletionIndex is the request's 1-based position in the run's order of completion,
 	// for a completed request.
 	CompletionIndex int `yaml:"completion_index,omitempty"`

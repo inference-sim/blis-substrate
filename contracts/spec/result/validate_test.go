@@ -360,6 +360,7 @@ func TestEachFailureModeIsRefused(t *testing.T) {
 		{"first token without a token", row(3, func(x *RequestRow) { x.FirstTokenUs = ptr(int64(20)) }), "request_rows[3].first_token_us", "emitted no token"},
 		{"first token before queue entry", row(0, func(x *RequestRow) { x.QueueEntryUs = ptr(int64(101)) }), "request_rows[0].first_token_us", "before queue_entry_us"},
 		{"first token disagrees with ttft", row(0, func(x *RequestRow) { x.FirstTokenUs = ptr(int64(99)) }), "request_rows[0].first_token_us", "must equal first_token_us - arrival_us"},
+		{"negative ended_us", row(0, func(x *RequestRow) { x.EndedUs = ptr(int64(-1)) }), "request_rows[0].ended_us", "negative"},
 		{"non-finite tpot", row(0, func(x *RequestRow) { x.TPOTUs = ptr(nan) }), "request_rows[0].tpot_us", "finite"},
 		{"negative prompt tokens", row(0, func(x *RequestRow) { x.PromptTokens = -1 }), "request_rows[0].prompt_tokens", "negative"},
 		{"completion index on an unfinished row", row(2, func(x *RequestRow) { x.CompletionIndex = 3 }), "request_rows[2].completion_index", "only a completed"},

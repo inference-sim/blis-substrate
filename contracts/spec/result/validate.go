@@ -747,7 +747,7 @@ func (r *Result) validateRows(p *validate.Problems) {
 		}
 		for f, v := range map[string]*int64{"ttft_us": row.TTFTUs, "e2e_us": row.E2EUs,
 			"scheduling_delay_us": row.SchedulingDelayUs, "gateway_queue_delay_us": row.GatewayQueueDelayUs,
-			"queue_entry_us": row.QueueEntryUs, "first_token_us": row.FirstTokenUs} {
+			"queue_entry_us": row.QueueEntryUs, "first_token_us": row.FirstTokenUs, "ended_us": row.EndedUs} {
 			if v != nil && *v < 0 {
 				p.Field(at+"."+f, "must not be negative")
 			}

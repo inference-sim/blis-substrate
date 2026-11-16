@@ -113,7 +113,7 @@
     { "id": "request_2", "fate": "completed", "arrival_us": 260000, "ttft_us": 160000, "tpot_us": 21500.0, "e2e_us": 2912000, "completion_index": 3, "prompt_tokens": 400, "computed_tokens": 400, "output_tokens": 129, "instance": "colocated-2" },
     { "id": "request_3", "fate": "completed", "arrival_us": 300000, "ttft_us": 190000, "tpot_us": 21800.0, "e2e_us": 2980400, "completion_index": 4, "prompt_tokens": 640, "computed_tokens": 640, "output_tokens": 129, "length_capped": true, "instance": "colocated-3" },
     { "id": "request_4", "fate": "completed", "arrival_us": 350000, "ttft_us": 228000, "tpot_us": 22800.0, "e2e_us": 2870400, "completion_index": 5, "prompt_tokens": 512, "computed_tokens": 512, "output_tokens": 116, "instance": "colocated-0" },
-    { "id": "request_5", "fate": "dropped", "drop_reason": "routing_rejected", "arrival_us": 360000, "prompt_tokens": 512, "output_tokens": 0 }
+    { "id": "request_5", "fate": "dropped", "drop_reason": "routing_rejected", "arrival_us": 360000, "ended_us": 360000, "prompt_tokens": 512, "output_tokens": 0 }
   ],
   "goodput": {
     "targets": { "interactive": { "ttft_ms": 500, "itl_ms": 50 } },
