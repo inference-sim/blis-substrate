@@ -27,8 +27,9 @@ Two other quantities are derived from it, and each has one name here:
   first i drafts are all accepted. They are non-increasing, each lies in [0, 1], and they
   sum to AL − 1.
 
-No source in scope publishes per-position rates, so they are optional everywhere. A
-consumer that needs a distribution derives one with `MinimumVarianceRates`, which is
+InferenceX's curves publish no per-position rates, so they are optional everywhere; an
+engine's per-position acceptance counters state them. A consumer that needs a distribution
+and has none derives one with `MinimumVarianceRates`, which is
 vLLM v0.31.0's `_acceptance_length_to_rates` (`vllm/config/speculative.py:557-564`):
 
 ```
@@ -38,6 +39,30 @@ rates = [1.0] * floor(AL - 1) + [frac(AL - 1)] + [0.0] * rest, truncated to K
 This is how vLLM, and the InferenceX runs that force a published AL, realise one, so a
 simulator using it reproduces those runs. Natural acceptance spreads more than this
 schedule does, so per-request tails derived from it are optimistic.
+
+## Schedules
+
+A profile's `schedule` says how a consumer realises its value step by step. Omitted, it is
+the mean: every request advances by AL on average, with no randomness, as a deterministic
+carry does. The kinds are:
+
+--8<-- "docs/contracts/generated/enum/acceptance.Schedule.md"
+
+`chain` draws each verification step's accepted drafts. Draft i + 1 is accepted, given that
+the first i were, with probability p<sub>i+1</sub> / p<sub>i</sub> (p<sub>0</sub> = 1), and
+the first rejection ends the chain, as rejection sampling does. Each request also draws one
+random effect u ~ N(0, `request_logit_sd`²) and adds it to the logit of every conditional
+probability for its whole life, so some requests accept more than others. The stated rates
+are the population's: `NewChain` solves the base logits so that the mean over u, taken at the
+64 midpoints of equal-probability bins of the standard normal (`ChainNodes`), gives the stated
+p<sub>i</sub> back. A writer that fits `request_logit_sd` averages over the same points.
+
+A chain needs stated per-position rates. Only an exact-key profile hands its schedule to a
+run: a value borrowed at another K or from another drafter or target, and a value stated
+inline, are realised as the mean, because a spread is fitted for its own key. A run that
+draws records the spread in its Result, as the `request_logit_sd` value of its
+`speculative_acceptance` property. Draws come from the run's seed, so the same seed gives the
+same bytes.
 
 Acceptance is not the kernel's input. K and the method stay in the deployment's
 [`speculative`](deployment.md) block, because they change what a step costs; acceptance
@@ -81,6 +106,8 @@ same target with two drafters has two profiles.
 | `category` | string | yes | The workload category, such as `coding`. Lower-case letters, digits, `_` and `-`. |
 | `acceptance_length` | number | yes | AL, in [1, K + 1]. |
 | `per_position_rates` | list of numbers | no | K rates, each in [0, 1], non-increasing, summing to AL − 1 within 0.01. |
+| `schedule` | string | no | How a consumer realises the value step by step: `chain`, [above](#schedules). Omitted for the mean. `chain` needs `per_position_rates`. |
+| `request_logit_sd` | number | no | The standard deviation of a chain's per-request random effect, on the logit scale, in [0, 5]. Only with `schedule: chain`. |
 | `method` | string | yes | How the value was obtained. One of the [methods](vocabularies.md#methods) except `not_charged`. |
 | `provenance` | mapping | unless `method` is `assumed` | Where it was measured, below. |
 | `rationale` | string | unless `method` is `measured` | The reasoning behind a value that was not measured. |

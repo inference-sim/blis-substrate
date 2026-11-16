@@ -1529,3 +1529,28 @@ job also checks the vendored curves against InferenceX at its pinned commit
 the repository's `catalog/`, and re-runs the emitter against the upstream checkout. Schema
 validation is `validate-registry` (`validate/cmd/validate-registry`), which reads
 `acceptance/` (blis-schemas#74), in CI's `registry` job.
+
+### 12.6 A profile measured from a run
+
+`acceptance/glm53-h200-agentic.yaml` is measured rather than transcribed. Its source is the
+reproducibility archive of inference-sim/inference-sim#2094: GLM-5.3 at TP 8 with expert
+parallelism and MTP at K 3 on 8xH200, at five closed-loop load levels. The archive is not
+vendored. `emit_acceptance_measured.py --extract <dir>` reads it and writes only derived
+numbers, with the sha256 of each file read, to
+`validator/testdata/glm53-h200-acceptance/summary.json`; the profile is generated from the
+summary, so `--check` runs in every CI job (`validator/test_acceptance_measured.py`).
+
+- **Rates.** p<sub>i</sub> is the pooled count of steps that accepted position i over the
+  pooled count of verification steps, from the engine's cumulative per-position counters,
+  differenced between the scrape that opened a cell and the one that opened the next.
+- **Spread.** A request's tokens per streamed emission, after the first, estimates its
+  acceptance length. Its variance across requests is the sum of three terms: the spread of
+  the per-request random effect, the noise a finite number of steps leaves, and the noise of
+  how many steps the load tool merged into one emission. The merged fraction is read from the
+  ratio of the mean tokens per emission to the counters' AL. The writer solves for the
+  `request_logit_sd` whose chain, averaged at the same 64 normal points as the contracts'
+  `NewChain`, gives the observed variance. A test recovers a known spread from requests drawn
+  from the chain itself.
+- **Held out.** The fit reads the 2-, 8- and 16-session cells. The 4- and 12-session cells are
+  held out for the accuracy comparison (design §12.3), and a test refuses a summary that read
+  their per-request records.

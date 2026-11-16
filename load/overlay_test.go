@@ -139,16 +139,32 @@ func TestTheSelectedEntryReport(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := d.Report()
-	if len(r.Selected) != 0 || len(r.Unloaded) != 11 {
-		t.Fatalf("a fresh load selects nothing and has loaded no file: %+v", r)
+	files, acceptanceFiles := 0, 0
+	for _, dir := range []string{"acceptance", "coefficients", "routing"} {
+		yamls, err := filepath.Glob(filepath.Join(repoDir, "registry", dir, "*.yaml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		files += len(yamls)
+		if dir == "acceptance" {
+			acceptanceFiles = len(yamls)
+		}
+	}
+	if len(r.Selected) != 0 || len(r.Unloaded) != files {
+		t.Fatalf("a fresh load selects nothing and has loaded none of the %d registry files: %+v", files, r)
 	}
 	d.RecordCoefficient("cost-model-fabric", "fabric_bandwidth_efficiency", coefficient.Scope{Fabric: []string{"ib-400g"}}, "literature")
-	acc := d.AcceptanceSets()
-	if len(acc) != 1 {
-		t.Fatalf("acceptance sets: %d", len(acc))
+	var golden *acceptance.ProfileSet
+	for _, s := range d.AcceptanceSets() {
+		if s.Name == "inferencex-golden-al" {
+			golden = s
+		}
 	}
-	p := acc[0].Profiles[0]
-	d.RecordAcceptance(&acceptance.Resolution{Set: acc[0].Name, Profile: &p})
+	if golden == nil {
+		t.Fatal("no acceptance set inferencex-golden-al")
+	}
+	p := golden.Profiles[0]
+	d.RecordAcceptance(&acceptance.Resolution{Set: golden.Name, Profile: &p})
 	d.RecordAcceptance(nil)
 	r = d.Report()
 	if len(r.Selected) != 2 || r.Selected[0].Kind != KindAcceptance || r.Selected[1].Kind != KindCoefficient ||
@@ -160,7 +176,8 @@ func TestTheSelectedEntryReport(t *testing.T) {
 			t.Errorf("%s was read and is reported unloaded", f)
 		}
 	}
-	if len(r.Unloaded) != 9 || r.Unloaded[len(r.Unloaded)-1] != "routing/servingstudio-dsv41-flash.yaml" {
+	// Listing the acceptance sets loads every one of them; the fabric lookup loads one more.
+	if len(r.Unloaded) != files-acceptanceFiles-1 || r.Unloaded[len(r.Unloaded)-1] != "routing/servingstudio-dsv41-flash.yaml" {
 		t.Errorf("unloaded: %v", r.Unloaded)
 	}
 }

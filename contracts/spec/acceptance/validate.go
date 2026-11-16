@@ -79,7 +79,31 @@ func (pr Profile) validate(p *validate.Problems, at string) {
 		checkLengthAndRates(p, at+".acceptance_length", at+".per_position_rates",
 			pr.AcceptanceLength, pr.PerPositionRates, pr.NumSpecTokens)
 	}
+	pr.validateSchedule(p, at)
 	pr.validateEvidence(p, at)
+}
+
+// validateSchedule checks a profile's schedule: a known kind, stated rates for a chain, and a
+// spread only with a chain and within [0, MaxRequestLogitSD].
+func (pr Profile) validateSchedule(p *validate.Problems, at string) {
+	if !pr.Schedule.Valid() {
+		p.Field(at+".schedule", "%q is not one of %v; omit it for the mean", pr.Schedule, vocab.Enumerate(schedules))
+		return
+	}
+	if pr.Schedule == ScheduleChain && len(pr.PerPositionRates) == 0 {
+		p.Field(at+".schedule", "chain draws over per-position rates, and the profile states none; "+
+			"a chain over rates derived from the length alone would be a schedule nobody measured")
+	}
+	sdAt := at + ".request_logit_sd"
+	if !p.FiniteField(sdAt, pr.RequestLogitSD) {
+		return
+	}
+	switch {
+	case pr.RequestLogitSD != 0 && pr.Schedule != ScheduleChain:
+		p.Field(sdAt, "applies only to schedule %q; the mean schedule draws nothing", ScheduleChain)
+	case pr.RequestLogitSD < 0 || pr.RequestLogitSD > MaxRequestLogitSD:
+		p.Field(sdAt, "must lie in [0, %v], got %v", MaxRequestLogitSD, pr.RequestLogitSD)
+	}
 }
 
 // checkLengthAndRates checks an acceptance length against K and, when rates are stated,

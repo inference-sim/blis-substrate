@@ -105,9 +105,19 @@ type Profile struct {
 	Architecture string `yaml:"architecture,omitempty"`
 
 	AcceptanceLength float64 `yaml:"acceptance_length"`
-	// PerPositionRates is optional: no source in scope publishes them, and a consumer
-	// that needs a distribution derives one with MinimumVarianceRates.
+	// PerPositionRates is optional: InferenceX's curves publish none, and a consumer
+	// that needs a distribution derives one with MinimumVarianceRates. An engine's
+	// per-position counters state them.
 	PerPositionRates []float64 `yaml:"per_position_rates,omitempty"`
+	// Schedule is how a consumer realises the value step by step. Omitted, it is the mean:
+	// every request advances by the acceptance length, with no randomness. ScheduleChain
+	// draws each step's accepted drafts, and needs stated per-position rates.
+	Schedule Schedule `yaml:"schedule,omitempty"`
+	// RequestLogitSD is the standard deviation of the chain's per-request random effect, on
+	// the logit scale of each conditional acceptance probability. It is fitted to how
+	// acceptance spreads across requests, and is stated only with ScheduleChain; zero is a
+	// chain whose requests all share the stated rates.
+	RequestLogitSD float64 `yaml:"request_logit_sd,omitempty"`
 
 	// Method is how the value was obtained, in the registry's evidence vocabulary.
 	Method vocab.Method `yaml:"method"`
