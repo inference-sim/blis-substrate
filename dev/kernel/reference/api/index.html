@@ -966,6 +966,8 @@
       
         
       
+        
+      
     
     
     
@@ -1483,6 +1485,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5327,19 +5357,15 @@ the interface itself is defined and documented in
 </tr>
 <tr>
 <td><code>Inputs</code></td>
-<td>The documents a kernel is built from: scenario, deployment, pool index, model graph, chip, fabric, storage devices, coefficient sets, engine rules, <code>Operations</code>, the pool's lowered operations with the kernel that executes each (<code>plan.PoolPlan.Operations()</code>), which a coefficient that lists implementations is matched against, for the operations that read it, and <code>Implementations</code>, the same by lowered primitive when a caller cannot say which operation runs which (<a href="../provenance/#kernel-implementations">VAL-8</a>).</td>
+<td>The documents a kernel is built from: scenario, deployment, pool index, model graph, chip, fabric, storage devices, coefficient sets, engine rules, <code>Lowered</code>, the pool's plan with every engine setting the engine's lowering resolved (<code>plan.Lowered</code>), which the kernel prices and applies no default to, <code>Operations</code>, the pool's lowered operations with the kernel that executes each (<code>plan.PoolPlan.Operations()</code>), which a coefficient that lists implementations is matched against, for the operations that read it, and <code>Implementations</code>, the same by lowered primitive when a caller cannot say which operation runs which (<a href="../provenance/#kernel-implementations">VAL-8</a>).</td>
 </tr>
 <tr>
 <td><code>Repos</code></td>
-<td>The scenario directory and the data (<code>*load.Data</code>) a scenario's names resolve against, and the engine's part, which the caller supplies: <code>Rules</code>, the engine rules for a release, <code>RulesKind</code>, the engine kind those rules are for (empty means <code>vllm</code>; <code>Open</code> refuses a scenario whose engine block names another kind), and <code>EngineSettings</code>, which decodes a pool's engine block.</td>
+<td>The scenario directory and the data (<code>*load.Data</code>) a scenario's names resolve against, and the engine's part, which the caller supplies: <code>Rules</code>, the engine rules for a release, <code>RulesKind</code>, the engine kind those rules are for (empty means <code>vllm</code>; <code>Open</code> refuses a scenario whose engine block names another kind), <code>DraftModel</code>, which names the drafter a pool's engine block names, and <code>Lower</code>, the engine's lowering of a pool into <code>Inputs.Lowered</code>.</td>
 </tr>
 <tr>
 <td><code>RulesFrom(lookup)</code></td>
 <td>Adapts a lookup returning a concrete rules type, such as blis-vllm/rules' <code>Lookup</code>, to <code>Repos.Rules</code>.</td>
-</tr>
-<tr>
-<td><code>LoadBundle(path)</code></td>
-<td><strong>Deprecated:</strong> use <code>contracts.LoadBundle</code>, which this calls. Reads a scenario and its deployment from one file of two YAML documents.</td>
 </tr>
 </tbody>
 </table>

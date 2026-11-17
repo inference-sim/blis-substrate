@@ -966,6 +966,8 @@
       
         
       
+        
+      
     
     
     
@@ -1483,6 +1485,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5397,7 +5427,7 @@ adds what the fitters need to read the Parquet sweeps: <code>pyarrow</code>, <co
 </li>
 <li>
 <p><strong>Run the derivation tests with the data present.</strong> The <code>rederive</code> workflow runs them
-   on every pull request that touches a coefficient, a writer or a test (~20 minutes);
+   on every pull request that touches a coefficient, a writer or a test (~7 minutes, four test processes at once);
    run them locally first. With <code>COLLECTIVEX_DATA</code> also set to the CollectiveX run bodies
    (<code>python -I scripts/fetch_cited_inferencex.py &lt;dir&gt;</code> fetches and checks them):</p>
 <div class="language-sh highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>scripts/rederive.sh

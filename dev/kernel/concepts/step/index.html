@@ -966,6 +966,8 @@
       
         
       
+        
+      
     
     
     
@@ -1483,6 +1485,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5518,7 +5548,8 @@ before. With <code>PassRequests all</code> the head and the later passes run for
 a request still in the middle of its prompt included; with <code>sampling</code>, only for the requests that
 complete their prompt. A deployment that speculates through an autoregressive drafter and states
 either word as empty is refused as <code>draft_passes_unstated</code>, and an unknown word as
-<code>draft_passes_unknown</code>. A parallel-block drafter needs neither.</p>
+<code>draft_passes_unknown</code>. A parallel-block drafter needs no <code>FirstPassRows</code>, and its query pass and
+sequential head run for the requests <code>PassRequests</code> names, which it must state.</p>
 <p><strong>Experts.</strong> In a mixture-of-experts layer each token is routed to a few experts. The kernel
 estimates how many distinct experts a batch touches, reads their weights, and prices their
 arithmetic. Unlike every other term, the arithmetic and the reads of the experts are <em>added</em>

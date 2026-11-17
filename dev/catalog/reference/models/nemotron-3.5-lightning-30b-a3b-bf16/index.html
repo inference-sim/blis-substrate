@@ -962,6 +962,8 @@
       
         
       
+        
+      
     
     
     
@@ -1479,6 +1481,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5321,20 +5351,27 @@
 </tr>
 <tr>
 <td style="text-align: right;">1</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">recurrent_in_proj</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=10304, k=2688, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
 <td style="text-align: left;"><code>RecurrentUpdate</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">recurrent_kind=mamba2, n_heads=64, state_size=128, n_groups=8, conv_kernel=4, intermediate_size=4096, state_dtype=fp32</td>
 </tr>
 <tr>
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">mixer_out</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">n=2688, k=4096</td>
 </tr>
 <tr>
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">4</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">mixer_out</td>
 <td style="text-align: left;"><code>tensor_parallel</code></td>
@@ -5364,20 +5401,48 @@
 </tr>
 <tr>
 <td style="text-align: right;">1</td>
-<td style="text-align: left;"><code>GroupedGEMM</code></td>
-<td style="text-align: left;">experts</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">router</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">shared=False, n=1856, k=2688, experts=128, top_k=6, shared_experts=1, shared_intermediate_size=3712</td>
+<td style="text-align: left;">n=128, k=2688, tp=replicated, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">2</td>
+<td style="text-align: left;"><code>GroupedGEMM</code></td>
+<td style="text-align: left;">experts</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">shared=False, n=1856, k=2688, experts=128, top_k=6</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_up</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=3712, k=2688, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_act</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=sharded, bytes_per_token=14848</td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_down</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=2688, k=3712, tp=row</td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
 <td style="text-align: left;"><code>All2All</code></td>
 <td style="text-align: left;">moe_dispatch_combine</td>
 <td style="text-align: left;"><code>expert_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">7</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">mlp_out</td>
 <td style="text-align: left;"><code>tensor_parallel_unless_sp_moe</code></td>

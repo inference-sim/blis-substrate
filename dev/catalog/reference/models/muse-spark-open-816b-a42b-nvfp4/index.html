@@ -962,6 +962,8 @@
       
         
       
+        
+      
     
     
     
@@ -1479,6 +1481,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5253,7 +5283,7 @@
 
 
 <h1 id="muse-spark-open-816b-a42b-nvfp4">muse-spark-open-816b-a42b-nvfp4<a class="headerlink" href="#muse-spark-open-816b-a42b-nvfp4" title="Permanent link">&para;</a></h1>
-<p><a href="https://huggingface.co/unsloth/Muse-Spark-Open-816B-A42B-NVFP4/tree/fc6908f53c6882d4ec48fca5ba144e41d21e1f92"><code>unsloth/Muse-Spark-Open-816B-A42B-NVFP4</code></a>, architecture <code>MuseSparkForConditionalGeneration</code>: 62 layers, weights in bf16 (fp32, nvfp4 for some nodes). The graph below is derived from the model's <a href="https://huggingface.co/unsloth/Muse-Spark-Open-816B-A42B-NVFP4/blob/fc6908f53c6882d4ec48fca5ba144e41d21e1f92/config.json"><code>config.json</code></a> at revision <code>fc6908f53c68</code>; <a href="../../../concepts/model-graphs/">Model graphs</a> explains how to read it, and the <a href="../../../concepts/glossary/">glossary</a> defines its terms.</p>
+<p><a href="https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B-NVFP4/tree/6b5fa7bb2d5bcf422a01852ae562a8f7f52b55c3"><code>meta-models/Muse-Spark-Open-816B-A42B-NVFP4</code></a>, architecture <code>MuseSparkForConditionalGeneration</code>: 62 layers, weights in bf16 (fp32, nvfp4 for some nodes). The graph below is derived from the model's <a href="https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B-NVFP4/blob/6b5fa7bb2d5bcf422a01852ae562a8f7f52b55c3/config.json"><code>config.json</code></a> at revision <code>6b5fa7bb2d5b</code>; <a href="../../../concepts/model-graphs/">Model graphs</a> explains how to read it, and the <a href="../../../concepts/glossary/">glossary</a> defines its terms.</p>
 <div class="admonition note">
 <p class="admonition-title">Text decoder only</p>
 <p>The vendor config describes a multimodal model. This graph prices the text decoder and records <code>modality: text_decoder_of_multimodal</code>; a request carrying an image or audio input costs more than it predicts.</p>
@@ -5328,7 +5358,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">qkv_gate_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=18432, k=8192</td>
+<td style="text-align: left;">n=18432, k=8192, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">2</td>
@@ -5356,7 +5386,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">o_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=8192, k=8192</td>
+<td style="text-align: left;">n=8192, k=8192, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">6</td>
@@ -5384,7 +5414,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">routed_expert_down_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=4096, k=8192, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256}</td>
+<td style="text-align: left;">n=4096, k=8192, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256}, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">10</td>
@@ -5398,7 +5428,7 @@
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">shared=False, n=4096, k=8192, experts=256, top_k=8, latent_size=4096</td>
+<td style="text-align: left;">shared=False, n=4096, k=8192, experts=256, top_k=8, latent_size=4096, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">12</td>
@@ -5433,7 +5463,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">routed_expert_up_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=8192, k=4096, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256, 'min_tokens_across_nodes': 32}</td>
+<td style="text-align: left;">n=8192, k=4096, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256, 'min_tokens_across_nodes': 32}, weight_dtype=bf16</td>
 </tr>
 </tbody>
 </table>
@@ -5462,7 +5492,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">qkv_gate_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=18432, k=8192</td>
+<td style="text-align: left;">n=18432, k=8192, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">2</td>
@@ -5490,7 +5520,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">o_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=8192, k=8192</td>
+<td style="text-align: left;">n=8192, k=8192, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">6</td>
@@ -5518,7 +5548,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">routed_expert_down_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=4096, k=8192, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256}</td>
+<td style="text-align: left;">n=4096, k=8192, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256}, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">10</td>
@@ -5567,7 +5597,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">routed_expert_up_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=8192, k=4096, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256, 'min_tokens_across_nodes': 32}</td>
+<td style="text-align: left;">n=8192, k=4096, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256, 'min_tokens_across_nodes': 32}, weight_dtype=bf16</td>
 </tr>
 </tbody>
 </table>
@@ -5596,7 +5626,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">qkv_gate_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=18432, k=8192</td>
+<td style="text-align: left;">n=18432, k=8192, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">2</td>
@@ -5624,7 +5654,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">o_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=8192, k=8192</td>
+<td style="text-align: left;">n=8192, k=8192, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">6</td>
@@ -5652,7 +5682,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">routed_expert_down_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=4096, k=8192, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256}</td>
+<td style="text-align: left;">n=4096, k=8192, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256}, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">10</td>
@@ -5701,7 +5731,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">routed_expert_up_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=8192, k=4096, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256, 'min_tokens_across_nodes': 32}</td>
+<td style="text-align: left;">n=8192, k=4096, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256, 'min_tokens_across_nodes': 32}, weight_dtype=bf16</td>
 </tr>
 </tbody>
 </table>
@@ -5730,7 +5760,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">qkv_gate_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=18432, k=8192</td>
+<td style="text-align: left;">n=18432, k=8192, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">2</td>
@@ -5758,7 +5788,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">o_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=8192, k=8192</td>
+<td style="text-align: left;">n=8192, k=8192, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">6</td>
@@ -5786,7 +5816,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">routed_expert_down_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=4096, k=8192, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256}</td>
+<td style="text-align: left;">n=4096, k=8192, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256}, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">10</td>
@@ -5800,7 +5830,7 @@
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">shared=False, n=4096, k=8192, experts=256, top_k=8, latent_size=4096</td>
+<td style="text-align: left;">shared=False, n=4096, k=8192, experts=256, top_k=8, latent_size=4096, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">12</td>
@@ -5835,7 +5865,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">routed_expert_up_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=8192, k=4096, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256, 'min_tokens_across_nodes': 32}</td>
+<td style="text-align: left;">n=8192, k=4096, tp=replicated, sharded_at_decode={'capability_family': 10, 'max_tokens': 256, 'min_tokens_across_nodes': 32}, weight_dtype=bf16</td>
 </tr>
 </tbody>
 </table>
@@ -5864,7 +5894,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">lm_head</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=202048, k=8192, tp=column</td>
+<td style="text-align: left;">n=202048, k=8192, tp=column, weight_dtype=bf16</td>
 </tr>
 </tbody>
 </table>
@@ -5879,15 +5909,15 @@
 <tbody>
 <tr>
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;"><a href="https://huggingface.co/unsloth/Muse-Spark-Open-816B-A42B-NVFP4/tree/fc6908f53c6882d4ec48fca5ba144e41d21e1f92"><code>unsloth/Muse-Spark-Open-816B-A42B-NVFP4</code></a> on huggingface</td>
+<td style="text-align: left;"><a href="https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B-NVFP4/tree/6b5fa7bb2d5bcf422a01852ae562a8f7f52b55c3"><code>meta-models/Muse-Spark-Open-816B-A42B-NVFP4</code></a> on huggingface</td>
 </tr>
 <tr>
 <td style="text-align: left;">Revision</td>
-<td style="text-align: left;"><code>fc6908f53c6882d4ec48fca5ba144e41d21e1f92</code></td>
+<td style="text-align: left;"><code>6b5fa7bb2d5bcf422a01852ae562a8f7f52b55c3</code></td>
 </tr>
 <tr>
 <td style="text-align: left;">Retrieved</td>
-<td style="text-align: left;">2026-10-29</td>
+<td style="text-align: left;">2026-11-16</td>
 </tr>
 <tr>
 <td style="text-align: left;">Config digest</td>

@@ -962,6 +962,8 @@
       
         
       
+        
+      
     
     
     
@@ -1479,6 +1481,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5336,7 +5366,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">qkv_a_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2624, k=6144</td>
+<td style="text-align: left;">n=2624, k=6144, tp=replicated</td>
 </tr>
 <tr>
 <td style="text-align: right;">2</td>
@@ -5364,21 +5394,21 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">index_wq_b</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=4096, k=2048</td>
+<td style="text-align: left;">n=4096, k=2048, tp=replicated</td>
 </tr>
 <tr>
 <td style="text-align: right;">6</td>
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">index_wk_weights_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=160, k=6144, weight_dtype=bf16</td>
+<td style="text-align: left;">n=160, k=6144, weight_dtype=bf16, tp=replicated</td>
 </tr>
 <tr>
 <td style="text-align: right;">7</td>
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;">block_index_scores</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">holds_engine_kv=False, kind=gqa, n_q=32, n_kv=1, d_h=128</td>
+<td style="text-align: left;">holds_engine_kv=False, kind=gqa, n_q=32, n_kv=1, d_h=128, tp=replicated</td>
 </tr>
 <tr>
 <td style="text-align: right;">8</td>
@@ -5456,7 +5486,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">qkv_a_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2624, k=6144</td>
+<td style="text-align: left;">n=2624, k=6144, tp=replicated</td>
 </tr>
 <tr>
 <td style="text-align: right;">2</td>
@@ -5484,21 +5514,21 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">index_wq_b</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=4096, k=2048</td>
+<td style="text-align: left;">n=4096, k=2048, tp=replicated</td>
 </tr>
 <tr>
 <td style="text-align: right;">6</td>
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">index_wk_weights_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=160, k=6144, weight_dtype=bf16</td>
+<td style="text-align: left;">n=160, k=6144, weight_dtype=bf16, tp=replicated</td>
 </tr>
 <tr>
 <td style="text-align: right;">7</td>
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;">block_index_scores</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">holds_engine_kv=False, kind=gqa, n_q=32, n_kv=1, d_h=128</td>
+<td style="text-align: left;">holds_engine_kv=False, kind=gqa, n_q=32, n_kv=1, d_h=128, tp=replicated</td>
 </tr>
 <tr>
 <td style="text-align: right;">8</td>
@@ -5530,20 +5560,48 @@
 </tr>
 <tr>
 <td style="text-align: right;">12</td>
-<td style="text-align: left;"><code>GroupedGEMM</code></td>
-<td style="text-align: left;">experts</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">router</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">shared=False, n=2048, k=6144, experts=256, top_k=8, shared_experts=1</td>
+<td style="text-align: left;">n=256, k=6144, tp=replicated, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">13</td>
+<td style="text-align: left;"><code>GroupedGEMM</code></td>
+<td style="text-align: left;">experts</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">shared=False, n=2048, k=6144, experts=256, top_k=8</td>
+</tr>
+<tr>
+<td style="text-align: right;">14</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_gate_up</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=4096, k=6144, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">15</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_act</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=sharded, bytes_per_token=12288</td>
+</tr>
+<tr>
+<td style="text-align: right;">16</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_down</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=6144, k=2048, tp=row</td>
+</tr>
+<tr>
+<td style="text-align: right;">17</td>
 <td style="text-align: left;"><code>All2All</code></td>
 <td style="text-align: left;">moe_dispatch_combine</td>
 <td style="text-align: left;"><code>expert_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">14</td>
+<td style="text-align: right;">18</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">mlp_out</td>
 <td style="text-align: left;"><code>tensor_parallel_unless_sp_moe</code></td>
@@ -5576,7 +5634,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">qkv_a_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2624, k=6144</td>
+<td style="text-align: left;">n=2624, k=6144, tp=replicated</td>
 </tr>
 <tr>
 <td style="text-align: right;">2</td>
@@ -5629,20 +5687,48 @@
 </tr>
 <tr>
 <td style="text-align: right;">9</td>
-<td style="text-align: left;"><code>GroupedGEMM</code></td>
-<td style="text-align: left;">experts</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">router</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">shared=False, n=2048, k=6144, experts=256, top_k=8, shared_experts=1</td>
+<td style="text-align: left;">n=256, k=6144, tp=replicated, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">10</td>
+<td style="text-align: left;"><code>GroupedGEMM</code></td>
+<td style="text-align: left;">experts</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">shared=False, n=2048, k=6144, experts=256, top_k=8</td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_gate_up</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=4096, k=6144, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">12</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_act</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=sharded, bytes_per_token=12288</td>
+</tr>
+<tr>
+<td style="text-align: right;">13</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_down</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=6144, k=2048, tp=row</td>
+</tr>
+<tr>
+<td style="text-align: right;">14</td>
 <td style="text-align: left;"><code>All2All</code></td>
 <td style="text-align: left;">moe_dispatch_combine</td>
 <td style="text-align: left;"><code>expert_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">11</td>
+<td style="text-align: right;">15</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">mlp_out</td>
 <td style="text-align: left;"><code>tensor_parallel_unless_sp_moe</code></td>
@@ -5666,103 +5752,152 @@
 <tr>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;"><code>Elementwise</code></td>
-<td style="text-align: left;">input_norm</td>
+<td style="text-align: left;">mtp_enorm</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
 <td style="text-align: right;">1</td>
-<td style="text-align: left;"><code>GEMM</code></td>
-<td style="text-align: left;">qkv_a_proj</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">mtp_hnorm</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=2624, k=6144</td>
+<td style="text-align: left;"></td>
 </tr>
 <tr>
 <td style="text-align: right;">2</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">mtp_eh_proj</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=6144, k=12288, weight_dtype=bf16, tp=replicated</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">input_norm</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">qkv_a_proj</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=2624, k=6144, tp=replicated</td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
 <td style="text-align: left;"><code>Elementwise</code></td>
 <td style="text-align: left;">qkv_a_layernorm</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">bytes_per_token=10752</td>
 </tr>
 <tr>
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">6</td>
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">q_b_proj</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">n=16384, k=2048</td>
 </tr>
 <tr>
-<td style="text-align: right;">4</td>
+<td style="text-align: right;">7</td>
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">kv_b_proj</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">n=28672, k=512</td>
 </tr>
 <tr>
-<td style="text-align: right;">5</td>
+<td style="text-align: right;">8</td>
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">index_wq_b</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=4096, k=2048</td>
+<td style="text-align: left;">n=4096, k=2048, tp=replicated</td>
 </tr>
 <tr>
-<td style="text-align: right;">6</td>
+<td style="text-align: right;">9</td>
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">index_wk_weights_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=160, k=6144, weight_dtype=bf16</td>
+<td style="text-align: left;">n=160, k=6144, weight_dtype=bf16, tp=replicated</td>
 </tr>
 <tr>
-<td style="text-align: right;">7</td>
+<td style="text-align: right;">10</td>
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;">block_index_scores</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">holds_engine_kv=False, kind=gqa, n_q=32, n_kv=1, d_h=128</td>
+<td style="text-align: left;">holds_engine_kv=False, kind=gqa, n_q=32, n_kv=1, d_h=128, tp=replicated</td>
 </tr>
 <tr>
-<td style="text-align: right;">8</td>
+<td style="text-align: right;">11</td>
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">holds_engine_kv=True, kind=sparse_mla, n_q=64, n_kv=1, d_h=576, kv_lora_rank=512, qk_rope_head_dim=64, index_topk=2048</td>
 </tr>
 <tr>
-<td style="text-align: right;">9</td>
+<td style="text-align: right;">12</td>
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">o_proj</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">n=6144, k=16384</td>
 </tr>
 <tr>
-<td style="text-align: right;">10</td>
+<td style="text-align: right;">13</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">attn_out</td>
 <td style="text-align: left;"><code>tensor_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">11</td>
+<td style="text-align: right;">14</td>
 <td style="text-align: left;"><code>Elementwise</code></td>
 <td style="text-align: left;">post_attn_norm</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">12</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">router</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=256, k=6144, tp=replicated, weight_dtype=bf16</td>
+</tr>
+<tr>
+<td style="text-align: right;">16</td>
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">shared=False, n=2048, k=6144, experts=256, top_k=8, shared_experts=1</td>
+<td style="text-align: left;">shared=False, n=2048, k=6144, experts=256, top_k=8</td>
 </tr>
 <tr>
-<td style="text-align: right;">13</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_gate_up</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=4096, k=6144, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">18</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_act</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=sharded, bytes_per_token=12288</td>
+</tr>
+<tr>
+<td style="text-align: right;">19</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_down</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=6144, k=2048, tp=row</td>
+</tr>
+<tr>
+<td style="text-align: right;">20</td>
 <td style="text-align: left;"><code>All2All</code></td>
 <td style="text-align: left;">moe_dispatch_combine</td>
 <td style="text-align: left;"><code>expert_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">14</td>
+<td style="text-align: right;">21</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">mlp_out</td>
 <td style="text-align: left;"><code>tensor_parallel_unless_sp_moe</code></td>

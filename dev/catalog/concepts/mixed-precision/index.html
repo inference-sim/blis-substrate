@@ -966,6 +966,8 @@
       
         
       
+        
+      
     
     
     
@@ -1483,6 +1485,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5425,8 +5455,9 @@ one width and a role stored two ways would be priced at one:</p>
   vLLM v0.32.0 reads the first from <code>config.json</code>, <code>modelopt.py:320-406</code>) that names a listed
   module, since the two files would then place it differently.</li>
 </ul>
-<p>The graph is the MXFP8 graph of <code>minimax-m3-mxfp8</code> with the routed experts at NVFP4 and the
-shared expert as a node of its own at FP8 (the same split <code>minimax-m3.1-flash</code> uses). The
+<p>The graph is the MXFP8 graph of <code>minimax-m3-mxfp8</code> with the routed experts at NVFP4. The shared
+expert's gate/up, activation and down are nodes of their own in every MiniMax-M3 graph, the launches
+vLLM runs for it, and its two GEMMs take the global FP8 width (as in <code>minimax-m3.1-flash</code>). The
 global width is FP8 with the microscaling scale, the router FP32, the head BF16.</p>
 <p>The kernel does not recognise the spelling <code>modelopt_mixed</code>: it is vLLM's name, and the cost model
 resolves no engine's setting. The engine model resolves it, refuses what vLLM refuses, and states

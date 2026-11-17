@@ -966,6 +966,8 @@
       
         
       
+        
+      
     
     
     
@@ -1483,6 +1485,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5397,7 +5427,7 @@ any overlays. Either way the files are checked by the validators CI runs before 
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">err</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">}</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nx">k</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">latencykernel</span><span class="p">.</span><span class="nx">Open</span><span class="p">(</span><span class="s">"scenario.yaml"</span><span class="p">,</span><span class="w"> </span><span class="nx">latencykernel</span><span class="p">.</span><span class="nx">Repos</span><span class="p">{</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nx">Scenarios</span><span class="p">:</span><span class="w"> </span><span class="nx">dir</span><span class="p">,</span><span class="w"> </span><span class="nx">Data</span><span class="p">:</span><span class="w"> </span><span class="nx">data</span><span class="p">,</span><span class="w"> </span><span class="nx">Rules</span><span class="p">:</span><span class="w"> </span><span class="nx">rules</span><span class="p">,</span><span class="w"> </span><span class="nx">EngineSettings</span><span class="p">:</span><span class="w"> </span><span class="nx">settings</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nx">Scenarios</span><span class="p">:</span><span class="w"> </span><span class="nx">dir</span><span class="p">,</span><span class="w"> </span><span class="nx">Data</span><span class="p">:</span><span class="w"> </span><span class="nx">data</span><span class="p">,</span><span class="w"> </span><span class="nx">Rules</span><span class="p">:</span><span class="w"> </span><span class="nx">rules</span><span class="p">,</span><span class="w"> </span><span class="nx">DraftModel</span><span class="p">:</span><span class="w"> </span><span class="nx">drafter</span><span class="p">,</span><span class="w"> </span><span class="nx">Lower</span><span class="p">:</span><span class="w"> </span><span class="nx">lower</span><span class="p">,</span>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="p">})</span>
 </code></pre></div>
 <p><code>data.Report()</code> then lists the registry entries the kernel's lookups returned and the
@@ -5407,7 +5437,12 @@ registry files nothing loaded.</p>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1">// which decodes the vLLM engine block it opens the kernel from.</span>
 </code></pre></div>
 <p><code>Repos</code> also carries the engine's part: <code>Rules</code>, the engine rules for the release a scenario
-declares, and <code>EngineSettings</code>, which decodes a pool's engine block. <code>RulesKind</code> names the
+declares; <code>DraftModel</code>, which names the drafter a pool's engine block names; and <code>Lower</code>, the
+engine's lowering of a pool, which resolves every engine setting into the plan the kernel prices
+(<code>plan.Lowered</code>). The kernel applies no default to that plan and reads no engine setting.
+Two engine rules still sit in the layout geometry, the <abbr title="Mixture of experts">MoE</abbr> group's width and whether an <abbr title="Mixture of experts">MoE</abbr>
+layer dispatches; moving them into the plan is blis-substrate#172.
+<code>RulesKind</code> names the
 engine kind those rules are for; <code>Open</code> refuses a scenario whose <code>engine</code> block names another
 kind, and an empty <code>RulesKind</code> means <code>vllm</code>. For vLLM all of these come from
 blis-vllm, which is why the examples on these pages live there.

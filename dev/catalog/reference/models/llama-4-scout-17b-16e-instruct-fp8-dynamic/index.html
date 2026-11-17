@@ -962,6 +962,8 @@
       
         
       
+        
+      
     
     
     
@@ -1479,6 +1481,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5220,11 +5250,7 @@
 
 
 <h1 id="llama-4-scout-17b-16e-instruct-fp8-dynamic">llama-4-scout-17b-16e-instruct-fp8-dynamic<a class="headerlink" href="#llama-4-scout-17b-16e-instruct-fp8-dynamic" title="Permanent link">&para;</a></h1>
-<p><a href="https://huggingface.co/RedHatAI/Llama-4-Scout-17B-16E-Instruct-FP8-dynamic/tree/fc1b4f4cea92cfc13570f504a209eb4d4ca81534"><code>RedHatAI/Llama-4-Scout-17B-16E-Instruct-FP8-dynamic</code></a>, architecture <code>Llama4ForConditionalGeneration</code>: 48 layers, weights in fp8. The graph below is derived from the model's <a href="https://huggingface.co/RedHatAI/Llama-4-Scout-17B-16E-Instruct-FP8-dynamic/blob/fc1b4f4cea92cfc13570f504a209eb4d4ca81534/config.json"><code>config.json</code></a> at revision <code>fc1b4f4cea92</code>; <a href="../../../concepts/model-graphs/">Model graphs</a> explains how to read it, and the <a href="../../../concepts/glossary/">glossary</a> defines its terms.</p>
-<div class="admonition note">
-<p class="admonition-title">Text decoder only</p>
-<p>The vendor config describes a multimodal model. This graph prices the text decoder and records <code>modality: text_decoder_of_multimodal</code>; a request carrying an image or audio input costs more than it predicts.</p>
-</div>
+<p><a href="https://huggingface.co/RedHatAI/Llama-4-Scout-17B-16E-Instruct-FP8-dynamic/tree/fc1b4f4cea92cfc13570f504a209eb4d4ca81534"><code>RedHatAI/Llama-4-Scout-17B-16E-Instruct-FP8-dynamic</code></a>, architecture <code>Llama4ForConditionalGeneration</code>: 48 layers, weights in fp8 (bf16 for some nodes). The graph below is derived from the model's <a href="https://huggingface.co/RedHatAI/Llama-4-Scout-17B-16E-Instruct-FP8-dynamic/blob/fc1b4f4cea92cfc13570f504a209eb4d4ca81534/config.json"><code>config.json</code></a> at revision <code>fc1b4f4cea92</code>; <a href="../../../concepts/model-graphs/">Model graphs</a> explains how to read it, and the <a href="../../../concepts/glossary/">glossary</a> defines its terms.</p>
 <h2 id="layer-stack">Layer stack<a class="headerlink" href="#layer-stack" title="Permanent link">&para;</a></h2>
 <div class="cf-scroll"><svg class="cf-figure" viewBox="0 0 720 56" role="img" aria-label="llama-4-scout-17b-16e-instruct-fp8-dynamic: 48 layers by kind, in stack order" xmlns="http://www.w3.org/2000/svg"><title>llama-4-scout-17b-16e-instruct-fp8-dynamic: 48 layers by kind, in stack order</title><rect x="0.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 0: attn_moe</title></rect><rect x="15.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 1: attn_moe</title></rect><rect x="30.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 2: attn_moe</title></rect><rect x="45.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 3: attn_moe</title></rect><rect x="60.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 4: attn_moe</title></rect><rect x="75.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 5: attn_moe</title></rect><rect x="90.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 6: attn_moe</title></rect><rect x="105.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 7: attn_moe</title></rect><rect x="120.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 8: attn_moe</title></rect><rect x="135.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 9: attn_moe</title></rect><rect x="150.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 10: attn_moe</title></rect><rect x="165.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 11: attn_moe</title></rect><rect x="180.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 12: attn_moe</title></rect><rect x="195.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 13: attn_moe</title></rect><rect x="210.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 14: attn_moe</title></rect><rect x="225.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 15: attn_moe</title></rect><rect x="240.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 16: attn_moe</title></rect><rect x="255.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 17: attn_moe</title></rect><rect x="270.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 18: attn_moe</title></rect><rect x="285.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 19: attn_moe</title></rect><rect x="300.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 20: attn_moe</title></rect><rect x="315.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 21: attn_moe</title></rect><rect x="330.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 22: attn_moe</title></rect><rect x="345.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 23: attn_moe</title></rect><rect x="360.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 24: attn_moe</title></rect><rect x="375.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 25: attn_moe</title></rect><rect x="390.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 26: attn_moe</title></rect><rect x="405.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 27: attn_moe</title></rect><rect x="420.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 28: attn_moe</title></rect><rect x="435.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 29: attn_moe</title></rect><rect x="450.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 30: attn_moe</title></rect><rect x="465.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 31: attn_moe</title></rect><rect x="480.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 32: attn_moe</title></rect><rect x="495.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 33: attn_moe</title></rect><rect x="510.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 34: attn_moe</title></rect><rect x="525.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 35: attn_moe</title></rect><rect x="540.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 36: attn_moe</title></rect><rect x="555.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 37: attn_moe</title></rect><rect x="570.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 38: attn_moe</title></rect><rect x="585.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 39: attn_moe</title></rect><rect x="600.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 40: attn_moe</title></rect><rect x="615.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 41: attn_moe</title></rect><rect x="630.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 42: attn_moe</title></rect><rect x="645.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 43: attn_moe</title></rect><rect x="660.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 44: attn_moe</title></rect><rect x="675.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 45: attn_moe</title></rect><rect x="690.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 46: attn_moe</title></rect><rect x="705.00" y="4" width="15.00" height="22" fill="#0072B2"><title>layer 47: attn_moe</title></rect><line class="cf-sep" x1="15.00" x2="15.00" y1="4" y2="26"/><line class="cf-sep" x1="30.00" x2="30.00" y1="4" y2="26"/><line class="cf-sep" x1="45.00" x2="45.00" y1="4" y2="26"/><line class="cf-sep" x1="60.00" x2="60.00" y1="4" y2="26"/><line class="cf-sep" x1="75.00" x2="75.00" y1="4" y2="26"/><line class="cf-sep" x1="90.00" x2="90.00" y1="4" y2="26"/><line class="cf-sep" x1="105.00" x2="105.00" y1="4" y2="26"/><line class="cf-sep" x1="120.00" x2="120.00" y1="4" y2="26"/><line class="cf-sep" x1="135.00" x2="135.00" y1="4" y2="26"/><line class="cf-sep" x1="150.00" x2="150.00" y1="4" y2="26"/><line class="cf-sep" x1="165.00" x2="165.00" y1="4" y2="26"/><line class="cf-sep" x1="180.00" x2="180.00" y1="4" y2="26"/><line class="cf-sep" x1="195.00" x2="195.00" y1="4" y2="26"/><line class="cf-sep" x1="210.00" x2="210.00" y1="4" y2="26"/><line class="cf-sep" x1="225.00" x2="225.00" y1="4" y2="26"/><line class="cf-sep" x1="240.00" x2="240.00" y1="4" y2="26"/><line class="cf-sep" x1="255.00" x2="255.00" y1="4" y2="26"/><line class="cf-sep" x1="270.00" x2="270.00" y1="4" y2="26"/><line class="cf-sep" x1="285.00" x2="285.00" y1="4" y2="26"/><line class="cf-sep" x1="300.00" x2="300.00" y1="4" y2="26"/><line class="cf-sep" x1="315.00" x2="315.00" y1="4" y2="26"/><line class="cf-sep" x1="330.00" x2="330.00" y1="4" y2="26"/><line class="cf-sep" x1="345.00" x2="345.00" y1="4" y2="26"/><line class="cf-sep" x1="360.00" x2="360.00" y1="4" y2="26"/><line class="cf-sep" x1="375.00" x2="375.00" y1="4" y2="26"/><line class="cf-sep" x1="390.00" x2="390.00" y1="4" y2="26"/><line class="cf-sep" x1="405.00" x2="405.00" y1="4" y2="26"/><line class="cf-sep" x1="420.00" x2="420.00" y1="4" y2="26"/><line class="cf-sep" x1="435.00" x2="435.00" y1="4" y2="26"/><line class="cf-sep" x1="450.00" x2="450.00" y1="4" y2="26"/><line class="cf-sep" x1="465.00" x2="465.00" y1="4" y2="26"/><line class="cf-sep" x1="480.00" x2="480.00" y1="4" y2="26"/><line class="cf-sep" x1="495.00" x2="495.00" y1="4" y2="26"/><line class="cf-sep" x1="510.00" x2="510.00" y1="4" y2="26"/><line class="cf-sep" x1="525.00" x2="525.00" y1="4" y2="26"/><line class="cf-sep" x1="540.00" x2="540.00" y1="4" y2="26"/><line class="cf-sep" x1="555.00" x2="555.00" y1="4" y2="26"/><line class="cf-sep" x1="570.00" x2="570.00" y1="4" y2="26"/><line class="cf-sep" x1="585.00" x2="585.00" y1="4" y2="26"/><line class="cf-sep" x1="600.00" x2="600.00" y1="4" y2="26"/><line class="cf-sep" x1="615.00" x2="615.00" y1="4" y2="26"/><line class="cf-sep" x1="630.00" x2="630.00" y1="4" y2="26"/><line class="cf-sep" x1="645.00" x2="645.00" y1="4" y2="26"/><line class="cf-sep" x1="660.00" x2="660.00" y1="4" y2="26"/><line class="cf-sep" x1="675.00" x2="675.00" y1="4" y2="26"/><line class="cf-sep" x1="690.00" x2="690.00" y1="4" y2="26"/><line class="cf-sep" x1="705.00" x2="705.00" y1="4" y2="26"/><rect x="0.0" y="38" width="10" height="10" fill="#0072B2"/><text class="cf-label" x="15.0" y="47">attn_moe ×48</text></svg></div>
 
@@ -5252,7 +5278,7 @@
 </tr>
 <tr>
 <td style="text-align: left;">Weights</td>
-<td style="text-align: right;">fp8</td>
+<td style="text-align: right;">fp8 (bf16 for some nodes)</td>
 </tr>
 <tr>
 <td style="text-align: left;">Sequence mixing</td>
@@ -5327,20 +5353,48 @@
 </tr>
 <tr>
 <td style="text-align: right;">6</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">router</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=16, k=5120, tp=replicated, weight_dtype=bf16</td>
+</tr>
+<tr>
+<td style="text-align: right;">7</td>
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">shared=False, n=8192, k=5120, experts=16, top_k=1</td>
 </tr>
 <tr>
-<td style="text-align: right;">7</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_gate_up</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=16384, k=5120, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">9</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_act</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=sharded, bytes_per_token=49152</td>
+</tr>
+<tr>
+<td style="text-align: right;">10</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_down</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=5120, k=8192, tp=row</td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
 <td style="text-align: left;"><code>All2All</code></td>
 <td style="text-align: left;">moe_dispatch_combine</td>
 <td style="text-align: left;"><code>expert_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">8</td>
+<td style="text-align: right;">12</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">mlp_out</td>
 <td style="text-align: left;"><code>tensor_parallel_unless_sp_moe</code></td>

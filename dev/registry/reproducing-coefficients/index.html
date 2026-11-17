@@ -966,6 +966,8 @@
       
         
       
+        
+      
     
     
     
@@ -1483,6 +1485,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5732,7 +5762,7 @@ the data comes from, and which command regenerates which file.</p>
 <tbody>
 <tr>
 <td>Repository</td>
-<td><a href="https://github.com/ai-dynamo/aisimulate">https://github.com/ai-dynamo/aisimulate</a></td>
+<td><a href="https://github.com/ai-dynamo/aisim">https://github.com/ai-dynamo/aisim</a> (renamed from <code>ai-dynamo/aisimulate</code> at f85518b3; the old name redirects)</td>
 </tr>
 <tr>
 <td>Docs</td>
@@ -5748,11 +5778,11 @@ the data comes from, and which command regenerates which file.</p>
 </tr>
 <tr>
 <td>Fetch</td>
-<td><code>git clone https://github.com/ai-dynamo/aisimulate</code> — the sweeps are checked into git as Parquet. Git LFS is needed only for retained legacy <code>.txt</code> assets, which no fit in this registry reads. <code>pip install aisimulate</code> also ships the tree inside the wheel.</td>
+<td><code>git clone https://github.com/ai-dynamo/aisim</code> — the sweeps are checked into git as Parquet. Git LFS is needed only for retained legacy <code>.txt</code> assets, which no fit in this registry reads. <code>pip install aisimulate</code> also ships the tree inside the wheel.</td>
 </tr>
 <tr>
 <td>Pin</td>
-<td>Every committed value re-derives at <code>2f0f4cd8606d580567b253d02f3d699fe36db865</code> (2026-10-10), with the repository's own <code>catalog/</code> at the same commit as the registry. The <code>rederive</code> workflow checks out AISimulate at <code>AISIMULATE_SHA</code>; bump it deliberately, with the diff the writers produce. A catalog change to a part's datasheet figure moves every rate fitted as a fraction of it, so the writers' <code>--check</code> runs on the pull request that makes it.</td>
+<td>Every committed value re-derives at <code>6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18</code> (2026-11-16), with the repository's own <code>catalog/</code> at the same commit as the registry. The <code>rederive</code> workflow checks out AISimulate at <code>AISIMULATE_SHA</code>; bump it deliberately, with the diff the writers produce. One table is read at a second commit: the DeepSeek-V4.1 FlashMLA sparse decode kernel table <code>dsv4_hca_attn_module_perf</code> at <code>AISIMULATE_DSV4_KERNEL_SHA</code> (2f0f4cd8, exported as <code>AISIMULATE_DSV4_KERNEL_DATA</code>), which AISimulate retired at e8cbe2dc; its successor times the whole attention module, a different measurement boundary. A catalog change to a part's datasheet figure moves every rate fitted as a fraction of it, so the writers' <code>--check</code> runs on the pull request that makes it.</td>
 </tr>
 <tr>
 <td>Python</td>
@@ -5761,14 +5791,15 @@ the data comes from, and which command regenerates which file.</p>
 </tbody>
 </table>
 <p>The two trees the fits read are <strong>not</strong> at the repository root:</p>
-<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python/aisimulate/src/aisimulate_core/systems/&lt;sku&gt;.yaml          # system descriptors
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>python/aisimulate/src/aisimulate_core/systems/data/&lt;sku&gt;/&lt;op&gt;/&lt;framework&gt;/&lt;version&gt;/*.parquet
+<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python/aisim/src/aisim_core/systems/&lt;sku&gt;.yaml          # system descriptors
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>python/aisim/src/aisim_core/systems/data/&lt;sku&gt;/&lt;op&gt;/&lt;framework&gt;/&lt;version&gt;/*.parquet
 </code></pre></div>
 <p>Export that second path once; every script below honours it. The fitters read the
 repository's <code>catalog/</code> unless <code>BLIS_CATALOG</code> names another directory, and
 <code>scripts/rederive.sh</code> requires it. Run them from <code>registry/</code>:</p>
-<div class="language-bash highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AISIMULATE_DATA</span><span class="o">=</span>&lt;aisimulate&gt;/python/aisimulate/src/aisimulate_core/systems/data
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BLIS_CATALOG</span><span class="o">=</span><span class="nv">$PWD</span>/../catalog
+<div class="language-bash highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AISIMULATE_DATA</span><span class="o">=</span>&lt;aisim&gt;/python/aisim/src/aisim_core/systems/data
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AISIMULATE_DSV4_KERNEL_DATA</span><span class="o">=</span>&lt;aisim<span class="w"> </span>@2f0f4cd8&gt;/python/aisimulate/src/aisimulate_core/systems/data<span class="w">  </span><span class="c1"># the DeepSeek-V4.1 writers</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BLIS_CATALOG</span><span class="o">=</span><span class="nv">$PWD</span>/../catalog
 </code></pre></div>
 <p><strong>Dataset SKU directories are not catalog chip names.</strong> The sweeps use
 <code>h200_sxm</code>, <code>h100_sxm</code>, <code>b200_sxm</code>, <code>b300_sxm</code>, <code>gb200</code>, <code>a100_sxm</code>, <code>l40s</code>; the catalog
@@ -5845,7 +5876,7 @@ AISimulate's own <code>systems/&lt;sku&gt;.yaml</code> — the keys are <code>me
 which NVIDIA annotates in-file as "nonofficial correction based on observations". It takes
 the <code>systems</code> directory, not <code>systems/data</code>:</p>
 <div class="language-bash highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>scripts/emit_primitives.py<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>&lt;aisimulate&gt;/python/aisimulate/src/aisimulate_core/systems<span class="w"> </span><span class="s2">"</span><span class="nv">$BLIS_CATALOG</span><span class="s2">"</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>&lt;aisim&gt;/python/aisim/src/aisim_core/systems<span class="w"> </span><span class="s2">"</span><span class="nv">$BLIS_CATALOG</span><span class="s2">"</span>
 </code></pre></div>
 <p>and its output is a reference to compare the descriptor entries against, not a file to
 commit whole (see the warning at the end of this section). Two descriptor keys are
@@ -6038,7 +6069,7 @@ bodies are not present". The entries <code>fit_deepep_ll_graph.py</code> and <co
 cite runs the API no longer serves (33356406487, 36334392363, 36367074689, 36402856875, and
 the swap_blocks bodies sha256 <code>26cad6ccbdaa</code>; each answered 404 on 2026-11-05). They stay as
 committed, and cannot be re-derived from public data. Their two tests are on
-<code>.github/quarantine.yaml</code> under inference-sim/blis-registry#57, so the gate reports them
+<code>.github/quarantine.yaml</code> under https://github.com/inference-sim/blis-registry/issues/57, so the gate reports them
 and fails when the entries expire, until the bodies are restored or the entries are
 re-cited through a reviewed refit.</p>
 <p>The OperatorX response <code>fit_marlin_nvfp4_grouped_ramp.py</code> cites is cited by the digest of
@@ -6164,7 +6195,7 @@ citations name the git SHA where that file can still be read.</p>
 <p><code>scripts/emit_memory.py</code> writes the whole file, and <code>--check</code> gates it.</p>
 <ul>
 <li>The activation multiples and floor are <code>vendor_spec</code>, read with <code>ast</code> from AISimulate's
-  <code>aisimulate_core/sdk/backends/</code> (located from <code>$AISIMULATE_DATA</code>, two directories up).
+  <code>aisim_core/sdk/backends/</code> (located from <code>$AISIMULATE_DATA</code>, two directories up).
   Verified against AISimulate <code>70305030</code>.</li>
 <li>The CUDA-graph capture bytes are <code>assumed</code>, the median per mode of the committed
   <code>registry/docs/vllm-cudagraph-capture-samples.csv</code>. That CSV is regenerated from the vLLM issue
@@ -6270,9 +6301,9 @@ appears with no owner — so a value that cannot be regenerated cannot be added.
 <td>AISimulate <code>attention</code> context rows</td>
 </tr>
 <tr>
-<td><code>attention_prefill_{floor,work_scale}_trtllm_gen_kv_{bf16,fp8}</code> (b200, b300, gb200-nvl72, gb300; <code>transferred</code>)</td>
-<td><code>emit_attention_trtllm_gen.py --check</code></td>
-<td>the <code>vllm_flashinfer_trtllmprefill</code> rows of AISimulate <code>attention/vllm/0.25.0</code> context sweeps; <code>--pooled</code> refits the committed pooled pair from every row to show the filter is the only change</td>
+<td><code>attention_prefill_{floor,work_scale}_trtllm_gen_kv_{bf16,fp8}</code> (b200, b300, gb200-nvl72, gb300; <code>measured</code> and <code>transferred</code>)</td>
+<td><code>emit_attention_trtllm_gen.py --check</code>, with <code>BLIS_KERNEL_IMPLS</code> set to blis-vllm's <code>kernel_impls.json</code> at <code>BLIS_VLLM_SHA</code> (rederive.yml)</td>
+<td>the <code>vllm_flashinfer_trtllmprefill</code> rows of AISimulate <code>attention/vllm/0.25.0</code> context sweeps, keyed by the table's builds; <code>--pooled</code> refits the committed pooled pair from every row to show the filter is the only change</td>
 </tr>
 <tr>
 <td><code>attention_prefill_*_sparse_mla</code>, <code>attention_prefill_*_block_index_scores</code>, <code>mhc_*</code></td>
@@ -6300,8 +6331,8 @@ appears with no owner — so a value that cannot be regenerated cannot be added.
 <td>AISimulate <code>comm</code></td>
 </tr>
 <tr>
-<td><code>collective_*_all_reduce_fp16_{2,4,8}rank_{h100,h200}</code> (their 16-rank extrapolations follow, <code>extrapolate_collective_width.py</code>)</td>
-<td><code>relane_allreduce_vllm.py --check</code> (<code>$AISIMULATE_ALLREDUCE_DATA</code>, aisimulate <code>7980e95</code>)</td>
+<td><code>collective_*_all_reduce_fp16_{2,4,8}rank_{h100,h200}</code> and <code>_{2,4}rank_{gb200_nvl72,gb300}</code> (h100/h200 16-rank extrapolations follow, <code>extrapolate_collective_width.py</code>); <code>_{8,16}rank_gb200_nvl72</code>, transferred from gb300's <code>comm/vllm/0.27.0</code></td>
+<td><code>relane_allreduce_vllm.py --check</code> (<code>$AISIMULATE_DATA</code>)</td>
 <td>AISimulate <code>comm/vllm/0.31.0</code> custom all-reduce, CUDA-graph lane</td>
 </tr>
 <tr>
@@ -6400,7 +6431,7 @@ non-zero if the committed file would change) and <code>--insert CHIP</code> (it 
 set does not carry yet, through the same renderer, so an inserted entry is byte-identical
 to what a later re-run produces). The order matters in one place: prefill attention reads
 the bf16 <abbr title="General matrix multiply">GEMM</abbr> ramp <strong>from the registry</strong>, so the envelope must be committed first.</p>
-<div class="language-bash highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AISIMULATE_DATA</span><span class="o">=</span>&lt;aisimulate&gt;/python/aisimulate/src/aisimulate_core/systems/data
+<div class="language-bash highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AISIMULATE_DATA</span><span class="o">=</span>&lt;aisim&gt;/python/aisim/src/aisim_core/systems/data
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BLIS_CATALOG</span><span class="o">=</span><span class="nv">$PWD</span>/../catalog
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># 1. descriptors (vendor_spec, from NVIDIA's own systems/gb300.yaml)</span>
@@ -6437,8 +6468,8 @@ per-family writers; they are what <code>--check</code> guards.</p>
 <code>cost-model-attention</code>, <code>cost-model-recurrent</code>) and <code>coefficients/</code> held exactly those,
 724 entries.</p>
 <p><code>cost-model-memory</code> supplies the memory magnitudes the kernel had hard-coded
-(inference-sim/blis-registry#33); the cost model reads it
-(inference-sim/blis-latency-kernel#22). Every set under <code>coefficients/</code> has a reader, and
+(https://github.com/inference-sim/blis-registry/issues/33); the cost model reads it
+(https://github.com/inference-sim/blis-latency-kernel/issues/22). Every set under <code>coefficients/</code> has a reader, and
 <a href="../reference/#which-sets-the-kernel-reads">the reference overview</a> lists the
 families within them that have none.</p>
 <p>Four sets were removed because nothing in BLIS read them; they are recoverable from git history, where they last appear at 8d78ff8:</p>

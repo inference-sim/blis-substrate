@@ -979,6 +979,8 @@
       
         
       
+        
+      
     
     
     
@@ -1271,6 +1273,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#encoder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        encoder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#speculator" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1408,6 +1421,17 @@
     <span class="md-ellipsis">
       
         config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#headers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        headers
       
     </span>
   </a>
@@ -1762,6 +1786,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5471,6 +5523,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#encoder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        encoder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#speculator" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5608,6 +5671,17 @@
     <span class="md-ellipsis">
       
         config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#headers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        headers
       
     </span>
   </a>
@@ -5777,7 +5851,13 @@ explained in <a href="../../design/model-graph/">Why a model is a graph</a>.</p>
 <td><code>modality</code></td>
 <td>string</td>
 <td>no</td>
-<td>What the graph covers. Omitted means <code>text_only</code>. <code>text_decoder_of_multimodal</code> marks the decoder of a model whose encoder the graph does not price. See <a href="../vocabularies/#modalities">modalities</a>.</td>
+<td>What the graph covers. Omitted means <code>text_only</code>. <code>text_decoder_of_multimodal</code> marks the decoder of a model with a tower the graph does not price (with an <code>encoder</code>, the towers listed under <code>omitted</code>). <code>multimodal</code> marks a graph whose <code>encoder</code> prices every tower of the source. See <a href="../vocabularies/#modalities">modalities</a>.</td>
+</tr>
+<tr>
+<td><code>encoder</code></td>
+<td>mapping</td>
+<td>no</td>
+<td>The towers the graph prices, <a href="#encoder">below</a>. Omitted means the graph prices the decoder alone.</td>
 </tr>
 </tbody>
 </table>
@@ -5998,6 +6078,323 @@ explained in <a href="../../design/model-graph/">Why a model is a graph</a>.</p>
 <p>A uniform model is a one-entry pattern with a repeat. A model with no period puts its
 whole layer sequence in <code>prologue</code> and leaves <code>repeat</code> at zero. The stack must expand to at
 least one layer.</p>
+<h3 id="encoder"><code>encoder</code><a class="headerlink" href="#encoder" title="Permanent link">&para;</a></h3>
+<p>A vision tower runs once per image over the image's patches, with bidirectional attention and
+no <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> cache, and its output tokens join the prompt. It is not a layer of the decoder stack, so
+it has a section of its own, with its own layer kinds and stack. A request with no image runs no tower.</p>
+<!-- fields: model.Encoder -->
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>towers</code></td>
+<td>list</td>
+<td>with no <code>omitted</code></td>
+<td>The priced towers. Only <code>image</code> towers are priced. A graph that prices none lists every tower of the source under <code>omitted</code>.</td>
+</tr>
+<tr>
+<td><code>omitted</code></td>
+<td>list</td>
+<td>no</td>
+<td>A tower of the source the graph does not price, below. A request carrying that input is refused.</td>
+</tr>
+</tbody>
+</table>
+<!-- fields: model.OmittedTower -->
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>modality</code></td>
+<td>string</td>
+<td>yes</td>
+<td><code>image</code> or <code>audio</code>.</td>
+</tr>
+<tr>
+<td><code>reason</code></td>
+<td>string</td>
+<td>yes</td>
+<td>One sentence on what the kernels cannot express.</td>
+</tr>
+<tr>
+<td><code>issue</code></td>
+<td>string</td>
+<td>yes</td>
+<td>The open issue that tracks the gap, as <code>owner/repo#N</code>.</td>
+</tr>
+</tbody>
+</table>
+<!-- fields: model.Tower -->
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>modality</code></td>
+<td>string</td>
+<td>yes</td>
+<td><code>image</code>.</td>
+</tr>
+<tr>
+<td><code>input</code></td>
+<td>mapping</td>
+<td>yes</td>
+<td>How pixels become the tower's rows, below.</td>
+</tr>
+<tr>
+<td><code>merge_ratio</code></td>
+<td>integer</td>
+<td>yes</td>
+<td>The rows that become one output token: the spatial merge squared (2x2 is 4), a pooling window (3x3 is 9), or 1.</td>
+</tr>
+<tr>
+<td><code>output_hidden_size</code></td>
+<td>integer</td>
+<td>yes</td>
+<td>The width of each output token. It equals <code>global.hidden_size</code>, because the decoder reads the tokens as embeddings.</td>
+</tr>
+<tr>
+<td><code>max_output_tokens</code></td>
+<td>integer</td>
+<td>no</td>
+<td>The most tokens one image yields when the processor shrinks a larger image to fit. Omitted means the checkpoint states none.</td>
+</tr>
+<tr>
+<td><code>parallel</code></td>
+<td>string</td>
+<td>yes</td>
+<td><code>tensor</code>: the tower's linears are tensor-parallel by default (the engine replicates them when the head count does not divide the width, or when the deployment asks for data mode). <code>replicated</code>: the model code builds every linear replicated.</td>
+</tr>
+<tr>
+<td><code>weight_dtype</code></td>
+<td>string</td>
+<td>yes</td>
+<td>The dtype the tower's tensors are stored in, from the checkpoint's headers. A node may override it.</td>
+</tr>
+<tr>
+<td><code>embedding</code></td>
+<td>list of nodes</td>
+<td>no</td>
+<td>Run once before the stack: the patch projection and position embedding.</td>
+</tr>
+<tr>
+<td><code>layer_kinds</code></td>
+<td>list</td>
+<td>yes</td>
+<td>The distinct tower layers, below.</td>
+</tr>
+<tr>
+<td><code>stack</code></td>
+<td>mapping</td>
+<td>yes</td>
+<td>The order the tower layers run in, as the decoder's <code>stack</code>.</td>
+</tr>
+<tr>
+<td><code>projector</code></td>
+<td>list of nodes</td>
+<td>no</td>
+<td>Run after the stack: the merger or projector that ends at <code>output_hidden_size</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The tower's evaluation functions are pure: <code>Patches(height, width, frames)</code> is the rows the
+tower encodes for an image the processor has already resized, <code>OutputTokens(height, width,
+frames)</code> the tokens it adds to the prompt, and <code>OutputBytes(tokens)</code> the bf16 embeddings an
+encoder-to-prefill handoff moves.</p>
+<!-- fields: model.TowerInput -->
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>patch_size</code></td>
+<td>integer</td>
+<td>yes</td>
+<td>Pixels on one side of a patch.</td>
+</tr>
+<tr>
+<td><code>temporal_patch_size</code></td>
+<td>integer</td>
+<td>no</td>
+<td>Frames one patch spans. Omitted means 1. A still image is one temporal patch.</td>
+</tr>
+<tr>
+<td><code>channels</code></td>
+<td>integer</td>
+<td>yes</td>
+<td>Input channels.</td>
+</tr>
+<tr>
+<td><code>tile_pixels</code></td>
+<td>integer</td>
+<td>no</td>
+<td>The image is cut into square tiles of this many pixels, each its own attention sequence, plus one tile of the whole image when there are several. A multiple of <code>patch_size</code>.</td>
+</tr>
+<tr>
+<td><code>class_tokens</code></td>
+<td>integer</td>
+<td>no</td>
+<td>Rows a tile or grid adds beyond its patches. They are encoded and yield no output token.</td>
+</tr>
+<tr>
+<td><code>fixed_rows</code></td>
+<td>integer</td>
+<td>no</td>
+<td>The rows the tower encodes for every image, because the processor pads to it. Not with <code>tile_pixels</code>.</td>
+</tr>
+</tbody>
+</table>
+<!-- fields: model.EncoderLayerKind -->
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>string</td>
+<td>yes</td>
+<td>The layer kind's name, unique in the tower and used by its <code>stack</code>.</td>
+</tr>
+<tr>
+<td><code>nodes</code></td>
+<td>list of tower nodes</td>
+<td>yes</td>
+<td>The primitives of one layer, at least one.</td>
+</tr>
+</tbody>
+</table>
+<!-- fields: model.EncoderNode -->
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>op</code></td>
+<td>string</td>
+<td>yes</td>
+<td><code>gemm</code>, <code>attention</code> or <code>elementwise</code>.</td>
+</tr>
+<tr>
+<td><code>role</code></td>
+<td>string</td>
+<td>no</td>
+<td>A label for people; it decides nothing.</td>
+</tr>
+<tr>
+<td><code>rows</code></td>
+<td>string</td>
+<td>no</td>
+<td><code>patches</code> (the default) or <code>output_tokens</code>, the row count the node runs over.</td>
+</tr>
+<tr>
+<td><code>tp</code></td>
+<td>string</td>
+<td>no</td>
+<td>How the node divides when the tower is <code>tensor</code>: <code>column</code> or <code>row</code> for a <code>gemm</code>, <code>sharded</code> for an <code>attention</code>, <code>sharded</code> or <code>replicated</code> for an <code>elementwise</code>. Omitted means replicated.</td>
+</tr>
+<tr>
+<td><code>weight_dtype</code></td>
+<td>string</td>
+<td>no</td>
+<td>Overrides the tower's dtype for this node.</td>
+</tr>
+<tr>
+<td><code>n</code></td>
+<td>integer</td>
+<td><code>gemm</code></td>
+<td>Output width.</td>
+</tr>
+<tr>
+<td><code>k</code></td>
+<td>integer</td>
+<td><code>gemm</code></td>
+<td>Input width.</td>
+</tr>
+<tr>
+<td><code>bias</code></td>
+<td>boolean</td>
+<td>no</td>
+<td>A <code>gemm</code> with an <code>n</code>-long bias.</td>
+</tr>
+<tr>
+<td><code>n_heads</code></td>
+<td>integer</td>
+<td><code>attention</code></td>
+<td>Heads. Tower attention is multi-head, with as many <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> heads.</td>
+</tr>
+<tr>
+<td><code>d_h</code></td>
+<td>integer</td>
+<td><code>attention</code></td>
+<td>Head dimension.</td>
+</tr>
+<tr>
+<td><code>window</code></td>
+<td>integer</td>
+<td>no</td>
+<td>Limits an attention sequence to blocks of this many rows.</td>
+</tr>
+<tr>
+<td><code>bytes_per_row</code></td>
+<td>integer</td>
+<td><code>elementwise</code></td>
+<td>Traffic per row, read plus write.</td>
+</tr>
+<tr>
+<td><code>params</code></td>
+<td>integer</td>
+<td>no</td>
+<td>The stored elements an <code>elementwise</code> node owns: norm scales, a position table.</td>
+</tr>
+</tbody>
+</table>
+<p>A graph with an <code>encoder</code> and no <code>omitted</code> tower states <code>modality: multimodal</code>; one that omits a
+tower states <code>text_decoder_of_multimodal</code>. A node carrying a parameter its op does not price is
+invalid, as for decoder nodes.</p>
 <h3 id="speculator"><code>speculator</code><a class="headerlink" href="#speculator" title="Permanent link">&para;</a></h3>
 <!-- fields: model.Speculator -->
 
@@ -6279,7 +6676,7 @@ That check covers the likely mistakes, not every key.</p>
 <td><code>n_kv</code></td>
 <td>integer</td>
 <td>yes</td>
-<td><abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> heads, at most <code>n_q</code>. Exactly 1 for <code>mla</code> and <code>sparse_mla</code>, which store one latent vector per token.</td>
+<td><abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> heads, at most <code>n_q</code>. Exactly 1 for <code>mla</code> and <code>sparse_mla</code>, which store one latent vector per token. <code>sparse_gqa</code> keeps K and V per head.</td>
 </tr>
 <tr>
 <td><code>d_h</code></td>
@@ -6308,14 +6705,14 @@ That check covers the likely mistakes, not every key.</p>
 <tr>
 <td><code>index_topk</code></td>
 <td>integer</td>
-<td>for <code>sparse_mla</code>, unless <code>compress_ratio</code> or <code>window</code> is set</td>
-<td>Cache entries a sparse layer selects.</td>
+<td>for <code>sparse_mla</code>, unless <code>compress_ratio</code> or <code>window</code> is set; for a <code>sparse_gqa</code> node with <code>holds_engine_kv</code> true</td>
+<td>Cache entries a sparse layer selects. Refused on a <code>sparse_gqa</code> indexer scorer.</td>
 </tr>
 <tr>
 <td><code>compress_ratio</code></td>
 <td>integer</td>
-<td>for <code>sparse_mla</code>, unless <code>index_topk</code> or <code>window</code> is set</td>
-<td>Factor by which a sparse layer compresses its latent read.</td>
+<td>for <code>sparse_mla</code>, unless <code>index_topk</code> or <code>window</code> is set; for a <code>sparse_gqa</code> node with <code>holds_engine_kv</code> false</td>
+<td>Factor by which a sparse layer compresses its latent read, or a <code>sparse_gqa</code> indexer compresses its key cache. Refused on the main <code>sparse_gqa</code> node.</td>
 </tr>
 <tr>
 <td><code>caches</code></td>
@@ -6353,32 +6750,38 @@ That check covers the likely mistakes, not every key.</p>
 <tr>
 <td><code>n_heads</code></td>
 <td>integer</td>
-<td>yes</td>
-<td>Heads.</td>
+<td>yes, except <code>short_conv</code></td>
+<td>Heads. Refused on <code>short_conv</code>.</td>
 </tr>
 <tr>
 <td><code>state_size</code></td>
 <td>integer</td>
-<td>yes</td>
-<td>State dimension.</td>
+<td>yes, except <code>short_conv</code></td>
+<td>State dimension. Refused on <code>short_conv</code>, which keeps no recurrent state.</td>
 </tr>
 <tr>
 <td><code>n_groups</code></td>
 <td>integer</td>
 <td>for <code>mamba2</code></td>
-<td>Groups.</td>
+<td>Groups. Refused on <code>short_conv</code>.</td>
 </tr>
 <tr>
 <td><code>conv_kernel</code></td>
 <td>integer</td>
-<td>for <code>mamba2</code></td>
+<td>for <code>mamba2</code> and <code>short_conv</code></td>
 <td>Convolution kernel width.</td>
+</tr>
+<tr>
+<td><code>conv_dilation</code></td>
+<td>integer</td>
+<td>no, <code>short_conv</code> only</td>
+<td>Tokens between the inputs the kernel taps. Omitted means 1. State holds <code>conv_kernel - 1</code> times this many inputs per channel.</td>
 </tr>
 <tr>
 <td><code>intermediate_size</code></td>
 <td>integer</td>
-<td>for <code>mamba2</code></td>
-<td>Inner dimension.</td>
+<td>for <code>mamba2</code> and <code>short_conv</code></td>
+<td>Inner dimension; for <code>short_conv</code>, the channels.</td>
 </tr>
 <tr>
 <td><code>state_dtype</code></td>
@@ -7246,6 +7649,18 @@ the entry is and where its <code>config.json</code> came from.</p>
 <td>The SHA-256 of a <code>config.json</code> that is not committed, below (X12).</td>
 </tr>
 <tr>
+<td><code>headers</code></td>
+<td>list of mappings</td>
+<td>no</td>
+<td>The safetensors headers the deriver reads stored widths from, for a checkpoint whose <code>config.json</code> does not state its quantization, below (SUB-15, X12).</td>
+</tr>
+<tr>
+<td><code>shard_index</code></td>
+<td>mapping</td>
+<td>with <code>headers</code></td>
+<td>The checkpoint's <code>model.safetensors.index.json</code>: <code>path</code> and the SHA-256 of the whole file. The pinned headers must be exactly the shards its <code>weight_map</code> names.</td>
+</tr>
+<tr>
 <td><code>drafters</code></td>
 <td>list of strings</td>
 <td>no</td>
@@ -7274,8 +7689,9 @@ facts of the graph. The engine states them in the pool's plan, as <code>plan.Dra
 settings, and the kernel receives them as <code>Inputs.DraftFirstPassRows</code> and <code>DraftPassRequests</code>. A
 deployment that speculates through an autoregressive drafter with either empty is refused at
 construction with <code>draft_passes_unstated</code> (an unknown word with <code>draft_passes_unknown</code>). The kernel
-names no engine or method. A parallel-block drafter (DSpark) needs neither: its context stack
-carries the work over the target's tokens.</p>
+names no engine or method. A parallel-block drafter (DFlash, DSpark) needs no <code>FirstPassRows</code>: its
+context stack carries the work over the target's tokens. It states <code>PassRequests</code>, the requests its
+query pass and sequential head run for, and is refused with <code>draft_passes_unstated</code> without it.</p>
 <p>A graph names its own MTP speculator by family (<code>deepseek_mtp</code>, <code>minimax_m3_mtp</code>,
 <code>nemotron_h_mtp</code>), and a deployment states <code>method: mtp</code>: vLLM replaces every model-specific MTP
 name with <code>mtp</code> (<code>vllm/config/speculative.py</code>, v0.32.0). <code>derive_graph.vllm_speculative_method</code>
@@ -7394,13 +7810,13 @@ reported as a missing model, not a missing drafter.</p>
 <td><code>id</code></td>
 <td>string</td>
 <td>yes</td>
-<td>The SPDX identifier, or <code>LicenseRef-&lt;name&gt;</code> for a licence SPDX does not list. When the model card names no licence, or only <code>other</code>, the identifier names the licence file read at the pinned revision; <code>LicenseRef-other</code> and <code>LicenseRef-none-stated</code> are refused.</td>
+<td>The SPDX identifier, or <code>LicenseRef-&lt;name&gt;</code> for a licence SPDX does not list. When the model card names no licence, or only <code>other</code>, the identifier names the licence file read at the pinned revision; <code>LicenseRef-other</code> and <code>LicenseRef-none-stated</code> are refused. When the revision states no licence at all (no card licence and no licence file), it is SPDX's <code>NONE</code>, which is not on the allow-list, so the entry must pin <code>config.sha256</code>.</td>
 </tr>
 <tr>
 <td><code>evidence</code></td>
 <td>string</td>
 <td>yes</td>
-<td>The <code>https</code> URL the licence was read from, naming the pinned revision: the model card, or the licence file when the card names none.</td>
+<td>The <code>https</code> URL the licence was read from, naming the pinned revision: the model card, the licence file when the card names none, or the provider's API record of the revision (for a gated repository, or for <code>NONE</code>).</td>
 </tr>
 </tbody>
 </table>
@@ -7442,6 +7858,42 @@ no model with a committed <code>config.json</code> needs.</p>
 <p>A model whose licence is not on the allow-list commits this hash in place of the file. The
 nightly fetch job retrieves the file with the access token, checks the hash, and derives the
 graph; pull-request jobs check the hash, the revision and the graph's <code>derived_from</code> hash only.</p>
+<h3 id="headers"><code>headers</code><a class="headerlink" href="#headers" title="Permanent link">&para;</a></h3>
+<!-- fields: model.HeaderPin -->
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>path</code></td>
+<td>string</td>
+<td>yes</td>
+<td>The shard's path in the repository, a <code>.safetensors</code> file. Each shard is pinned once.</td>
+</tr>
+<tr>
+<td><code>sha256</code></td>
+<td>string</td>
+<td>yes</td>
+<td>The SHA-256 of the shard's header: the JSON after the 8-byte length at the start of the file.</td>
+</tr>
+</tbody>
+</table>
+<p>A graph field is computed from <code>config.json</code> and the header of every shard (SUB-15). When
+<code>config.json</code> states no quantization, the stored width of each tensor is read from its header:
+an NVFP4 weight is U8 with an F8_E4M3 <code>weight_scale</code> of one column per 16 elements, an FP8
+weight is F8_E4M3, and a BF16 weight is unquantized. Only the headers are fetched, by range
+request, never the weights, and they are not committed (X12): <code>fetch_pinned_configs.py</code> checks
+each against its pin, and the deriver re-derives from them. "Every shard" is every shard the
+checkpoint's index names: <code>shard_index</code> pins that index, and a pinned header set that is not
+exactly its <code>weight_map</code>'s files is refused. A file the index does not name (a spare shard the
+engine never loads) is not pinned.</p>
 <p><code>model.yaml</code> and <code>graph.yaml</code> do not accept <code>_comment</code> keys, unlike the chip, fabric,
 storage-class and workload-shape files.</p>
 <h2 id="checks">Checks<a class="headerlink" href="#checks" title="Permanent link">&para;</a></h2>
@@ -7455,6 +7907,11 @@ storage-class and workload-shape files.</p>
 <li>an edge indexes a node that does not exist, joins a node to itself, or closes a cycle;</li>
 <li>the stack expands to no layers, <code>repeat</code> is negative, a pattern has no repeat or a repeat
   no pattern, or the stack names a layer kind that is not declared;</li>
+<li>an <code>encoder</code> has neither a tower nor an omitted tower, prices a tower that is not an image tower, has a <code>merge_ratio</code> below 1, an
+  <code>output_hidden_size</code> other than <code>global.hidden_size</code>, an unknown <code>parallel</code> or <code>weight_dtype</code>, no stack layers,
+  a stack that names an undefined layer kind, a layer kind outside the stack, a node carrying parameters its op
+  does not price, or an <code>omitted</code> tower without a reason and an <code>owner/repo#N</code> issue; or <code>modality</code> disagrees with
+  <code>omitted</code> (<code>multimodal</code> with one, <code>text_decoder_of_multimodal</code> with an <code>encoder</code> and none);</li>
 <li>a <code>speculator</code> lacks a <code>method</code>, a <code>pattern</code>, at least one draft token or a repeat of at
   least 1, has an unrecognized <code>drafting</code>, a <code>sequential_head</code> without <code>parallel_block</code>,
   a <code>stack</code> or <code>context_stack</code> naming a layer kind that is not declared, or an
@@ -7517,9 +7974,15 @@ storage-class and workload-shape files.</p>
   outside <code>[0, max_tokens]</code>;</li>
 <li><code>bytes_per_token</code> is set on a primitive other than <code>Elementwise</code>, <code>AllReduce</code>,
   <code>AllGather</code> or <code>ReduceScatter</code>;</li>
-<li><code>index_topk</code> or <code>compress_ratio</code> is set on anything other than a <code>sparse_mla</code> attention
-  node, or is negative, or a <code>sparse_mla</code> node has none of <code>index_topk</code>, <code>compress_ratio</code>
-  and <code>window</code>;</li>
+<li><code>index_topk</code> or <code>compress_ratio</code> is set on anything other than a <code>sparse_mla</code> or
+  <code>sparse_gqa</code> attention node, or is negative, or a <code>sparse_mla</code> node has none of
+  <code>index_topk</code>, <code>compress_ratio</code> and <code>window</code>;</li>
+<li>a <code>sparse_gqa</code> node that holds the engine's <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> has no <code>index_topk</code> or states a
+  <code>compress_ratio</code>, or one that does not (the indexer scorer) has no <code>compress_ratio</code> or
+  states an <code>index_topk</code>;</li>
+<li><code>conv_dilation</code> is set on anything other than a <code>short_conv</code> node, or is negative; a
+  <code>short_conv</code> node lacks <code>conv_kernel</code> or <code>intermediate_size</code>, or states <code>n_heads</code>,
+  <code>state_size</code> or <code>n_groups</code>;</li>
 <li>it carries one of the keys its primitive rejects, such as <code>n_q</code> on a <code>GEMM</code>.</li>
 </ul>
 <p>Two problems are warnings: a layer kind that neither the stack nor the speculator uses,

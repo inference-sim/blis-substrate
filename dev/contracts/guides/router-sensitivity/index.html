@@ -1059,6 +1059,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-layout-sweep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The layout sweep
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-it-does-not-show" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1108,6 +1119,8 @@
       
         
           
+        
+      
         
       
         
@@ -1678,6 +1691,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5441,6 +5482,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-layout-sweep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The layout sweep
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-it-does-not-show" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5504,6 +5556,7 @@ hash, the commands, the expected output, the cost, and what the sweep does not s
 <li><a href="#where-the-bound-is-large">Where the bound is large</a></li>
 <li><a href="#the-prefill-pool-check">The prefill-pool check</a></li>
 <li><a href="#cost">Cost</a></li>
+<li><a href="#the-layout-sweep">The layout sweep</a></li>
 <li><a href="#what-it-does-not-show">What it does not show</a></li>
 <li><a href="#where-the-data-came-from">Where the data came from</a></li>
 </ul>
@@ -6251,9 +6304,81 @@ entry's second group is against the policies that read load.</p>
 also using (load average above 100), one run finished every 3.3 seconds on average (each took about 13 seconds of one process); a 60-run trial of one shape took 191 seconds. Peak memory was not measured. Each
 run writes a Result of 0.6 to 2 MB that the script deletes after reading six figures from it, so the scratch directory stays small. The
 committed evidence is <code>runs.csv</code> (98 KB) and <code>alternation.csv</code> (6 KB). Run it with <code>--jobs 3</code> or fewer on a shared machine.</p>
+<h2 id="the-layout-sweep">The layout sweep<a class="headerlink" href="#the-layout-sweep" title="Permanent link">&para;</a></h2>
+<p>The first sweep (above) ran one model on one part. <code>layouts.csv</code> extends it to the Dynamo vLLM prefill/decode points the dashboard scores:
+32 layout classes (a layout is a model, part, precision, input and output length and the parallelism of each pool; <code>layouts.json</code> lists them
+with the engine settings the frozen recipes state for each pool shape), at the pool shapes those points use, 11 client counts (1 to 1,024), the
+five policies and three seeds, 8,580 runs. Ratios in the table are rounded up to two decimals, as the entries state them. The classes cover 52 of the 188 topologies and 167 of the 445 artifact points. Pools with data-parallel
+attention are not in it, and neither is kimik2.5 on gb300 at 1P7D, which the engine refuses (blis-vllm#214). The sweep was pre-registered before any run
+(the router lane's <code>PREREG-sweeps.md</code>); the largest ratio over all cells of all layouts, by figure:</p>
+<table>
+<thead>
+<tr>
+<th>Class of pool shape</th>
+<th>Against</th>
+<th style="text-align: right;">TTFT p50</th>
+<th style="text-align: right;">TTFT p99</th>
+<th style="text-align: right;">TPOT p50</th>
+<th style="text-align: right;">Output tok/s</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>one prefill, one decode (1P1D, 264 cells)</td>
+<td>any policy</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr>
+<td>one prefill, several decode</td>
+<td><code>random-picker</code></td>
+<td style="text-align: right;">1.15</td>
+<td style="text-align: right;">1.12</td>
+<td style="text-align: right;">1.03</td>
+<td style="text-align: right;">1.01</td>
+</tr>
+<tr>
+<td>one prefill, several decode</td>
+<td>the load-reading policies</td>
+<td style="text-align: right;">1.65</td>
+<td style="text-align: right;">1.27</td>
+<td style="text-align: right;">1.36</td>
+<td style="text-align: right;">1.04</td>
+</tr>
+<tr>
+<td>several prefill</td>
+<td><code>random-picker</code></td>
+<td style="text-align: right;">1.29</td>
+<td style="text-align: right;">1.27</td>
+<td style="text-align: right;">1.01</td>
+<td style="text-align: right;">1.01</td>
+</tr>
+<tr>
+<td>several prefill</td>
+<td>the load-reading policies</td>
+<td style="text-align: right;">1.85</td>
+<td style="text-align: right;">1.76</td>
+<td style="text-align: right;">1.03</td>
+<td style="text-align: right;">1.03</td>
+</tr>
+</tbody>
+</table>
+<p>Against the predictions: a single prefill and a single decode instance leave nothing to choose, and every ratio is exactly 1 (P1 holds). With
+one prefill and several decode instances, round-robin and the random picker are not equivalent: 33 of 165 cells differ by more than 2 percent
+and 2 by more than 10 percent in time to first token (P6 fails; the prediction that the decode pick alone leaves TTFT within 1.10, part of P2, fails
+by 0.05). With several prefill instances the ratios against <code>random-picker</code> exceed the pre-registered ceiling for TTFT p50 by 0.13 and for the load-reading
+group by 0.24 (P3 fails on TTFT; TPOT and throughput stay inside it). The ratio does not grow with the longer prompt: in 6 matched layout pairs the 8k-input class has
+the larger TTFT ratio in 3 and the mean difference is -0.003 (P4 fails). It does not depend on the part within a generation: across 132 matched
+b200/b300 and gb200/gb300 cells the largest difference between the two is 0.08 (P5 holds, which is what lets one class cover both parts).</p>
+<p>Each emitted ratio is the largest over the layout's shapes and client counts, and the entries state one regime per layout (<code>dynamo-round-robin</code> and
+<code>dynamo-random</code>, the <code>more_evidence</code> file <code>layouts.csv</code>). Every layout runs the engine the scenario declares, vLLM 0.33.0, but the kernel set of this
+build encodes vLLM v0.31.0 behaviour (inference-sim#150); the entries' <code>not_measured</code> names the difference. The fabric is the part's catalog fabric
+(ib-400g for b200 and gb200-nvl72, ib-800g for b300 and gb300; the b300 fabric is an estimate).</p>
 <h2 id="what-it-does-not-show">What it does not show<a class="headerlink" href="#what-it-does-not-show" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>One model, one part, one engine.</strong> MiniMax-M2.5 on GB200 with vLLM 0.32.0 over <abbr title="NVIDIA's inference transfer library, used to move KV caches between engines">NIXL</abbr>. Another model or part moves where the pools
+<li><strong>One model, one part, one engine in the first sweep.</strong> MiniMax-M2.5 on GB200 with vLLM 0.32.0 over <abbr title="NVIDIA's inference transfer library, used to move KV caches between engines">NIXL</abbr>; the layout sweep adds the layouts above, on a kernel set that encodes v0.31.0. Another model or part moves where the pools
   saturate, and with it where the large ratios sit.</li>
 <li><strong>Closed-loop clients, fixed lengths, no shared prefix.</strong> Nothing here has sessions of several turns, a spread of lengths, an
   open-loop arrival rate, or requests that share a prefix. The <code>kv</code> mode of Dynamo exists for shared prefixes, which is why its entry maps no policy.</li>

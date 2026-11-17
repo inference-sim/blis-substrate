@@ -962,6 +962,8 @@
       
         
       
+        
+      
     
     
     
@@ -1479,6 +1481,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5338,20 +5368,48 @@
 </tr>
 <tr>
 <td style="text-align: right;">6</td>
-<td style="text-align: left;"><code>GroupedGEMM</code></td>
-<td style="text-align: left;">experts</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">router</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">shared=False, n=3072, k=6144, experts=256, top_k=6, shared_experts=2</td>
+<td style="text-align: left;">n=258, k=6144, tp=replicated, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">7</td>
+<td style="text-align: left;"><code>GroupedGEMM</code></td>
+<td style="text-align: left;">experts</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">shared=False, n=3072, k=6144, experts=256, top_k=6</td>
+</tr>
+<tr>
+<td style="text-align: right;">8</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_gate_up</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=12288, k=6144, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">9</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_act</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=sharded, bytes_per_token=36864</td>
+</tr>
+<tr>
+<td style="text-align: right;">10</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_down</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=6144, k=6144, tp=row</td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
 <td style="text-align: left;"><code>All2All</code></td>
 <td style="text-align: left;">moe_dispatch_combine</td>
 <td style="text-align: left;"><code>expert_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">8</td>
+<td style="text-align: right;">12</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">mlp_out</td>
 <td style="text-align: left;"><code>tensor_parallel_unless_sp_moe</code></td>
@@ -5416,20 +5474,48 @@
 </tr>
 <tr>
 <td style="text-align: right;">6</td>
-<td style="text-align: left;"><code>GroupedGEMM</code></td>
-<td style="text-align: left;">experts</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">router</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">shared=False, n=3072, k=6144, experts=256, top_k=6, shared_experts=2</td>
+<td style="text-align: left;">n=258, k=6144, tp=replicated, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">7</td>
+<td style="text-align: left;"><code>GroupedGEMM</code></td>
+<td style="text-align: left;">experts</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">shared=False, n=3072, k=6144, experts=256, top_k=6</td>
+</tr>
+<tr>
+<td style="text-align: right;">8</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_gate_up</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=12288, k=6144, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">9</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_act</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=sharded, bytes_per_token=36864</td>
+</tr>
+<tr>
+<td style="text-align: right;">10</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_down</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=6144, k=6144, tp=row</td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
 <td style="text-align: left;"><code>All2All</code></td>
 <td style="text-align: left;">moe_dispatch_combine</td>
 <td style="text-align: left;"><code>expert_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">8</td>
+<td style="text-align: right;">12</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">mlp_out</td>
 <td style="text-align: left;"><code>tensor_parallel_unless_sp_moe</code></td>

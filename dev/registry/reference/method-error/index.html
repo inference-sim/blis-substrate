@@ -966,6 +966,8 @@
       
         
       
+        
+      
     
     
     
@@ -1483,6 +1485,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5182,7 +5212,7 @@
 a measured value, the method estimates it as if the measurement did not exist, and the estimate is compared
 with the measurement. The two parts of the A100 family carry the same measured values, so they are left out
 together; otherwise each would predict itself from its twin.</p>
-<p>The figures below cover 911 measured points of the committed coefficient registry. A ratio is
+<p>The figures below cover 954 measured points of the committed coefficient registry. A ratio is
 <code>max(estimate/truth, truth/estimate)</code>: 1.00 is exact and 2.00 is a factor of two either way.</p>
 <ul>
 <li><strong>Same generation</strong> is the median of the same quantity on the other chips of the held-out chip's architecture
@@ -5216,11 +5246,11 @@ those methods and says so rather than reusing the figures above for them. The wh
 </tr>
 <tr>
 <td><code>collective_floor_all_reduce</code></td>
-<td>40</td>
-<td>1.07</td>
-<td>3.78</td>
-<td>1.30</td>
-<td>4.39</td>
+<td>37</td>
+<td>1.09</td>
+<td>1.97</td>
+<td>1.31</td>
+<td>3.99</td>
 </tr>
 <tr>
 <td><code>collective_floor_alltoall</code></td>
@@ -5248,11 +5278,11 @@ those methods and says so rather than reusing the figures above for them. The wh
 </tr>
 <tr>
 <td><code>collective_peak_rate_all_reduce</code></td>
-<td>40</td>
+<td>37</td>
 <td>1.02</td>
 <td>2.02</td>
-<td>1.70</td>
-<td>253.38</td>
+<td>1.73</td>
+<td>202.52</td>
 </tr>
 <tr>
 <td><code>collective_peak_rate_alltoall</code></td>
@@ -5280,11 +5310,11 @@ those methods and says so rather than reusing the figures above for them. The wh
 </tr>
 <tr>
 <td><code>collective_transition_rate_all_reduce</code></td>
-<td>40</td>
-<td>1.04</td>
+<td>37</td>
+<td>1.03</td>
 <td>2.07</td>
-<td>1.84</td>
-<td>290.88</td>
+<td>1.83</td>
+<td>264.71</td>
 </tr>
 <tr>
 <td><code>collective_transition_rate_alltoall</code></td>
@@ -5305,26 +5335,26 @@ those methods and says so rather than reusing the figures above for them. The wh
 <tr>
 <td><code>gemm_eps_max</code></td>
 <td>29</td>
-<td>1.05</td>
-<td>1.39</td>
+<td>1.03</td>
+<td>1.33</td>
 <td>1.07</td>
 <td>2.40</td>
 </tr>
 <tr>
 <td><code>gemm_m_half</code></td>
 <td>29</td>
-<td>1.14</td>
+<td>1.16</td>
 <td>2.54</td>
-<td>1.18</td>
-<td>3.63</td>
+<td>1.26</td>
+<td>4.12</td>
 </tr>
 <tr>
 <td><code>other</code></td>
-<td>146</td>
+<td>187</td>
 <td>1.05</td>
-<td>2.95</td>
-<td>1.15</td>
-<td>61.42</td>
+<td>3.40</td>
+<td>1.11</td>
+<td>16.11</td>
 </tr>
 </tbody>
 </table>

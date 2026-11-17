@@ -1081,6 +1081,8 @@
       
         
       
+        
+      
     
     
     
@@ -1601,6 +1603,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5493,7 +5523,12 @@ A field-layer error stops construction; rule-layer problems do not.</p>
 here, so a simulator steps it without knowing which engine it is, and checks itself with
 <code>conformance/enginetest</code>, the suite every engine runs. It also owns the vLLM rules packs,
 which a caller such as the cost model reads through <code>rules.EngineRules</code>, and the connector
-registry, whose shape is <code>spec/connector</code>. blis-sglang does the same for SGLang.</p>
+registry, whose shape is <code>spec/connector</code>. blis-sglang does the same for SGLang. Both take
+their shared machinery from <code>contracts/harness</code>: the <code>Upstream</code> record, the provenance and
+no-clock checks, the golangci-lint settings, and the oracle's lock, manifest and golden-trace
+checks, which each keeps as generated copies (<code>go run
+github.com/inference-sim/blis-substrate/contracts/harness/cmd/harnessfiles</code>). Neither imports
+the other.</p>
 <p><strong>inference-sim</strong> takes its step times from the cost model through <code>kernel.Kernel</code>, and its
 documents through these loaders. It computes no cost of its own.</p>
 <p><strong>The llm-d router fork</strong> implements the <a href="../../reference/embed/">router contract</a>, package

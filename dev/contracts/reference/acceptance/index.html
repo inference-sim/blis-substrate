@@ -979,6 +979,8 @@
       
         
       
+        
+      
     
     
     
@@ -1322,6 +1324,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#shapes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shapes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#profiles" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1364,6 +1377,17 @@
     <span class="md-ellipsis">
       
         Inline values
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workload-terms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workload terms
       
     </span>
   </a>
@@ -1668,6 +1692,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5344,6 +5396,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#shapes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shapes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#profiles" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5386,6 +5449,17 @@
     <span class="md-ellipsis">
       
         Inline values
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workload-terms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workload terms
       
     </span>
   </a>
@@ -5502,63 +5576,74 @@ vLLM v0.31.0's <code>_acceptance_length_to_rates</code> (<code>vllm/config/specu
 <p>This is how vLLM, and the InferenceX runs that force a published AL, realise one, so a
 simulator using it reproduces those runs. Natural acceptance spreads more than this
 schedule does, so per-request tails derived from it are optimistic.</p>
+<p>A value that measured natural acceptance says so (<code>realisation: natural</code>). With no rates of
+its own it is spread with <code>NaturalRates</code> and the decay a profile set fits to its measured
+curves (its <code>shapes</code>, below):</p>
+<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>p_i = q ^ (i ^ decay_exponent), with q chosen so the rates sum to AL - 1
+</code></pre></div>
+<p>An exponent of 1 is a constant per-token acceptance probability; a larger one decays faster
+down the positions. The decay is an estimate (<code>method: calibrated</code>), not yet judged against
+held-out end-to-end runs (VAL-6): the resolution records it as the <code>natural_decay</code> schedule and
+names the shape, and a run records both. Requests still advance by the mean acceptance length
+until an engine draws the accepted count per step (inference-sim/blis-vllm#147), so today the
+shape changes only adaptive-verification pricing.</p>
 <p>Acceptance is not the kernel's input. K and the method stay in the deployment's
 <a href="../deployment/"><code>speculative</code></a> block, because they change what a step costs; acceptance
 changes only how far requests advance.</p>
 <h2 id="profile-set">Profile set<a class="headerlink" href="#profile-set" title="Permanent link">&para;</a></h2>
 <p>A registry file under <code>acceptance/</code>, named by its file. This one carries real values from
 InferenceX's golden SPEED-Bench curves:</p>
-<div class="language-yaml highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AcceptanceProfileSet</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">inferencex-golden-al</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nt">caveats</span><span class="p">:</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Coding only. Every curve is SPEED-Bench Qualitative coding; other categories have none.</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Measured on B300. Reuse on another part is recorded by the resolver.</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DeepSeek-V4.1-Flash with DSpark at K 6-8 was refused by the image, so it has no value.</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="nt">profiles</span><span class="p">:</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek-v4.1-flash</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="nt">speculative_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dspark</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="nt">num_spec_tokens</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="nt">thinking</span><span class="p">:</span><span class="w"> </span><span class="s">"off"</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coding</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="nt">acceptance_length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4.07</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">measured</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="nt">provenance</span><span class="p">:</span><span class="w"> </span><span class="nl">&amp;dsv41</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">      </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/SemiAnalysisAI/InferenceX/blob/main/inferencex-e2e/infx/golden_al_distribution/dsv41flash_dspark.yaml</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">      </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/SemiAnalysisAI/InferenceX/actions/runs/34493175056</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">      </span><span class="nt">benchmark</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SPEED-Bench Qualitative</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">      </span><span class="nt">prompts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">      </span><span class="nt">hardware</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">b300</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">      </span><span class="nt">engine_image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vllm/vllm-openai:deepseekv41-flash-0909</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">      </span><span class="nt">tp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">      </span><span class="nt">sampling</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="nv">1.0</span><span class="p p-Indicator">,</span><span class="nt"> max_tokens</span><span class="p">:</span><span class="w"> </span><span class="nv">4096</span><span class="p p-Indicator">}</span>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">      </span><span class="nt">settings</span><span class="p">:</span>
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">        </span><span class="nt">draft_sample_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">probabilistic</span>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">        </span><span class="nt">rejection_sample_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">block</span>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek-v4.1-flash</span>
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">    </span><span class="nt">speculative_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dspark</span>
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="w">    </span><span class="nt">num_spec_tokens</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="w">    </span><span class="nt">thinking</span><span class="p">:</span><span class="w"> </span><span class="s">"on"</span>
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">    </span><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coding</span>
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">    </span><span class="nt">acceptance_length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.51</span>
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">measured</span>
-<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">    </span><span class="nt">provenance</span><span class="p">:</span><span class="w"> </span><span class="nv">*dsv41</span>
-<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">glm-5.3</span>
-<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="w">    </span><span class="nt">speculative_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mtp</span>
-<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="w">    </span><span class="nt">num_spec_tokens</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
-<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="w">    </span><span class="nt">thinking</span><span class="p">:</span><span class="w"> </span><span class="s">"on"</span>
-<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="w">    </span><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coding</span>
-<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="w">    </span><span class="nt">acceptance_length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.99</span>
-<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">transferred</span>
-<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="w">    </span><span class="nt">transferred_from</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">glm-5.2-fp8/mtp/k3/thinking-on/coding</span>
-<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="w">    </span><span class="nt">transfer_rule</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">the value measured on GLM-5.2 is carried unchanged, because GLM-5.3 shares its base and layer topology</span>
-<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="w">    </span><span class="nt">rationale</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
-<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a><span class="w">      </span><span class="no">Provisional. GLM-5.3 shares GLM-5.2's base and layer topology, so GLM-5.2's curve is</span>
-<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a><span class="w">      </span><span class="no">the closest measured reference; replace it with a run on GLM-5.3.</span>
-<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a><span class="w">    </span><span class="nt">provenance</span><span class="p">:</span>
-<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a><span class="w">      </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/SemiAnalysisAI/InferenceX/blob/main/inferencex-e2e/infx/golden_al_distribution/glm5.3_mtp.yaml</span>
-<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a><span class="w">      </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/SemiAnalysisAI/InferenceX/actions/runs/28058352479</span>
-<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a><span class="w">      </span><span class="nt">hardware</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">b300</span>
-<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a><span class="w">      </span><span class="nt">sampling</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="nv">1.0</span><span class="p p-Indicator">,</span><span class="nt"> top_p</span><span class="p">:</span><span class="w"> </span><span class="nv">0.95</span><span class="p p-Indicator">,</span><span class="nt"> max_tokens</span><span class="p">:</span><span class="w"> </span><span class="nv">4096</span><span class="p p-Indicator">}</span>
+<div class="language-yaml highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AcceptanceProfileSet</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">inferencex-golden-al</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nt">caveats</span><span class="p">:</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Coding only. Every curve is SPEED-Bench Qualitative coding; other categories have none.</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Measured on B300. Reuse on another part is recorded by the resolver.</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DeepSeek-V4.1-Flash with DSpark at K 6-8 was refused by the image, so it has no value.</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nt">profiles</span><span class="p">:</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek-v4.1-flash</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span><span class="nt">speculative_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dspark</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="nt">num_spec_tokens</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">    </span><span class="nt">thinking</span><span class="p">:</span><span class="w"> </span><span class="s">"off"</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">    </span><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coding</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">    </span><span class="nt">acceptance_length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4.07</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">measured</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">    </span><span class="nt">provenance</span><span class="p">:</span><span class="w"> </span><span class="nl">&amp;dsv41</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">      </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/SemiAnalysisAI/InferenceX/blob/main/inferencex-e2e/infx/golden_al_distribution/dsv41flash_dspark.yaml</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">      </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/SemiAnalysisAI/InferenceX/actions/runs/34493175056</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="w">      </span><span class="nt">benchmark</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SPEED-Bench Qualitative</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="w">      </span><span class="nt">prompts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="w">      </span><span class="nt">hardware</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">b300</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="w">      </span><span class="nt">engine_image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vllm/vllm-openai:deepseekv41-flash-0909</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="w">      </span><span class="nt">tp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="w">      </span><span class="nt">sampling</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="nv">1.0</span><span class="p p-Indicator">,</span><span class="nt"> max_tokens</span><span class="p">:</span><span class="w"> </span><span class="nv">4096</span><span class="p p-Indicator">}</span>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="w">      </span><span class="nt">settings</span><span class="p">:</span>
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="w">        </span><span class="nt">draft_sample_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">probabilistic</span>
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="w">        </span><span class="nt">rejection_sample_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">block</span>
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek-v4.1-flash</span>
+<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="w">    </span><span class="nt">speculative_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dspark</span>
+<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="w">    </span><span class="nt">num_spec_tokens</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="w">    </span><span class="nt">thinking</span><span class="p">:</span><span class="w"> </span><span class="s">"on"</span>
+<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a><span class="w">    </span><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coding</span>
+<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a><span class="w">    </span><span class="nt">acceptance_length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.51</span>
+<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a><span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">measured</span>
+<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a><span class="w">    </span><span class="nt">provenance</span><span class="p">:</span><span class="w"> </span><span class="nv">*dsv41</span>
+<a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">glm-5.3</span>
+<a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a><span class="w">    </span><span class="nt">speculative_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mtp</span>
+<a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a><span class="w">    </span><span class="nt">num_spec_tokens</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a><span class="w">    </span><span class="nt">thinking</span><span class="p">:</span><span class="w"> </span><span class="s">"on"</span>
+<a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a><span class="w">    </span><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coding</span>
+<a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a><span class="w">    </span><span class="nt">acceptance_length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.99</span>
+<a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a><span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">transferred</span>
+<a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a><span class="w">    </span><span class="nt">transferred_from</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">glm-5.2-fp8/mtp/k3/thinking-on/coding</span>
+<a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a><span class="w">    </span><span class="nt">transfer_rule</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">the value measured on GLM-5.2 is carried unchanged, because GLM-5.3 shares its base and layer topology</span>
+<a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a><span class="w">    </span><span class="nt">rationale</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
+<a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a><span class="w">      </span><span class="no">Provisional. GLM-5.3 shares GLM-5.2's base and layer topology, so GLM-5.2's curve is</span>
+<a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a><span class="w">      </span><span class="no">the closest measured reference; replace it with a run on GLM-5.3.</span>
+<a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a><span class="w">    </span><span class="nt">provenance</span><span class="p">:</span>
+<a id="__codelineno-2-48" name="__codelineno-2-48" href="#__codelineno-2-48"></a><span class="w">      </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/SemiAnalysisAI/InferenceX/blob/main/inferencex-e2e/infx/golden_al_distribution/glm5.3_mtp.yaml</span>
+<a id="__codelineno-2-49" name="__codelineno-2-49" href="#__codelineno-2-49"></a><span class="w">      </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/SemiAnalysisAI/InferenceX/actions/runs/28058352479</span>
+<a id="__codelineno-2-50" name="__codelineno-2-50" href="#__codelineno-2-50"></a><span class="w">      </span><span class="nt">hardware</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">b300</span>
+<a id="__codelineno-2-51" name="__codelineno-2-51" href="#__codelineno-2-51"></a><span class="w">      </span><span class="nt">sampling</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="nv">1.0</span><span class="p p-Indicator">,</span><span class="nt"> top_p</span><span class="p">:</span><span class="w"> </span><span class="nv">0.95</span><span class="p p-Indicator">,</span><span class="nt"> max_tokens</span><span class="p">:</span><span class="w"> </span><span class="nv">4096</span><span class="p p-Indicator">}</span>
 </code></pre></div>
 <!-- fields: acceptance.ProfileSet -->
 
@@ -5591,6 +5676,12 @@ InferenceX's golden SPEED-Bench curves:</p>
 <td>What the set does not cover and how far its values travel. No entry may be empty.</td>
 </tr>
 <tr>
+<td><code>shapes</code></td>
+<td>list</td>
+<td>no</td>
+<td>How natural acceptance spreads over the draft positions, fitted to the set's measured curves, below.</td>
+</tr>
+<tr>
 <td><code>profiles</code></td>
 <td>list</td>
 <td>yes</td>
@@ -5598,11 +5689,71 @@ InferenceX's golden SPEED-Bench curves:</p>
 </tr>
 </tbody>
 </table>
+<h3 id="shapes">Shapes<a class="headerlink" href="#shapes" title="Permanent link">&para;</a></h3>
+<p>One shape per speculative method, and one fitted to every method's curves, which a method with
+none of its own takes. Two shapes for one method are an error.</p>
+<!-- fields: acceptance.Shape -->
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>speculative_method</code></td>
+<td>string</td>
+<td>no</td>
+<td>The method whose curves it was fitted to. Left out for the shape fitted to every method's.</td>
+</tr>
+<tr>
+<td><code>decay_exponent</code></td>
+<td>number</td>
+<td>yes</td>
+<td>The exponent of the decay above, in [0.5, 2].</td>
+</tr>
+<tr>
+<td><code>fitted_from</code></td>
+<td>list of strings</td>
+<td>yes</td>
+<td>The source of every curve it was fitted to. No entry may be empty.</td>
+</tr>
+<tr>
+<td><code>rule</code></td>
+<td>string</td>
+<td>yes</td>
+<td>How the exponent was fitted.</td>
+</tr>
+<tr>
+<td><code>method</code></td>
+<td>string</td>
+<td>yes</td>
+<td>How the exponent was obtained: <code>calibrated</code> (a one-parameter form fitted to measured curves) or <code>assumed</code>. A shape is an estimate, so <code>measured</code> is refused.</td>
+</tr>
+</tbody>
+</table>
 <h3 id="profiles">Profiles<a class="headerlink" href="#profiles" title="Permanent link">&para;</a></h3>
-<p>A profile is keyed by model, drafter, speculative method, K, thinking mode and workload
-category. Two profiles with one key are an error. The drafter is the model's own in-graph
-speculator when it is left out, or the catalog name of a separate drafter checkpoint; the
-same target with two drafters has two profiles.</p>
+<p>A profile is keyed by model, drafter, speculative method, K, thinking mode, workload
+category, draft sampler and verifier. Two profiles with one key are an error. The drafter is
+the model's own in-graph speculator when it is left out, or the catalog name of a separate
+drafter checkpoint; the same target with two drafters has two profiles. The draft sampler and
+the verifier are stated where they tell one measurement from another of the same target,
+drafter and method, such as Kimi-K3's DSpark curves under greedy and probabilistic drafting.
+The engine that measured the value is a key field too. A profile states the settings as its
+source states them; a setting the source left at its engine's default is the marker <code>default</code>.
+A request states the run's values as its engine resolves them, defaults included, and the
+engine's own defaults for its release (<code>DefaultDraftSampler</code>, <code>DefaultVerifier</code>). The lookup
+compares only: a profile's <code>default</code> stands for the requesting engine's stated default when the
+profile's engine is the request's, and for nothing otherwise. A field neither side states is
+left out, meaning unstated. The exact key matches a field only when both sides state the same
+value or both leave it unstated; any other difference, an unstated side included, is borrowed
+by <code>same_drafter_other_settings</code> and named in <code>differed</code>. A key that states them renders them
+after the category, as <code>.../coding/draft-probabilistic/verify-block/engine-vllm</code>. The design states this in
+D8 (inference-sim/blis-design#13).</p>
 <!-- fields: acceptance.Profile -->
 
 <table>
@@ -5626,6 +5777,24 @@ same target with two drafters has two profiles.</p>
 <td>string</td>
 <td>no</td>
 <td>The catalog name of the separate drafter checkpoint the value was measured with. Left out for the model's own speculator, such as its MTP layers. No <code>+</code>, <code>/</code> or space, and not the target's own name.</td>
+</tr>
+<tr>
+<td><code>draft_sampler</code></td>
+<td>string</td>
+<td>no</td>
+<td>How the drafter sampled its drafts: <code>greedy</code> or <code>probabilistic</code>, or <code>default</code> when the source left it at its engine's default. Left out when the source states nothing (unstated).</td>
+</tr>
+<tr>
+<td><code>verifier</code></td>
+<td>string</td>
+<td>no</td>
+<td>How the target verified drafts, in vLLM v0.33.0's vocabulary: <code>standard</code>, <code>block</code> or <code>fly</code>, or <code>default</code> when the source left it at its engine's default. Left out when the source states nothing (unstated).</td>
+</tr>
+<tr>
+<td><code>engine</code></td>
+<td>string</td>
+<td>no</td>
+<td>The serving engine that measured the value, lower case. Left out when unstated.</td>
 </tr>
 <tr>
 <td><code>architecture</code></td>
@@ -5719,6 +5888,12 @@ same target with two drafters has two profiles.</p>
 <td>string</td>
 <td>yes</td>
 <td>The document the value was read from.</td>
+</tr>
+<tr>
+<td><code>sha256</code></td>
+<td>string</td>
+<td>no</td>
+<td>The SHA-256 of the source file, as 64 lower-case hex digits, so a reader can check it has the file the value was read from.</td>
 </tr>
 <tr>
 <td><code>run</code></td>
@@ -5861,21 +6036,65 @@ speculates another K it is refused rather than rescaled.</p>
 <td>no</td>
 <td>Where the value came from, recorded with the resolution.</td>
 </tr>
+<tr>
+<td><code>realisation</code></td>
+<td>string</td>
+<td>no</td>
+<td>How the run realised its acceptance: <code>natural</code> (real verification) or <code>synthetic</code> (the engine's forced acceptance). A natural value with no rates is spread with its method's shape, and refused when no set states one; a synthetic or unstated one with <code>MinimumVarianceRates</code>.</td>
+</tr>
 </tbody>
 </table>
+<h2 id="workload-terms">Workload terms<a class="headerlink" href="#workload-terms" title="Permanent link">&para;</a></h2>
+<p>What a workload says about acceptance, in a workload shape's <code>acceptance</code> key and in a trace
+header's <code>acceptance</code> key (the terms the run that wrote the trace was given, so that a replay
+resolves the same profile, DEV-7). It is the workload layer of the resolution: a selector or
+value given on the command line overrides it.</p>
+<!-- fields: acceptance.Workload -->
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>category</code></td>
+<td>string</td>
+<td>no</td>
+<td>The workload category that selects a registry profile.</td>
+</tr>
+<tr>
+<td><code>thinking</code></td>
+<td>string</td>
+<td>no</td>
+<td>Whether the target runs with thinking on: <code>on</code> or <code>off</code>. Selects the profile with the category.</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>mapping</td>
+<td>no</td>
+<td>An acceptance value of the workload's own, as in Inline values above.</td>
+</tr>
+</tbody>
+</table>
+<p>At least one of the three is stated.</p>
 <h2 id="scenario-pin">Scenario pin<a class="headerlink" href="#scenario-pin" title="Permanent link">&para;</a></h2>
 <p>The value of a scenario's <code>acceptance</code> key.</p>
-<div class="language-yaml highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">acceptance</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">value</span><span class="p">:</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">num_spec_tokens</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nt">acceptance_length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.8</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">synthetic_acceptance_length in the scored run's server log</span>
+<div class="language-yaml highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">acceptance</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">value</span><span class="p">:</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">num_spec_tokens</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">acceptance_length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.8</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">synthetic_acceptance_length in the scored run's server log</span>
 </code></pre></div>
 <p>To use another profile set for the run, and to accept coding's curve for traffic that
 has none of its own:</p>
-<div class="language-yaml highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">acceptance</span><span class="p">:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">profiles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">inferencex-golden-al</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">fallback_category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coding</span>
+<div class="language-yaml highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">acceptance</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">profiles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">inferencex-golden-al</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">fallback_category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coding</span>
 </code></pre></div>
 <!-- fields: acceptance.Pin -->
 
@@ -5961,6 +6180,10 @@ one, in this order (design D8), and records that it did:</p>
    that states none gives 1 + K(AL − 1)/K₀, where K₀ is its K. That figure cannot exceed what
    the profile's own rates would give, so it does not overstate drafting's gain. The lookup
    never extrapolates.</li>
+<li><strong>The same target, drafter and method under another draft sampler or verifier</strong>
+   (<code>same_drafter_other_settings</code>). It takes the profiles that differ in the fewest of the
+   two, then the lowest value at the run's K by the first step's rules, so that a borrowed
+   setting does not overstate drafting's gain.</li>
 <li><strong>Another drafter of the same target</strong>, preferring the same method and then the lowest
    value at the run's K, found by the first step's rules, so that drafting's gain is not
    overstated. The drafter must differ from the run's: the same drafter under another
@@ -5970,15 +6193,15 @@ one, in this order (design D8), and records that it did:</p>
 </ol>
 <p>Every step keeps the category and the thinking mode, apart from a fallback category the user
 requested. The fallback category stands in only when the workload's own category supplies
-nothing: the lookup tries the exact key and all three steps in the workload's category first,
+nothing: the lookup tries the exact key and every step in the workload's category first,
 and only then repeats them in the fallback category. Any remaining tie breaks in this order: the profile measured on the run's
 hardware, then the newest source (<code>provenance.date</code>), then the set name, then the key, so the
 choice is deterministic whatever order the sets are listed in. Two profiles that share a key
 but record different sampling or settings are not interchangeable, and an exact key found in
 two sets is ambiguous; the lookup refuses both. A scenario's <code>exact_only</code>, or the request's,
 limits the lookup to exact matches.</p>
-<p>The resolution records <code>step</code> (<code>exact</code>, <code>same_drafter_other_k</code>, <code>other_drafter</code> or
-<code>other_target</code>), the key fields that <code>differed</code>, how K was brought to the run's (<code>k_rule</code>),
+<p>The resolution records <code>step</code> (<code>exact</code>, <code>same_drafter_other_k</code>,
+<code>same_drafter_other_settings</code>, <code>other_drafter</code> or <code>other_target</code>), the key fields that <code>differed</code>, how K was brought to the run's (<code>k_rule</code>),
 and every profile read. The Result carries the same record on its <code>speculative_acceptance</code>
 property.</p>
 <p>Nothing else falls back silently. A lookup is refused when</p>
@@ -6011,8 +6234,9 @@ whether the rates were derived.</p>
   more than 0.01 from AL − 1;</li>
 <li><code>method</code> is not recognized or is <code>not_charged</code>, or a field the method requires, per the
   table above, is missing;</li>
-<li>a provenance has no <code>source</code>, a negative count, an empty setting, or sampling with no
-  <code>temperature</code>, a negative one, a <code>top_p</code> outside (0, 1] or a <code>top_k</code> below −1.</li>
+<li>a provenance has no <code>source</code>, a <code>sha256</code> that is not 64 hex digits, a negative count, an
+  empty setting, or sampling with no <code>temperature</code>, a negative one, a <code>top_p</code> outside (0, 1]
+  or a <code>top_k</code> below −1.</li>
 </ul>
 <p>An inline value is invalid if <code>num_spec_tokens</code> is less than 1, it states no acceptance,
 it states both <code>acceptance_length</code> and <code>acceptance_rate</code>, either lies outside its range,

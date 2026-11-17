@@ -979,6 +979,8 @@
       
         
       
+        
+      
     
     
     
@@ -1197,6 +1199,17 @@
   
     <nav class="md-nav" aria-label="Header">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        phases[]
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#goodput_slo_targetsclass" class="md-nav__link">
@@ -1618,6 +1631,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5283,6 +5324,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        phases[]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#goodput_slo_targetsclass" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5457,6 +5509,12 @@ columns <code>vllm_priority</code>, <code>x_request_id</code>, <code>server_inpu
 <td>The resolved <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr>-cache offload configuration of the run that wrote the trace, below.</td>
 </tr>
 <tr>
+<td><code>phases</code></td>
+<td>list</td>
+<td>no</td>
+<td>Drain-gated stages in order, below. A phase starts after the previous one drains (<code>start: after_drain</code>, plus <code>offset_us</code>) or at the clock <code>offset_us</code> (<code>start: at</code>); <code>concurrency</code> limits its requests in flight. Names are lowercase slugs, each used once and each naming at least one request. The format marks phases; the reader decides which count.</td>
+</tr>
+<tr>
 <td><code>max_nodes_spanned</code></td>
 <td>integer</td>
 <td>no</td>
@@ -5468,12 +5526,58 @@ columns <code>vllm_priority</code>, <code>x_request_id</code>, <code>server_inpu
 <td>no</td>
 <td>The llm-d router inputs the run routed with, below.</td>
 </tr>
+<tr>
+<td><code>acceptance</code></td>
+<td>mapping</td>
+<td>no</td>
+<td>What the workload stated about speculative acceptance: <code>category</code>, <code>thinking</code> (<code>on</code> or <code>off</code>) and <code>value</code>, as in the <a href="../acceptance/#workload-terms">acceptance reference</a>. A replay resolves the profile from it as the run did; a selector on the command line overrides it. Omitted when the workload stated none.</td>
+</tr>
 </tbody>
 </table>
 <p>A <code>generated</code> or <code>replayed</code> trace records a BLIS deployment, and a replay keeps its header
 authoritative: it does not add offload tiers or other deployment options the run did not
 have. A <code>converted</code> trace records none, so a replay takes them from the scenario and the
 command line (<code>Header.RecordsDeployment</code>, inference-sim #2067).</p>
+<h3 id="phases"><code>phases[]</code><a class="headerlink" href="#phases" title="Permanent link">&para;</a></h3>
+<!-- fields: trace.Phase -->
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>yes</td>
+<td>The label the phase's records carry in <code>phase</code>. A lowercase slug, unique in the trace.</td>
+</tr>
+<tr>
+<td><code>start</code></td>
+<td>string</td>
+<td>no</td>
+<td><code>after_drain</code> (the default): every request of the previous phase has ended. <code>at</code>: the clock <code>offset_us</code>.</td>
+</tr>
+<tr>
+<td><code>offset_us</code></td>
+<td>integer</td>
+<td>no</td>
+<td>The wait after the drain, or the start clock for <code>at</code>. Not negative; <code>at</code> phases are in order.</td>
+</tr>
+<tr>
+<td><code>concurrency</code></td>
+<td>integer</td>
+<td>no</td>
+<td>Requests of the phase in flight at most; a request is sent when an earlier one of the phase ends. Zero sends each at its recorded arrival.</td>
+</tr>
+</tbody>
+</table>
+<p>Engine, <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> and prefix-cache state carry across phases. A phase that names no request is refused.</p>
 <h3 id="goodput_slo_targetsclass"><code>goodput_slo_targets.&lt;class&gt;</code><a class="headerlink" href="#goodput_slo_targetsclass" title="Permanent link">&para;</a></h3>
 <p>Thresholds in milliseconds. Zero on a dimension leaves it unconstrained, but a class must
 constrain at least one.</p>
@@ -5755,7 +5859,7 @@ constrain at least one.</p>
 <h2 id="data">Data<a class="headerlink" href="#data" title="Permanent link">&para;</a></h2>
 <p>The first row names the columns; a reader finds them by name. The columns of <code>Columns</code> are
 required; those of <code>OptionalColumns</code> (<code>slo_target_us</code>, <code>adapter</code>, <code>think_time_us</code>,
-<code>input_tokens_reset</code>) are written only when some row carries one. Any other column is
+<code>input_tokens_reset</code>, <code>phase</code>) are written only when some row carries one. Any other column is
 refused.</p>
 <!-- fields: trace.Record -->
 
@@ -5918,6 +6022,12 @@ refused.</p>
 <td>integer</td>
 <td>no</td>
 <td>Recorded client think time before the round; an empty cell is not recorded, distinct from 0.</td>
+</tr>
+<tr>
+<td><code>phase</code></td>
+<td>string</td>
+<td>with header <code>phases</code></td>
+<td>The header phase the request belongs to; every request names one when the header lists phases, and none does otherwise.</td>
 </tr>
 <tr>
 <td><code>input_tokens_reset</code></td>

@@ -962,6 +962,8 @@
       
         
       
+        
+      
     
     
     
@@ -1479,6 +1481,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5243,10 +5273,6 @@
 
 <h1 id="kimi-k31">kimi-k3.1<a class="headerlink" href="#kimi-k31" title="Permanent link">&para;</a></h1>
 <p><a href="https://huggingface.co/moonshotai/Kimi-K3.1-Pro/tree/d9e99b0792a5e93b78ea9bea62a68167e36ddd9e"><code>moonshotai/Kimi-K3.1-Pro</code></a>, architecture <code>?</code>: 93 layers, weights in bf16 (mxfp4 for some nodes). The graph below is derived from the model's <a href="https://huggingface.co/moonshotai/Kimi-K3.1-Pro/blob/d9e99b0792a5e93b78ea9bea62a68167e36ddd9e/config.json"><code>config.json</code></a> at revision <code>d9e99b0792a5</code>; <a href="../../../concepts/model-graphs/">Model graphs</a> explains how to read it, and the <a href="../../../concepts/glossary/">glossary</a> defines its terms.</p>
-<div class="admonition note">
-<p class="admonition-title">Text decoder only</p>
-<p>The vendor config describes a multimodal model. This graph prices the text decoder and records <code>modality: text_decoder_of_multimodal</code>; a request carrying an image or audio input costs more than it predicts.</p>
-</div>
 <h2 id="layer-stack">Layer stack<a class="headerlink" href="#layer-stack" title="Permanent link">&para;</a></h2>
 <div class="cf-scroll"><svg class="cf-figure" viewBox="0 0 720 56" role="img" aria-label="kimi-k3.1: 93 layers by kind, in stack order" xmlns="http://www.w3.org/2000/svg"><title>kimi-k3.1: 93 layers by kind, in stack order</title><rect x="0.00" y="4" width="7.74" height="22" fill="#009E73"><title>layer 0: kda_dense</title></rect><rect x="7.74" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 1: kda_moe</title></rect><rect x="15.48" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 2: kda_moe</title></rect><rect x="23.23" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 3: dsa_moe</title></rect><rect x="30.97" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 4: kda_moe</title></rect><rect x="38.71" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 5: kda_moe</title></rect><rect x="46.45" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 6: kda_moe</title></rect><rect x="54.19" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 7: dsa_moe</title></rect><rect x="61.94" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 8: kda_moe</title></rect><rect x="69.68" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 9: kda_moe</title></rect><rect x="77.42" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 10: kda_moe</title></rect><rect x="85.16" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 11: dsa_moe</title></rect><rect x="92.90" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 12: kda_moe</title></rect><rect x="100.65" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 13: kda_moe</title></rect><rect x="108.39" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 14: kda_moe</title></rect><rect x="116.13" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 15: dsa_moe</title></rect><rect x="123.87" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 16: kda_moe</title></rect><rect x="131.61" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 17: kda_moe</title></rect><rect x="139.35" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 18: kda_moe</title></rect><rect x="147.10" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 19: dsa_moe</title></rect><rect x="154.84" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 20: kda_moe</title></rect><rect x="162.58" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 21: kda_moe</title></rect><rect x="170.32" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 22: kda_moe</title></rect><rect x="178.06" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 23: dsa_moe</title></rect><rect x="185.81" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 24: kda_moe</title></rect><rect x="193.55" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 25: kda_moe</title></rect><rect x="201.29" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 26: kda_moe</title></rect><rect x="209.03" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 27: dsa_moe</title></rect><rect x="216.77" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 28: kda_moe</title></rect><rect x="224.52" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 29: kda_moe</title></rect><rect x="232.26" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 30: kda_moe</title></rect><rect x="240.00" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 31: dsa_moe</title></rect><rect x="247.74" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 32: kda_moe</title></rect><rect x="255.48" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 33: kda_moe</title></rect><rect x="263.23" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 34: kda_moe</title></rect><rect x="270.97" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 35: dsa_moe</title></rect><rect x="278.71" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 36: kda_moe</title></rect><rect x="286.45" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 37: kda_moe</title></rect><rect x="294.19" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 38: kda_moe</title></rect><rect x="301.94" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 39: dsa_moe</title></rect><rect x="309.68" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 40: kda_moe</title></rect><rect x="317.42" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 41: kda_moe</title></rect><rect x="325.16" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 42: kda_moe</title></rect><rect x="332.90" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 43: dsa_moe</title></rect><rect x="340.65" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 44: kda_moe</title></rect><rect x="348.39" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 45: kda_moe</title></rect><rect x="356.13" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 46: kda_moe</title></rect><rect x="363.87" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 47: dsa_moe</title></rect><rect x="371.61" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 48: kda_moe</title></rect><rect x="379.35" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 49: kda_moe</title></rect><rect x="387.10" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 50: kda_moe</title></rect><rect x="394.84" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 51: dsa_moe</title></rect><rect x="402.58" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 52: kda_moe</title></rect><rect x="410.32" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 53: kda_moe</title></rect><rect x="418.06" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 54: kda_moe</title></rect><rect x="425.81" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 55: dsa_moe</title></rect><rect x="433.55" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 56: kda_moe</title></rect><rect x="441.29" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 57: kda_moe</title></rect><rect x="449.03" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 58: kda_moe</title></rect><rect x="456.77" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 59: dsa_moe</title></rect><rect x="464.52" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 60: kda_moe</title></rect><rect x="472.26" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 61: kda_moe</title></rect><rect x="480.00" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 62: kda_moe</title></rect><rect x="487.74" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 63: dsa_moe</title></rect><rect x="495.48" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 64: kda_moe</title></rect><rect x="503.23" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 65: kda_moe</title></rect><rect x="510.97" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 66: kda_moe</title></rect><rect x="518.71" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 67: dsa_moe</title></rect><rect x="526.45" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 68: kda_moe</title></rect><rect x="534.19" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 69: kda_moe</title></rect><rect x="541.94" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 70: kda_moe</title></rect><rect x="549.68" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 71: dsa_moe</title></rect><rect x="557.42" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 72: kda_moe</title></rect><rect x="565.16" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 73: kda_moe</title></rect><rect x="572.90" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 74: kda_moe</title></rect><rect x="580.65" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 75: dsa_moe</title></rect><rect x="588.39" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 76: kda_moe</title></rect><rect x="596.13" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 77: kda_moe</title></rect><rect x="603.87" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 78: kda_moe</title></rect><rect x="611.61" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 79: dsa_moe</title></rect><rect x="619.35" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 80: kda_moe</title></rect><rect x="627.10" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 81: kda_moe</title></rect><rect x="634.84" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 82: kda_moe</title></rect><rect x="642.58" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 83: dsa_moe</title></rect><rect x="650.32" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 84: kda_moe</title></rect><rect x="658.06" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 85: kda_moe</title></rect><rect x="665.81" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 86: kda_moe</title></rect><rect x="673.55" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 87: dsa_moe</title></rect><rect x="681.29" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 88: kda_moe</title></rect><rect x="689.03" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 89: kda_moe</title></rect><rect x="696.77" y="4" width="7.74" height="22" fill="#0072B2"><title>layer 90: kda_moe</title></rect><rect x="704.52" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 91: dsa_moe</title></rect><rect x="712.26" y="4" width="7.74" height="22" fill="#E69F00"><title>layer 92: dsa_moe</title></rect><line class="cf-sep" x1="7.74" x2="7.74" y1="4" y2="26"/><line class="cf-sep" x1="15.48" x2="15.48" y1="4" y2="26"/><line class="cf-sep" x1="23.23" x2="23.23" y1="4" y2="26"/><line class="cf-sep" x1="30.97" x2="30.97" y1="4" y2="26"/><line class="cf-sep" x1="38.71" x2="38.71" y1="4" y2="26"/><line class="cf-sep" x1="46.45" x2="46.45" y1="4" y2="26"/><line class="cf-sep" x1="54.19" x2="54.19" y1="4" y2="26"/><line class="cf-sep" x1="61.94" x2="61.94" y1="4" y2="26"/><line class="cf-sep" x1="69.68" x2="69.68" y1="4" y2="26"/><line class="cf-sep" x1="77.42" x2="77.42" y1="4" y2="26"/><line class="cf-sep" x1="85.16" x2="85.16" y1="4" y2="26"/><line class="cf-sep" x1="92.90" x2="92.90" y1="4" y2="26"/><line class="cf-sep" x1="100.65" x2="100.65" y1="4" y2="26"/><line class="cf-sep" x1="108.39" x2="108.39" y1="4" y2="26"/><line class="cf-sep" x1="116.13" x2="116.13" y1="4" y2="26"/><line class="cf-sep" x1="123.87" x2="123.87" y1="4" y2="26"/><line class="cf-sep" x1="131.61" x2="131.61" y1="4" y2="26"/><line class="cf-sep" x1="139.35" x2="139.35" y1="4" y2="26"/><line class="cf-sep" x1="147.10" x2="147.10" y1="4" y2="26"/><line class="cf-sep" x1="154.84" x2="154.84" y1="4" y2="26"/><line class="cf-sep" x1="162.58" x2="162.58" y1="4" y2="26"/><line class="cf-sep" x1="170.32" x2="170.32" y1="4" y2="26"/><line class="cf-sep" x1="178.06" x2="178.06" y1="4" y2="26"/><line class="cf-sep" x1="185.81" x2="185.81" y1="4" y2="26"/><line class="cf-sep" x1="193.55" x2="193.55" y1="4" y2="26"/><line class="cf-sep" x1="201.29" x2="201.29" y1="4" y2="26"/><line class="cf-sep" x1="209.03" x2="209.03" y1="4" y2="26"/><line class="cf-sep" x1="216.77" x2="216.77" y1="4" y2="26"/><line class="cf-sep" x1="224.52" x2="224.52" y1="4" y2="26"/><line class="cf-sep" x1="232.26" x2="232.26" y1="4" y2="26"/><line class="cf-sep" x1="240.00" x2="240.00" y1="4" y2="26"/><line class="cf-sep" x1="247.74" x2="247.74" y1="4" y2="26"/><line class="cf-sep" x1="255.48" x2="255.48" y1="4" y2="26"/><line class="cf-sep" x1="263.23" x2="263.23" y1="4" y2="26"/><line class="cf-sep" x1="270.97" x2="270.97" y1="4" y2="26"/><line class="cf-sep" x1="278.71" x2="278.71" y1="4" y2="26"/><line class="cf-sep" x1="286.45" x2="286.45" y1="4" y2="26"/><line class="cf-sep" x1="294.19" x2="294.19" y1="4" y2="26"/><line class="cf-sep" x1="301.94" x2="301.94" y1="4" y2="26"/><line class="cf-sep" x1="309.68" x2="309.68" y1="4" y2="26"/><line class="cf-sep" x1="317.42" x2="317.42" y1="4" y2="26"/><line class="cf-sep" x1="325.16" x2="325.16" y1="4" y2="26"/><line class="cf-sep" x1="332.90" x2="332.90" y1="4" y2="26"/><line class="cf-sep" x1="340.65" x2="340.65" y1="4" y2="26"/><line class="cf-sep" x1="348.39" x2="348.39" y1="4" y2="26"/><line class="cf-sep" x1="356.13" x2="356.13" y1="4" y2="26"/><line class="cf-sep" x1="363.87" x2="363.87" y1="4" y2="26"/><line class="cf-sep" x1="371.61" x2="371.61" y1="4" y2="26"/><line class="cf-sep" x1="379.35" x2="379.35" y1="4" y2="26"/><line class="cf-sep" x1="387.10" x2="387.10" y1="4" y2="26"/><line class="cf-sep" x1="394.84" x2="394.84" y1="4" y2="26"/><line class="cf-sep" x1="402.58" x2="402.58" y1="4" y2="26"/><line class="cf-sep" x1="410.32" x2="410.32" y1="4" y2="26"/><line class="cf-sep" x1="418.06" x2="418.06" y1="4" y2="26"/><line class="cf-sep" x1="425.81" x2="425.81" y1="4" y2="26"/><line class="cf-sep" x1="433.55" x2="433.55" y1="4" y2="26"/><line class="cf-sep" x1="441.29" x2="441.29" y1="4" y2="26"/><line class="cf-sep" x1="449.03" x2="449.03" y1="4" y2="26"/><line class="cf-sep" x1="456.77" x2="456.77" y1="4" y2="26"/><line class="cf-sep" x1="464.52" x2="464.52" y1="4" y2="26"/><line class="cf-sep" x1="472.26" x2="472.26" y1="4" y2="26"/><line class="cf-sep" x1="480.00" x2="480.00" y1="4" y2="26"/><line class="cf-sep" x1="487.74" x2="487.74" y1="4" y2="26"/><line class="cf-sep" x1="495.48" x2="495.48" y1="4" y2="26"/><line class="cf-sep" x1="503.23" x2="503.23" y1="4" y2="26"/><line class="cf-sep" x1="510.97" x2="510.97" y1="4" y2="26"/><line class="cf-sep" x1="518.71" x2="518.71" y1="4" y2="26"/><line class="cf-sep" x1="526.45" x2="526.45" y1="4" y2="26"/><line class="cf-sep" x1="534.19" x2="534.19" y1="4" y2="26"/><line class="cf-sep" x1="541.94" x2="541.94" y1="4" y2="26"/><line class="cf-sep" x1="549.68" x2="549.68" y1="4" y2="26"/><line class="cf-sep" x1="557.42" x2="557.42" y1="4" y2="26"/><line class="cf-sep" x1="565.16" x2="565.16" y1="4" y2="26"/><line class="cf-sep" x1="572.90" x2="572.90" y1="4" y2="26"/><line class="cf-sep" x1="580.65" x2="580.65" y1="4" y2="26"/><line class="cf-sep" x1="588.39" x2="588.39" y1="4" y2="26"/><line class="cf-sep" x1="596.13" x2="596.13" y1="4" y2="26"/><line class="cf-sep" x1="603.87" x2="603.87" y1="4" y2="26"/><line class="cf-sep" x1="611.61" x2="611.61" y1="4" y2="26"/><line class="cf-sep" x1="619.35" x2="619.35" y1="4" y2="26"/><line class="cf-sep" x1="627.10" x2="627.10" y1="4" y2="26"/><line class="cf-sep" x1="634.84" x2="634.84" y1="4" y2="26"/><line class="cf-sep" x1="642.58" x2="642.58" y1="4" y2="26"/><line class="cf-sep" x1="650.32" x2="650.32" y1="4" y2="26"/><line class="cf-sep" x1="658.06" x2="658.06" y1="4" y2="26"/><line class="cf-sep" x1="665.81" x2="665.81" y1="4" y2="26"/><line class="cf-sep" x1="673.55" x2="673.55" y1="4" y2="26"/><line class="cf-sep" x1="681.29" x2="681.29" y1="4" y2="26"/><line class="cf-sep" x1="689.03" x2="689.03" y1="4" y2="26"/><line class="cf-sep" x1="696.77" x2="696.77" y1="4" y2="26"/><line class="cf-sep" x1="704.52" x2="704.52" y1="4" y2="26"/><line class="cf-sep" x1="712.26" x2="712.26" y1="4" y2="26"/><rect x="0.0" y="38" width="10" height="10" fill="#0072B2"/><text class="cf-label" x="15.0" y="47">kda_moe ×68</text><rect x="112.2" y="38" width="10" height="10" fill="#E69F00"/><text class="cf-label" x="127.2" y="47">dsa_moe ×24</text><rect x="224.4" y="38" width="10" height="10" fill="#009E73"/><text class="cf-label" x="239.4" y="47">kda_dense ×1</text></svg></div>
 
@@ -5393,40 +5419,61 @@
 <tr>
 <td style="text-align: right;">12</td>
 <td style="text-align: left;"><code>GEMM</code></td>
-<td style="text-align: left;">routed_expert_down_proj</td>
+<td style="text-align: left;">router</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=3584, k=7168</td>
+<td style="text-align: left;">n=896, k=7168, tp=replicated, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">13</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">routed_expert_down_proj</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=3584, k=7168, weight_dtype=bf16</td>
+</tr>
+<tr>
+<td style="text-align: right;">14</td>
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">shared=False, n=3072, k=7168, experts=896, top_k=16, latent_size=3584, weight_dtype=mxfp4</td>
 </tr>
 <tr>
-<td style="text-align: right;">14</td>
-<td style="text-align: left;"><code>GroupedGEMM</code></td>
-<td style="text-align: left;">shared_experts</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">shared=True, n=3072, k=7168, experts=2, top_k=2, weight_dtype=bf16</td>
-</tr>
-<tr>
 <td style="text-align: right;">15</td>
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">routed_expert_up_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=7168, k=3584</td>
+<td style="text-align: left;">n=7168, k=3584, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">16</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_gate_up</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=12288, k=7168, weight_dtype=bf16, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">17</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_act</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=sharded, bytes_per_token=36864</td>
+</tr>
+<tr>
+<td style="text-align: right;">18</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_down</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=7168, k=6144, weight_dtype=bf16, tp=row</td>
+</tr>
+<tr>
+<td style="text-align: right;">19</td>
 <td style="text-align: left;"><code>All2All</code></td>
 <td style="text-align: left;">moe_dispatch_combine</td>
 <td style="text-align: left;"><code>expert_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">17</td>
+<td style="text-align: right;">20</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">mlp_out</td>
 <td style="text-align: left;"><code>tensor_parallel_unless_sp_moe</code></td>
@@ -5487,7 +5534,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">index_wq_b</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=4096, k=1536, tp=replicated</td>
+<td style="text-align: left;">n=4096, k=1536, tp=replicated, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">6</td>
@@ -5501,7 +5548,7 @@
 <td style="text-align: left;"><code>Attention</code></td>
 <td style="text-align: left;">block_index_scores</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">holds_engine_kv=False, kind=gqa, n_q=32, n_kv=1, d_h=128</td>
+<td style="text-align: left;">holds_engine_kv=False, kind=gqa, n_q=32, n_kv=1, d_h=128, tp=replicated</td>
 </tr>
 <tr>
 <td style="text-align: right;">8</td>
@@ -5541,40 +5588,61 @@
 <tr>
 <td style="text-align: right;">13</td>
 <td style="text-align: left;"><code>GEMM</code></td>
-<td style="text-align: left;">routed_expert_down_proj</td>
+<td style="text-align: left;">router</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=3584, k=7168</td>
+<td style="text-align: left;">n=896, k=7168, tp=replicated, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">14</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">routed_expert_down_proj</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=3584, k=7168, weight_dtype=bf16</td>
+</tr>
+<tr>
+<td style="text-align: right;">15</td>
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">shared=False, n=3072, k=7168, experts=896, top_k=16, latent_size=3584, weight_dtype=mxfp4</td>
 </tr>
 <tr>
-<td style="text-align: right;">15</td>
-<td style="text-align: left;"><code>GroupedGEMM</code></td>
-<td style="text-align: left;">shared_experts</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">shared=True, n=3072, k=7168, experts=2, top_k=2, weight_dtype=bf16</td>
-</tr>
-<tr>
 <td style="text-align: right;">16</td>
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">routed_expert_up_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=7168, k=3584</td>
+<td style="text-align: left;">n=7168, k=3584, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">17</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_gate_up</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=12288, k=7168, weight_dtype=bf16, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">18</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_act</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=sharded, bytes_per_token=36864</td>
+</tr>
+<tr>
+<td style="text-align: right;">19</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_down</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=7168, k=6144, weight_dtype=bf16, tp=row</td>
+</tr>
+<tr>
+<td style="text-align: right;">20</td>
 <td style="text-align: left;"><code>All2All</code></td>
 <td style="text-align: left;">moe_dispatch_combine</td>
 <td style="text-align: left;"><code>expert_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">18</td>
+<td style="text-align: right;">21</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">mlp_out</td>
 <td style="text-align: left;"><code>tensor_parallel_unless_sp_moe</code></td>
@@ -5684,14 +5752,14 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">mlp_gate_up</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=67584, k=7168</td>
+<td style="text-align: left;">n=67584, k=7168, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">13</td>
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">mlp_down</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=7168, k=33792</td>
+<td style="text-align: left;">n=7168, k=33792, weight_dtype=bf16</td>
 </tr>
 <tr>
 <td style="text-align: right;">14</td>
@@ -5727,7 +5795,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">lm_head</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=163840, k=7168</td>
+<td style="text-align: left;">n=163840, k=7168, weight_dtype=bf16</td>
 </tr>
 </tbody>
 </table>

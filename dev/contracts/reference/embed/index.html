@@ -979,6 +979,8 @@
       
         
       
+        
+      
     
     
     
@@ -1499,6 +1501,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5515,6 +5545,16 @@ key order. <code>:method</code> is <code>POST</code>, <code>:path</code> is <cod
 <td><code>TTFTSLO</code></td>
 <td><code>x-llm-d-slo-ttft-ms</code></td>
 <td>whole milliseconds, rounded up, when positive</td>
+</tr>
+<tr>
+<td><code>SessionID</code></td>
+<td><code>x-session-id</code> (<code>embed.SessionIDHeader</code>)</td>
+<td>verbatim, when non-empty</td>
+</tr>
+<tr>
+<td><code>Headers</code></td>
+<td>each, by lower-case name</td>
+<td>verbatim; never overrides a header the rows above set</td>
 </tr>
 <tr>
 <td><code>TTL</code></td>

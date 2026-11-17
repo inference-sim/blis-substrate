@@ -979,6 +979,8 @@
       
         
       
+        
+      
     
     
     
@@ -1590,6 +1592,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5319,17 +5349,70 @@ its identifier; the definition lives here, once.</p>
 
 <p>A definition states the metric's formula (the per-sample quantity), its statistic, its
 population (what the statistic is taken over), its window, its unit, and how it treats
-requests unfinished at the horizon. Time to first token, time per output token and
-inter-token latency follow the benchmark clients BLIS is compared with:</p>
+requests unfinished at the horizon. Time to first token, time per output token, inter-token
+latency and inter-chunk latency follow the benchmark clients BLIS is compared with:</p>
 <ul>
 <li><code>tpot_*</code> is per request: each completed request with at least two output tokens gives one
-  sample, (E2E - TTFT) / (output tokens - 1), as <code>vllm bench serve</code> computes it.</li>
+  sample, (E2E - TTFT) / (output tokens - 1).</li>
 <li><code>itl_*</code> is pooled over tokens: every gap between consecutive output tokens of those same
-  requests is one sample (inference-sim #1894).</li>
+  requests is one sample (inference-sim #1894). Tokens that reach the client in one chunk
+  share its arrival time, so the gaps between them are zero. Under speculative decoding a
+  chunk carries several tokens, and most of these gaps are zero.</li>
+<li><code>icl_*</code> is pooled over chunks: every gap between consecutive chunks streamed to the
+  client is one sample, one per chunk after the first (inference-sim #2128). With one token
+  per chunk it has the same samples as <code>itl_*</code>.</li>
 <li><code>step_interval_*</code> is the engine's step interval. Under speculative decoding one step
   emits several tokens, so it is not a per-token figure, and it is never compared with
-  <code>itl_*</code> or <code>tpot_*</code>.</li>
+  <code>itl_*</code>, <code>icl_*</code> or <code>tpot_*</code>.</li>
 </ul>
+<p>The clients use the name ITL for three different figures, so a client figure is matched to
+a metric by its definition, never by its name. Each metric's <code>follows</code> cites the code below.</p>
+<table>
+<thead>
+<tr>
+<th>Client field</th>
+<th>Definition</th>
+<th>Metric</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>vllm bench serve</code> TPOT (v0.32.0)</td>
+<td>per request, (latency - TTFT) / (output tokens - 1)</td>
+<td><code>tpot_*</code></td>
+</tr>
+<tr>
+<td><code>vllm bench serve</code> ITL (v0.32.0)</td>
+<td>pooled, one gap per streamed chunk</td>
+<td><code>icl_*</code></td>
+</tr>
+<tr>
+<td>aiperf <code>inter_token_latency</code>, "ITL" (v0.12.0)</td>
+<td>per request, (latency - TTFT) / (output tokens - 1)</td>
+<td><code>tpot_*</code></td>
+</tr>
+<tr>
+<td>aiperf <code>inter_chunk_latency</code>, "ICL" (v0.12.0)</td>
+<td>pooled, one gap per content chunk</td>
+<td><code>icl_mean_ms</code> only: aiperf's percentiles are t-digest estimates, not <code>numpy_linear</code></td>
+</tr>
+<tr>
+<td>inference-perf <code>time_per_output_token</code> (v0.7.0)</td>
+<td>per request, (last token time - first token time) / (output tokens - 1)</td>
+<td><code>tpot_*</code></td>
+</tr>
+<tr>
+<td>inference-perf <code>inter_token_latency</code> (v0.7.0), a tokenizer configured</td>
+<td>pooled, one gap per token, zero inside a chunk</td>
+<td><code>itl_*</code></td>
+</tr>
+<tr>
+<td>inference-perf <code>inter_token_latency</code> (v0.7.0), no tokenizer</td>
+<td>pooled, one gap per streamed chunk</td>
+<td><code>icl_*</code></td>
+</tr>
+</tbody>
+</table>
 <h2 id="scope-and-aggregate">Scope and aggregate<a class="headerlink" href="#scope-and-aggregate" title="Permanent link">&para;</a></h2>
 <p>A figure is a metric at a scope (design §8.7): the whole cluster, one pool, or one instance.
 The scope selects which requests, tokens or steps form the population; the formula, statistic,
@@ -5424,6 +5507,19 @@ refused.</p>
 </thead>
 <tbody>
 <tr>
+<td><code>busy_share</code></td>
+<td><code>busy_share</code></td>
+<td>rate</td>
+<td><code>ran_steps</code></td>
+<td><code>measured</code></td>
+<td>fraction</td>
+<td>-</td>
+<td>not_applicable</td>
+<td>cluster, pool, instance</td>
+<td>max, min</td>
+<td>Simulated time an instance's engine spent running steps, over the measured window's length; steps are clipped to the window, and pipeline stages that overlap count once. At a pool or the cluster, the instances' busy time over the window's length times the instance count. It is not a service-level figure: a share near 1 means the engine had work for every moment, not that it served it well.</td>
+</tr>
+<tr>
 <td><code>cache_hit_rate</code></td>
 <td><code>cache_hit_rate</code></td>
 <td>rate</td>
@@ -5435,6 +5531,19 @@ refused.</p>
 <td>cluster, pool, instance</td>
 <td>max, min</td>
 <td>Prompt tokens served from the prefix cache over prompt tokens looked up.</td>
+</tr>
+<tr>
+<td><code>decode_busy_share</code></td>
+<td><code>decode_busy_share</code></td>
+<td>rate</td>
+<td><code>ran_steps</code></td>
+<td><code>measured</code></td>
+<td>fraction</td>
+<td>-</td>
+<td>not_applicable</td>
+<td>cluster, pool, instance</td>
+<td>max, min</td>
+<td>The part of busy_share charged to decode: each step's time is split by the step's scheduled tokens (see prefill_busy_share). prefill_busy_share and decode_busy_share add up to busy_share.</td>
 </tr>
 <tr>
 <td><code>e2e_mean_ms</code></td>
@@ -5580,6 +5689,71 @@ refused.</p>
 <td>Completed requests that met every SLO target of their class, over the window's length.</td>
 </tr>
 <tr>
+<td><code>icl_mean_ms</code></td>
+<td><code>icl</code></td>
+<td>mean</td>
+<td><code>chunks</code></td>
+<td><code>measured</code></td>
+<td>ms</td>
+<td>-</td>
+<td>excluded</td>
+<td>cluster, pool, instance</td>
+<td>max, min</td>
+<td>Inter-chunk latency, pooled over every gap between chunks streamed to the client (vllm bench serve's ITL), mean, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/lib/endpoint_request_func.py:270,442 and vllm/benchmarks/serve.py:632,766-769 (ITL); aiperf v0.12.0 src/aiperf/metrics/types/inter_chunk_latency_metric.py:31,63-73 (inter_chunk_latency; mean only, its percentiles are t-digest estimates); inference-perf v0.7.0 inference_perf/apis/chat.py:578 and inference_perf/reportgen/base.py:659-662,734,781 (inter_token_latency, no tokenizer).</td>
+</tr>
+<tr>
+<td><code>icl_p50_ms</code></td>
+<td><code>icl</code></td>
+<td>p50 (numpy_linear)</td>
+<td><code>chunks</code></td>
+<td><code>measured</code></td>
+<td>ms</td>
+<td>-</td>
+<td>excluded</td>
+<td>cluster, pool, instance</td>
+<td>max, min</td>
+<td>Inter-chunk latency, pooled over every gap between chunks streamed to the client (vllm bench serve's ITL), p50, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/lib/endpoint_request_func.py:270,442 and vllm/benchmarks/serve.py:632,766-769 (ITL); aiperf v0.12.0 src/aiperf/metrics/types/inter_chunk_latency_metric.py:31,63-73 (inter_chunk_latency; mean only, its percentiles are t-digest estimates); inference-perf v0.7.0 inference_perf/apis/chat.py:578 and inference_perf/reportgen/base.py:659-662,734,781 (inter_token_latency, no tokenizer).</td>
+</tr>
+<tr>
+<td><code>icl_p90_ms</code></td>
+<td><code>icl</code></td>
+<td>p90 (numpy_linear)</td>
+<td><code>chunks</code></td>
+<td><code>measured</code></td>
+<td>ms</td>
+<td>-</td>
+<td>excluded</td>
+<td>cluster, pool, instance</td>
+<td>max, min</td>
+<td>Inter-chunk latency, pooled over every gap between chunks streamed to the client (vllm bench serve's ITL), p90, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/lib/endpoint_request_func.py:270,442 and vllm/benchmarks/serve.py:632,766-769 (ITL); aiperf v0.12.0 src/aiperf/metrics/types/inter_chunk_latency_metric.py:31,63-73 (inter_chunk_latency; mean only, its percentiles are t-digest estimates); inference-perf v0.7.0 inference_perf/apis/chat.py:578 and inference_perf/reportgen/base.py:659-662,734,781 (inter_token_latency, no tokenizer).</td>
+</tr>
+<tr>
+<td><code>icl_p95_ms</code></td>
+<td><code>icl</code></td>
+<td>p95 (numpy_linear)</td>
+<td><code>chunks</code></td>
+<td><code>measured</code></td>
+<td>ms</td>
+<td>-</td>
+<td>excluded</td>
+<td>cluster, pool, instance</td>
+<td>max, min</td>
+<td>Inter-chunk latency, pooled over every gap between chunks streamed to the client (vllm bench serve's ITL), p95, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/lib/endpoint_request_func.py:270,442 and vllm/benchmarks/serve.py:632,766-769 (ITL); aiperf v0.12.0 src/aiperf/metrics/types/inter_chunk_latency_metric.py:31,63-73 (inter_chunk_latency; mean only, its percentiles are t-digest estimates); inference-perf v0.7.0 inference_perf/apis/chat.py:578 and inference_perf/reportgen/base.py:659-662,734,781 (inter_token_latency, no tokenizer).</td>
+</tr>
+<tr>
+<td><code>icl_p99_ms</code></td>
+<td><code>icl</code></td>
+<td>p99 (numpy_linear)</td>
+<td><code>chunks</code></td>
+<td><code>measured</code></td>
+<td>ms</td>
+<td>-</td>
+<td>excluded</td>
+<td>cluster, pool, instance</td>
+<td>max, min</td>
+<td>Inter-chunk latency, pooled over every gap between chunks streamed to the client (vllm bench serve's ITL), p99, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/lib/endpoint_request_func.py:270,442 and vllm/benchmarks/serve.py:632,766-769 (ITL); aiperf v0.12.0 src/aiperf/metrics/types/inter_chunk_latency_metric.py:31,63-73 (inter_chunk_latency; mean only, its percentiles are t-digest estimates); inference-perf v0.7.0 inference_perf/apis/chat.py:578 and inference_perf/reportgen/base.py:659-662,734,781 (inter_token_latency, no tokenizer).</td>
+</tr>
+<tr>
 <td><code>interactivity_mean</code></td>
 <td><code>user_tps</code></td>
 <td>mean</td>
@@ -5642,7 +5816,7 @@ refused.</p>
 <td>excluded</td>
 <td>cluster, pool, instance</td>
 <td>max, min</td>
-<td>Inter-token latency, pooled over every gap between output tokens, mean, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634.</td>
+<td>Inter-token latency, pooled over every gap between output tokens, zero between tokens of one chunk, mean, over the measured window. Follows inference-perf v0.7.0 inference_perf/reportgen/base.py:614-622,659-662,734,781 (inter_token_latency, a tokenizer configured).</td>
 </tr>
 <tr>
 <td><code>itl_p50_ms</code></td>
@@ -5655,7 +5829,7 @@ refused.</p>
 <td>excluded</td>
 <td>cluster, pool, instance</td>
 <td>max, min</td>
-<td>Inter-token latency, pooled over every gap between output tokens, p50, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634.</td>
+<td>Inter-token latency, pooled over every gap between output tokens, zero between tokens of one chunk, p50, over the measured window. Follows inference-perf v0.7.0 inference_perf/reportgen/base.py:614-622,659-662,734,781 (inter_token_latency, a tokenizer configured).</td>
 </tr>
 <tr>
 <td><code>itl_p90_ms</code></td>
@@ -5668,7 +5842,7 @@ refused.</p>
 <td>excluded</td>
 <td>cluster, pool, instance</td>
 <td>max, min</td>
-<td>Inter-token latency, pooled over every gap between output tokens, p90, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634.</td>
+<td>Inter-token latency, pooled over every gap between output tokens, zero between tokens of one chunk, p90, over the measured window. Follows inference-perf v0.7.0 inference_perf/reportgen/base.py:614-622,659-662,734,781 (inter_token_latency, a tokenizer configured).</td>
 </tr>
 <tr>
 <td><code>itl_p95_ms</code></td>
@@ -5681,7 +5855,7 @@ refused.</p>
 <td>excluded</td>
 <td>cluster, pool, instance</td>
 <td>max, min</td>
-<td>Inter-token latency, pooled over every gap between output tokens, p95, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634.</td>
+<td>Inter-token latency, pooled over every gap between output tokens, zero between tokens of one chunk, p95, over the measured window. Follows inference-perf v0.7.0 inference_perf/reportgen/base.py:614-622,659-662,734,781 (inter_token_latency, a tokenizer configured).</td>
 </tr>
 <tr>
 <td><code>itl_p99_ms</code></td>
@@ -5694,7 +5868,20 @@ refused.</p>
 <td>excluded</td>
 <td>cluster, pool, instance</td>
 <td>max, min</td>
-<td>Inter-token latency, pooled over every gap between output tokens, p99, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634.</td>
+<td>Inter-token latency, pooled over every gap between output tokens, zero between tokens of one chunk, p99, over the measured window. Follows inference-perf v0.7.0 inference_perf/reportgen/base.py:614-622,659-662,734,781 (inter_token_latency, a tokenizer configured).</td>
+</tr>
+<tr>
+<td><code>mfu</code></td>
+<td><code>mfu</code></td>
+<td>rate</td>
+<td><code>ran_steps</code></td>
+<td><code>measured</code></td>
+<td>fraction</td>
+<td>-</td>
+<td>not_applicable</td>
+<td>cluster, pool, instance</td>
+<td>max, min</td>
+<td>Estimated model-FLOPs utilization: the model FLOPs of the steps run in the measured window (each step clipped to it, FLOPs in proportion), counted from the model graph as the kernel prices it (dense and expert GEMMs per token, the head over the sampling rows, attention over the keys each query reads; the elementwise work, recurrent mixers, sparse index scoring and drafter passes are not counted), over the window's length times the scope's GPUs times one GPU's datasheet dense peak at the format the linear layers run in. A model that is mostly recurrent therefore reads low.</td>
 </tr>
 <tr>
 <td><code>output_tok_s</code></td>
@@ -5747,6 +5934,19 @@ refused.</p>
 <td>cluster, pool, instance</td>
 <td>max, min</td>
 <td>Preemptions the engines performed over the whole run.</td>
+</tr>
+<tr>
+<td><code>prefill_busy_share</code></td>
+<td><code>prefill_busy_share</code></td>
+<td>rate</td>
+<td><code>ran_steps</code></td>
+<td><code>measured</code></td>
+<td>fraction</td>
+<td>-</td>
+<td>not_applicable</td>
+<td>cluster, pool, instance</td>
+<td>max, min</td>
+<td>The part of busy_share charged to prefill: each step's time is split by the step's scheduled tokens, those of requests still computing their prompt against those past it (decode tokens, speculative drafts included).</td>
 </tr>
 <tr>
 <td><code>request_throughput</code></td>
@@ -5941,7 +6141,7 @@ refused.</p>
 <td>excluded</td>
 <td>cluster, pool, instance</td>
 <td>max, min</td>
-<td>Time per output token, excluding the first, computed per request, mean, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634.</td>
+<td>Time per output token, excluding the first, computed per request (aiperf's ITL), mean, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634 (TPOT); aiperf v0.12.0 src/aiperf/metrics/types/inter_token_latency_metric.py:24,55 (inter_token_latency); inference-perf v0.7.0 inference_perf/reportgen/base.py:653-657 (time_per_output_token).</td>
 </tr>
 <tr>
 <td><code>tpot_p50_ms</code></td>
@@ -5954,7 +6154,7 @@ refused.</p>
 <td>excluded</td>
 <td>cluster, pool, instance</td>
 <td>max, min</td>
-<td>Time per output token, excluding the first, computed per request, p50, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634.</td>
+<td>Time per output token, excluding the first, computed per request (aiperf's ITL), p50, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634 (TPOT); aiperf v0.12.0 src/aiperf/metrics/types/inter_token_latency_metric.py:24,55 (inter_token_latency); inference-perf v0.7.0 inference_perf/reportgen/base.py:653-657 (time_per_output_token).</td>
 </tr>
 <tr>
 <td><code>tpot_p90_ms</code></td>
@@ -5967,7 +6167,7 @@ refused.</p>
 <td>excluded</td>
 <td>cluster, pool, instance</td>
 <td>max, min</td>
-<td>Time per output token, excluding the first, computed per request, p90, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634.</td>
+<td>Time per output token, excluding the first, computed per request (aiperf's ITL), p90, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634 (TPOT); aiperf v0.12.0 src/aiperf/metrics/types/inter_token_latency_metric.py:24,55 (inter_token_latency); inference-perf v0.7.0 inference_perf/reportgen/base.py:653-657 (time_per_output_token).</td>
 </tr>
 <tr>
 <td><code>tpot_p95_ms</code></td>
@@ -5980,7 +6180,7 @@ refused.</p>
 <td>excluded</td>
 <td>cluster, pool, instance</td>
 <td>max, min</td>
-<td>Time per output token, excluding the first, computed per request, p95, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634.</td>
+<td>Time per output token, excluding the first, computed per request (aiperf's ITL), p95, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634 (TPOT); aiperf v0.12.0 src/aiperf/metrics/types/inter_token_latency_metric.py:24,55 (inter_token_latency); inference-perf v0.7.0 inference_perf/reportgen/base.py:653-657 (time_per_output_token).</td>
 </tr>
 <tr>
 <td><code>tpot_p99_ms</code></td>
@@ -5993,7 +6193,7 @@ refused.</p>
 <td>excluded</td>
 <td>cluster, pool, instance</td>
 <td>max, min</td>
-<td>Time per output token, excluding the first, computed per request, p99, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634.</td>
+<td>Time per output token, excluding the first, computed per request (aiperf's ITL), p99, over the measured window. Follows vllm v0.32.0 vllm/benchmarks/serve.py:624-634 (TPOT); aiperf v0.12.0 src/aiperf/metrics/types/inter_token_latency_metric.py:24,55 (inter_token_latency); inference-perf v0.7.0 inference_perf/reportgen/base.py:653-657 (time_per_output_token).</td>
 </tr>
 <tr>
 <td><code>ttft_mean_ms</code></td>

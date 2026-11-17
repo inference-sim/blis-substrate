@@ -979,6 +979,8 @@
       
         
       
+        
+      
     
     
     
@@ -1491,6 +1493,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="input">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rates_shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rates_shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1766,6 +1796,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5471,6 +5529,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="input">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rates_shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rates_shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6333,6 +6419,12 @@ state none of the three, so most coefficients are not evaluated until the regist
 <td>no</td>
 <td>Each workload property and what supplied it (D8), sorted by name.</td>
 </tr>
+<tr>
+<td><code>files</code></td>
+<td>list</td>
+<td>no</td>
+<td>The small input files the run read, whole, sorted by <code>path</code>: the router's endpoint-picker configuration and manifests, and each configuration file an option names. Each is <code>path</code>, <code>sha256</code> (of <code>content</code>) and <code>content</code>. A trace or a corpus is never held here; <code>options</code> names it by sha256.</td>
+</tr>
 </tbody>
 </table>
 <!-- fields: scenario.Packaging -->
@@ -6447,7 +6539,7 @@ simulate, such as speculative acceptance or expert routing imbalance (D8).</p>
 <td><code>step</code></td>
 <td>string</td>
 <td>for a profile lookup that can borrow</td>
-<td>How the lookup found its value (D8): <code>exact</code>, <code>same_drafter_other_k</code>, <code>other_drafter</code> or <code>other_target</code>.</td>
+<td>How the lookup found its value (D8): <code>exact</code>, <code>same_drafter_other_k</code>, <code>same_drafter_other_settings</code>, <code>other_drafter</code> or <code>other_target</code>.</td>
 </tr>
 <tr>
 <td><code>differed</code></td>
@@ -6466,6 +6558,96 @@ simulate, such as speculative acceptance or expert routing imbalance (D8).</p>
 <td>list of strings</td>
 <td>with <code>step</code></td>
 <td>Every profile the value was read from, as set and key, the one that sets it first; an interpolation lists both it lies between.</td>
+</tr>
+<tr>
+<td><code>rates_schedule</code></td>
+<td>string</td>
+<td>no</td>
+<td>How per-position rates the source did not state were derived, an estimate the run assumed: <code>minimum_variance</code> (the engine's synthetic schedule) or <code>natural_decay</code> (a profile set's fitted decay). Left out when the rates were stated.</td>
+</tr>
+<tr>
+<td><code>rates_shape</code></td>
+<td>mapping</td>
+<td>with <code>natural_decay</code></td>
+<td>The fitted shape the decay used, below.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="rates_shape"><code>rates_shape</code><a class="headerlink" href="#rates_shape" title="Permanent link">&para;</a></h3>
+<p>A fitted decay is an estimate, not a measurement, and the shape says how it was obtained, so a
+point can name it as a substitution.</p>
+<!-- fields: result.RatesShape -->
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>set</code></td>
+<td>string</td>
+<td>yes</td>
+<td>The profile set that holds the shape.</td>
+</tr>
+<tr>
+<td><code>speculative_method</code></td>
+<td>string</td>
+<td>no</td>
+<td>The method it was fitted to; left out for the shape fitted to every method.</td>
+</tr>
+<tr>
+<td><code>decay_exponent</code></td>
+<td>number</td>
+<td>yes</td>
+<td>Its exponent, in [0.5, 2].</td>
+</tr>
+<tr>
+<td><code>method</code></td>
+<td>string</td>
+<td>yes</td>
+<td>How the exponent was obtained: <code>calibrated</code> or <code>assumed</code>, never <code>measured</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="files"><code>files</code><a class="headerlink" href="#files" title="Permanent link">&para;</a></h3>
+<p>A small input file the run read, held whole, so that <code>--from-result</code> reproduces the run without
+it (DEV-7): the endpoint-picker configuration and manifests the deployment's router names, and each
+configuration file an option names. A trace or a corpus is bulk data and is never held here; its
+option records its sha256 (Principle 6 of blis-substrate#154).</p>
+<!-- fields: result.File -->
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>path</code></td>
+<td>string</td>
+<td>yes</td>
+<td>The file as the input names it: the router's path, or the option's name. Listed once each, sorted.</td>
+</tr>
+<tr>
+<td><code>sha256</code></td>
+<td>string</td>
+<td>yes</td>
+<td>The lowercase hex sha256 of <code>content</code>.</td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td>string</td>
+<td>yes</td>
+<td>The file's bytes.</td>
 </tr>
 </tbody>
 </table>
@@ -6989,7 +7171,13 @@ is the generator's own count, and equals the sum of the fates.</p>
 <td><code>generated</code></td>
 <td>integer</td>
 <td>yes</td>
-<td>Requests the workload created, every planned session round included.</td>
+<td>Requests the workload issued; the cap on a run counts these.</td>
+</tr>
+<tr>
+<td><code>planned_not_issued</code></td>
+<td>integer</td>
+<td>no</td>
+<td>Session rounds planned and never issued. Not generated and not a fate; each has a request row with fate <code>not_started</code>.</td>
 </tr>
 <tr>
 <td><code>completed</code></td>
@@ -7025,7 +7213,7 @@ is the generator's own count, and equals the sum of the fates.</p>
 <td><code>not_started</code></td>
 <td>integer</td>
 <td>yes</td>
-<td>Planned, such as a later session round, but never issued.</td>
+<td>Generated, but its arrival had not happened when the run ended.</td>
 </tr>
 <tr>
 <td><code>length_capped</code></td>
@@ -7102,6 +7290,18 @@ has <code>e2e_us</code>. The rows' fates agree with <code>requests</code>.</p>
 <td>Arrival at an engine to the first scheduled step.</td>
 </tr>
 <tr>
+<td><code>queue_entry_us</code></td>
+<td>integer</td>
+<td>no</td>
+<td>Clock at which the request entered an engine's waiting queue; not before <code>arrival_us</code>.</td>
+</tr>
+<tr>
+<td><code>first_token_us</code></td>
+<td>integer</td>
+<td>when sampled</td>
+<td>Clock at which the first token reached the client; <code>ttft_us</code> is this less <code>arrival_us</code>.</td>
+</tr>
+<tr>
 <td><code>gateway_queue_delay_us</code></td>
 <td>integer</td>
 <td>no</td>
@@ -7153,7 +7353,7 @@ has <code>e2e_us</code>. The rows' fates agree with <code>requests</code>.</p>
 <td><code>phase</code></td>
 <td>string</td>
 <td>no</td>
-<td><code>warmup</code>, <code>profile</code> or <code>grace</code>, when the workload marks phases.</td>
+<td>The workload phase the request was sent in, a lowercase slug (<code>warmup</code> is outside the measured window), when the workload marks phases.</td>
 </tr>
 <tr>
 <td><code>instance</code></td>

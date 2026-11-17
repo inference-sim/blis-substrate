@@ -962,6 +962,8 @@
       
         
       
+        
+      
     
     
     
@@ -1479,6 +1481,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5184,6 +5214,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#mtp_moe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mtp_moe
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#head" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5243,10 +5284,6 @@
 
 <h1 id="qwen36-35b-a3b">qwen3.6-35b-a3b<a class="headerlink" href="#qwen36-35b-a3b" title="Permanent link">&para;</a></h1>
 <p><a href="https://huggingface.co/Qwen/Qwen3.6-35B-A3B/tree/995ad96eacd98c81ed38be0c5b274b04031597b0"><code>Qwen/Qwen3.6-35B-A3B</code></a>, architecture <code>Qwen3_5MoeForConditionalGeneration</code>: 40 layers, weights in bf16. The graph below is derived from the model's <a href="https://huggingface.co/Qwen/Qwen3.6-35B-A3B/blob/995ad96eacd98c81ed38be0c5b274b04031597b0/config.json"><code>config.json</code></a> at revision <code>995ad96eacd9</code>; <a href="../../../concepts/model-graphs/">Model graphs</a> explains how to read it, and the <a href="../../../concepts/glossary/">glossary</a> defines its terms.</p>
-<div class="admonition note">
-<p class="admonition-title">Text decoder only</p>
-<p>The vendor config describes a multimodal model. This graph prices the text decoder and records <code>modality: text_decoder_of_multimodal</code>; a request carrying an image or audio input costs more than it predicts.</p>
-</div>
 <h2 id="layer-stack">Layer stack<a class="headerlink" href="#layer-stack" title="Permanent link">&para;</a></h2>
 <div class="cf-scroll"><svg class="cf-figure" viewBox="0 0 720 56" role="img" aria-label="qwen3.6-35b-a3b: 40 layers by kind, in stack order" xmlns="http://www.w3.org/2000/svg"><title>qwen3.6-35b-a3b: 40 layers by kind, in stack order</title><rect x="0.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 0: gdn_moe</title></rect><rect x="18.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 1: gdn_moe</title></rect><rect x="36.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 2: gdn_moe</title></rect><rect x="54.00" y="4" width="18.00" height="22" fill="#E69F00"><title>layer 3: attn_moe</title></rect><rect x="72.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 4: gdn_moe</title></rect><rect x="90.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 5: gdn_moe</title></rect><rect x="108.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 6: gdn_moe</title></rect><rect x="126.00" y="4" width="18.00" height="22" fill="#E69F00"><title>layer 7: attn_moe</title></rect><rect x="144.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 8: gdn_moe</title></rect><rect x="162.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 9: gdn_moe</title></rect><rect x="180.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 10: gdn_moe</title></rect><rect x="198.00" y="4" width="18.00" height="22" fill="#E69F00"><title>layer 11: attn_moe</title></rect><rect x="216.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 12: gdn_moe</title></rect><rect x="234.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 13: gdn_moe</title></rect><rect x="252.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 14: gdn_moe</title></rect><rect x="270.00" y="4" width="18.00" height="22" fill="#E69F00"><title>layer 15: attn_moe</title></rect><rect x="288.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 16: gdn_moe</title></rect><rect x="306.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 17: gdn_moe</title></rect><rect x="324.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 18: gdn_moe</title></rect><rect x="342.00" y="4" width="18.00" height="22" fill="#E69F00"><title>layer 19: attn_moe</title></rect><rect x="360.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 20: gdn_moe</title></rect><rect x="378.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 21: gdn_moe</title></rect><rect x="396.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 22: gdn_moe</title></rect><rect x="414.00" y="4" width="18.00" height="22" fill="#E69F00"><title>layer 23: attn_moe</title></rect><rect x="432.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 24: gdn_moe</title></rect><rect x="450.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 25: gdn_moe</title></rect><rect x="468.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 26: gdn_moe</title></rect><rect x="486.00" y="4" width="18.00" height="22" fill="#E69F00"><title>layer 27: attn_moe</title></rect><rect x="504.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 28: gdn_moe</title></rect><rect x="522.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 29: gdn_moe</title></rect><rect x="540.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 30: gdn_moe</title></rect><rect x="558.00" y="4" width="18.00" height="22" fill="#E69F00"><title>layer 31: attn_moe</title></rect><rect x="576.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 32: gdn_moe</title></rect><rect x="594.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 33: gdn_moe</title></rect><rect x="612.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 34: gdn_moe</title></rect><rect x="630.00" y="4" width="18.00" height="22" fill="#E69F00"><title>layer 35: attn_moe</title></rect><rect x="648.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 36: gdn_moe</title></rect><rect x="666.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 37: gdn_moe</title></rect><rect x="684.00" y="4" width="18.00" height="22" fill="#0072B2"><title>layer 38: gdn_moe</title></rect><rect x="702.00" y="4" width="18.00" height="22" fill="#E69F00"><title>layer 39: attn_moe</title></rect><line class="cf-sep" x1="18.00" x2="18.00" y1="4" y2="26"/><line class="cf-sep" x1="36.00" x2="36.00" y1="4" y2="26"/><line class="cf-sep" x1="54.00" x2="54.00" y1="4" y2="26"/><line class="cf-sep" x1="72.00" x2="72.00" y1="4" y2="26"/><line class="cf-sep" x1="90.00" x2="90.00" y1="4" y2="26"/><line class="cf-sep" x1="108.00" x2="108.00" y1="4" y2="26"/><line class="cf-sep" x1="126.00" x2="126.00" y1="4" y2="26"/><line class="cf-sep" x1="144.00" x2="144.00" y1="4" y2="26"/><line class="cf-sep" x1="162.00" x2="162.00" y1="4" y2="26"/><line class="cf-sep" x1="180.00" x2="180.00" y1="4" y2="26"/><line class="cf-sep" x1="198.00" x2="198.00" y1="4" y2="26"/><line class="cf-sep" x1="216.00" x2="216.00" y1="4" y2="26"/><line class="cf-sep" x1="234.00" x2="234.00" y1="4" y2="26"/><line class="cf-sep" x1="252.00" x2="252.00" y1="4" y2="26"/><line class="cf-sep" x1="270.00" x2="270.00" y1="4" y2="26"/><line class="cf-sep" x1="288.00" x2="288.00" y1="4" y2="26"/><line class="cf-sep" x1="306.00" x2="306.00" y1="4" y2="26"/><line class="cf-sep" x1="324.00" x2="324.00" y1="4" y2="26"/><line class="cf-sep" x1="342.00" x2="342.00" y1="4" y2="26"/><line class="cf-sep" x1="360.00" x2="360.00" y1="4" y2="26"/><line class="cf-sep" x1="378.00" x2="378.00" y1="4" y2="26"/><line class="cf-sep" x1="396.00" x2="396.00" y1="4" y2="26"/><line class="cf-sep" x1="414.00" x2="414.00" y1="4" y2="26"/><line class="cf-sep" x1="432.00" x2="432.00" y1="4" y2="26"/><line class="cf-sep" x1="450.00" x2="450.00" y1="4" y2="26"/><line class="cf-sep" x1="468.00" x2="468.00" y1="4" y2="26"/><line class="cf-sep" x1="486.00" x2="486.00" y1="4" y2="26"/><line class="cf-sep" x1="504.00" x2="504.00" y1="4" y2="26"/><line class="cf-sep" x1="522.00" x2="522.00" y1="4" y2="26"/><line class="cf-sep" x1="540.00" x2="540.00" y1="4" y2="26"/><line class="cf-sep" x1="558.00" x2="558.00" y1="4" y2="26"/><line class="cf-sep" x1="576.00" x2="576.00" y1="4" y2="26"/><line class="cf-sep" x1="594.00" x2="594.00" y1="4" y2="26"/><line class="cf-sep" x1="612.00" x2="612.00" y1="4" y2="26"/><line class="cf-sep" x1="630.00" x2="630.00" y1="4" y2="26"/><line class="cf-sep" x1="648.00" x2="648.00" y1="4" y2="26"/><line class="cf-sep" x1="666.00" x2="666.00" y1="4" y2="26"/><line class="cf-sep" x1="684.00" x2="684.00" y1="4" y2="26"/><line class="cf-sep" x1="702.00" x2="702.00" y1="4" y2="26"/><rect x="0.0" y="38" width="10" height="10" fill="#0072B2"/><text class="cf-label" x="15.0" y="47">gdn_moe ×30</text><rect x="112.2" y="38" width="10" height="10" fill="#E69F00"/><text class="cf-label" x="127.2" y="47">attn_moe ×10</text></svg></div>
 
@@ -5314,48 +5351,104 @@
 </tr>
 <tr>
 <td style="text-align: right;">1</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">recurrent_in_proj_qkvz</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=12288, k=2048, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">recurrent_in_proj_ba</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=64, k=2048, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
 <td style="text-align: left;"><code>RecurrentUpdate</code></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">recurrent_kind=gdn, n_heads=32, state_size=128, conv_kernel=4, intermediate_size=8192, state_dtype=fp32</td>
 </tr>
 <tr>
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">mixer_out</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">n=2048, k=4096</td>
 </tr>
 <tr>
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">5</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">mixer_out</td>
 <td style="text-align: left;"><code>tensor_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">4</td>
+<td style="text-align: right;">6</td>
 <td style="text-align: left;"><code>Elementwise</code></td>
 <td style="text-align: left;">post_attn_norm</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">5</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">router</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=256, k=2048, tp=replicated, weight_dtype=bf16</td>
+</tr>
+<tr>
+<td style="text-align: right;">8</td>
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">shared=False, n=512, k=2048, experts=256, top_k=8, shared_experts=1</td>
+<td style="text-align: left;">shared=False, n=512, k=2048, experts=256, top_k=8</td>
 </tr>
 <tr>
-<td style="text-align: right;">6</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_gate_up</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=1024, k=2048, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">10</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_act</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=sharded, bytes_per_token=3072</td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_down</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=2048, k=512, tp=row</td>
+</tr>
+<tr>
+<td style="text-align: right;">12</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_expert_gate</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=1, k=2048, tp=replicated, weight_dtype=bf16</td>
+</tr>
+<tr>
+<td style="text-align: right;">13</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_gate_mul</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=replicated, bytes_per_token=8192</td>
+</tr>
+<tr>
+<td style="text-align: right;">14</td>
 <td style="text-align: left;"><code>All2All</code></td>
 <td style="text-align: left;">moe_dispatch_combine</td>
 <td style="text-align: left;"><code>expert_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">7</td>
+<td style="text-align: right;">15</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">mlp_out</td>
 <td style="text-align: left;"><code>tensor_parallel_unless_sp_moe</code></td>
@@ -5388,7 +5481,7 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">qkv_proj</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=5120, k=2048</td>
+<td style="text-align: left;">n=9216, k=2048</td>
 </tr>
 <tr>
 <td style="text-align: right;">2</td>
@@ -5399,41 +5492,245 @@
 </tr>
 <tr>
 <td style="text-align: right;">3</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">attn_output_gate</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">bytes_per_token=24576</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">o_proj</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;">n=2048, k=4096</td>
 </tr>
 <tr>
-<td style="text-align: right;">4</td>
+<td style="text-align: right;">5</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">attn_out</td>
 <td style="text-align: left;"><code>tensor_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">5</td>
+<td style="text-align: right;">6</td>
 <td style="text-align: left;"><code>Elementwise</code></td>
 <td style="text-align: left;">post_attn_norm</td>
 <td style="text-align: left;"></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">6</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">router</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=256, k=2048, tp=replicated, weight_dtype=bf16</td>
+</tr>
+<tr>
+<td style="text-align: right;">8</td>
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">shared=False, n=512, k=2048, experts=256, top_k=8, shared_experts=1</td>
+<td style="text-align: left;">shared=False, n=512, k=2048, experts=256, top_k=8</td>
 </tr>
 <tr>
-<td style="text-align: right;">7</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_gate_up</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=1024, k=2048, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">10</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_act</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=sharded, bytes_per_token=3072</td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_down</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=2048, k=512, tp=row</td>
+</tr>
+<tr>
+<td style="text-align: right;">12</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_expert_gate</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=1, k=2048, tp=replicated, weight_dtype=bf16</td>
+</tr>
+<tr>
+<td style="text-align: right;">13</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_gate_mul</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=replicated, bytes_per_token=8192</td>
+</tr>
+<tr>
+<td style="text-align: right;">14</td>
 <td style="text-align: left;"><code>All2All</code></td>
 <td style="text-align: left;">moe_dispatch_combine</td>
 <td style="text-align: left;"><code>expert_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
+<td style="text-align: right;">15</td>
+<td style="text-align: left;"><code>AllReduce</code></td>
+<td style="text-align: left;">mlp_out</td>
+<td style="text-align: left;"><code>tensor_parallel_unless_sp_moe</code></td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+<h3 id="mtp_moe"><code>mtp_moe</code><a class="headerlink" href="#mtp_moe" title="Permanent link">&para;</a></h3>
+<p>speculator only.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">#</th>
+<th style="text-align: left;">Op</th>
+<th style="text-align: left;">Role</th>
+<th style="text-align: left;">Runs when</th>
+<th style="text-align: left;">Parameters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">mtp_pre_fc_norm_embedding</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">mtp_pre_fc_norm_hidden</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">mtp_fc</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=2048, k=4096, weight_dtype=bf16, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;"><code>AllGather</code></td>
+<td style="text-align: left;">mtp_fc_out</td>
+<td style="text-align: left;"><code>tensor_parallel</code></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">input_norm</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">qkv_proj</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=9216, k=2048</td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
+<td style="text-align: left;"><code>Attention</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">holds_engine_kv=True, kind=gqa, n_q=16, n_kv=2, d_h=256</td>
+</tr>
+<tr>
+<td style="text-align: right;">7</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">attn_output_gate</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">bytes_per_token=24576</td>
+</tr>
+<tr>
 <td style="text-align: right;">8</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">o_proj</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=2048, k=4096</td>
+</tr>
+<tr>
+<td style="text-align: right;">9</td>
+<td style="text-align: left;"><code>AllReduce</code></td>
+<td style="text-align: left;">attn_out</td>
+<td style="text-align: left;"><code>tensor_parallel</code></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: right;">10</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">post_attn_norm</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">router</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=256, k=2048, tp=replicated, weight_dtype=bf16</td>
+</tr>
+<tr>
+<td style="text-align: right;">12</td>
+<td style="text-align: left;"><code>GroupedGEMM</code></td>
+<td style="text-align: left;">experts</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">shared=False, n=512, k=2048, experts=256, top_k=8</td>
+</tr>
+<tr>
+<td style="text-align: right;">13</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_gate_up</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=1024, k=2048, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">14</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_act</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=sharded, bytes_per_token=3072</td>
+</tr>
+<tr>
+<td style="text-align: right;">15</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_down</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=2048, k=512, tp=row</td>
+</tr>
+<tr>
+<td style="text-align: right;">16</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_expert_gate</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=1, k=2048, tp=replicated, weight_dtype=bf16</td>
+</tr>
+<tr>
+<td style="text-align: right;">17</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_gate_mul</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=replicated, bytes_per_token=8192</td>
+</tr>
+<tr>
+<td style="text-align: right;">18</td>
+<td style="text-align: left;"><code>All2All</code></td>
+<td style="text-align: left;">moe_dispatch_combine</td>
+<td style="text-align: left;"><code>expert_parallel</code></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: right;">19</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">mlp_out</td>
 <td style="text-align: left;"><code>tensor_parallel_unless_sp_moe</code></td>
@@ -5471,7 +5768,7 @@
 </tbody>
 </table>
 <h3 id="speculator">Speculator<a class="headerlink" href="#speculator" title="Permanent link">&para;</a></h3>
-<p>Method <code>qwen3_5_mtp</code>, proposing 1 draft token per step. Its stack is the pattern (<code>attn_moe</code>) once.</p>
+<p>Method <code>qwen3_5_mtp</code>, proposing 1 draft token per step. Its stack is the pattern (<code>mtp_moe</code>) once.</p>
 <h2 id="provenance">Provenance<a class="headerlink" href="#provenance" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

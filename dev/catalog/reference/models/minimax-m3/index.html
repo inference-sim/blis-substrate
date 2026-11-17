@@ -962,6 +962,8 @@
       
         
       
+        
+      
     
     
     
@@ -1479,6 +1481,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5243,10 +5273,6 @@
 
 <h1 id="minimax-m3">minimax-m3<a class="headerlink" href="#minimax-m3" title="Permanent link">&para;</a></h1>
 <p><a href="https://huggingface.co/MiniMaxAI/MiniMax-M3/tree/f0e1c1e04d40177e4673a22097036854f536e9c0"><code>MiniMaxAI/MiniMax-M3</code></a>, architecture <code>MiniMaxM3SparseForConditionalGeneration</code>: 60 layers, weights in bf16 (fp32 for some nodes). The graph below is derived from the model's <a href="https://huggingface.co/MiniMaxAI/MiniMax-M3/blob/f0e1c1e04d40177e4673a22097036854f536e9c0/config.json"><code>config.json</code></a> at revision <code>f0e1c1e04d40</code>; <a href="../../../concepts/model-graphs/">Model graphs</a> explains how to read it, and the <a href="../../../concepts/glossary/">glossary</a> defines its terms.</p>
-<div class="admonition note">
-<p class="admonition-title">Text decoder only</p>
-<p>The vendor config describes a multimodal model. This graph prices the text decoder and records <code>modality: text_decoder_of_multimodal</code>; a request carrying an image or audio input costs more than it predicts.</p>
-</div>
 <h2 id="layer-stack">Layer stack<a class="headerlink" href="#layer-stack" title="Permanent link">&para;</a></h2>
 <div class="cf-scroll"><svg class="cf-figure" viewBox="0 0 720 56" role="img" aria-label="minimax-m3: 60 layers by kind, in stack order" xmlns="http://www.w3.org/2000/svg"><title>minimax-m3: 60 layers by kind, in stack order</title><rect x="0.00" y="4" width="12.00" height="22" fill="#0072B2"><title>layer 0: dense</title></rect><rect x="12.00" y="4" width="12.00" height="22" fill="#0072B2"><title>layer 1: dense</title></rect><rect x="24.00" y="4" width="12.00" height="22" fill="#0072B2"><title>layer 2: dense</title></rect><rect x="36.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 3: sparse_attn_moe</title></rect><rect x="48.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 4: sparse_attn_moe</title></rect><rect x="60.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 5: sparse_attn_moe</title></rect><rect x="72.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 6: sparse_attn_moe</title></rect><rect x="84.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 7: sparse_attn_moe</title></rect><rect x="96.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 8: sparse_attn_moe</title></rect><rect x="108.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 9: sparse_attn_moe</title></rect><rect x="120.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 10: sparse_attn_moe</title></rect><rect x="132.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 11: sparse_attn_moe</title></rect><rect x="144.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 12: sparse_attn_moe</title></rect><rect x="156.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 13: sparse_attn_moe</title></rect><rect x="168.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 14: sparse_attn_moe</title></rect><rect x="180.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 15: sparse_attn_moe</title></rect><rect x="192.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 16: sparse_attn_moe</title></rect><rect x="204.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 17: sparse_attn_moe</title></rect><rect x="216.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 18: sparse_attn_moe</title></rect><rect x="228.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 19: sparse_attn_moe</title></rect><rect x="240.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 20: sparse_attn_moe</title></rect><rect x="252.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 21: sparse_attn_moe</title></rect><rect x="264.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 22: sparse_attn_moe</title></rect><rect x="276.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 23: sparse_attn_moe</title></rect><rect x="288.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 24: sparse_attn_moe</title></rect><rect x="300.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 25: sparse_attn_moe</title></rect><rect x="312.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 26: sparse_attn_moe</title></rect><rect x="324.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 27: sparse_attn_moe</title></rect><rect x="336.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 28: sparse_attn_moe</title></rect><rect x="348.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 29: sparse_attn_moe</title></rect><rect x="360.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 30: sparse_attn_moe</title></rect><rect x="372.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 31: sparse_attn_moe</title></rect><rect x="384.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 32: sparse_attn_moe</title></rect><rect x="396.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 33: sparse_attn_moe</title></rect><rect x="408.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 34: sparse_attn_moe</title></rect><rect x="420.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 35: sparse_attn_moe</title></rect><rect x="432.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 36: sparse_attn_moe</title></rect><rect x="444.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 37: sparse_attn_moe</title></rect><rect x="456.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 38: sparse_attn_moe</title></rect><rect x="468.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 39: sparse_attn_moe</title></rect><rect x="480.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 40: sparse_attn_moe</title></rect><rect x="492.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 41: sparse_attn_moe</title></rect><rect x="504.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 42: sparse_attn_moe</title></rect><rect x="516.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 43: sparse_attn_moe</title></rect><rect x="528.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 44: sparse_attn_moe</title></rect><rect x="540.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 45: sparse_attn_moe</title></rect><rect x="552.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 46: sparse_attn_moe</title></rect><rect x="564.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 47: sparse_attn_moe</title></rect><rect x="576.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 48: sparse_attn_moe</title></rect><rect x="588.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 49: sparse_attn_moe</title></rect><rect x="600.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 50: sparse_attn_moe</title></rect><rect x="612.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 51: sparse_attn_moe</title></rect><rect x="624.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 52: sparse_attn_moe</title></rect><rect x="636.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 53: sparse_attn_moe</title></rect><rect x="648.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 54: sparse_attn_moe</title></rect><rect x="660.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 55: sparse_attn_moe</title></rect><rect x="672.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 56: sparse_attn_moe</title></rect><rect x="684.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 57: sparse_attn_moe</title></rect><rect x="696.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 58: sparse_attn_moe</title></rect><rect x="708.00" y="4" width="12.00" height="22" fill="#E69F00"><title>layer 59: sparse_attn_moe</title></rect><line class="cf-sep" x1="12.00" x2="12.00" y1="4" y2="26"/><line class="cf-sep" x1="24.00" x2="24.00" y1="4" y2="26"/><line class="cf-sep" x1="36.00" x2="36.00" y1="4" y2="26"/><line class="cf-sep" x1="48.00" x2="48.00" y1="4" y2="26"/><line class="cf-sep" x1="60.00" x2="60.00" y1="4" y2="26"/><line class="cf-sep" x1="72.00" x2="72.00" y1="4" y2="26"/><line class="cf-sep" x1="84.00" x2="84.00" y1="4" y2="26"/><line class="cf-sep" x1="96.00" x2="96.00" y1="4" y2="26"/><line class="cf-sep" x1="108.00" x2="108.00" y1="4" y2="26"/><line class="cf-sep" x1="120.00" x2="120.00" y1="4" y2="26"/><line class="cf-sep" x1="132.00" x2="132.00" y1="4" y2="26"/><line class="cf-sep" x1="144.00" x2="144.00" y1="4" y2="26"/><line class="cf-sep" x1="156.00" x2="156.00" y1="4" y2="26"/><line class="cf-sep" x1="168.00" x2="168.00" y1="4" y2="26"/><line class="cf-sep" x1="180.00" x2="180.00" y1="4" y2="26"/><line class="cf-sep" x1="192.00" x2="192.00" y1="4" y2="26"/><line class="cf-sep" x1="204.00" x2="204.00" y1="4" y2="26"/><line class="cf-sep" x1="216.00" x2="216.00" y1="4" y2="26"/><line class="cf-sep" x1="228.00" x2="228.00" y1="4" y2="26"/><line class="cf-sep" x1="240.00" x2="240.00" y1="4" y2="26"/><line class="cf-sep" x1="252.00" x2="252.00" y1="4" y2="26"/><line class="cf-sep" x1="264.00" x2="264.00" y1="4" y2="26"/><line class="cf-sep" x1="276.00" x2="276.00" y1="4" y2="26"/><line class="cf-sep" x1="288.00" x2="288.00" y1="4" y2="26"/><line class="cf-sep" x1="300.00" x2="300.00" y1="4" y2="26"/><line class="cf-sep" x1="312.00" x2="312.00" y1="4" y2="26"/><line class="cf-sep" x1="324.00" x2="324.00" y1="4" y2="26"/><line class="cf-sep" x1="336.00" x2="336.00" y1="4" y2="26"/><line class="cf-sep" x1="348.00" x2="348.00" y1="4" y2="26"/><line class="cf-sep" x1="360.00" x2="360.00" y1="4" y2="26"/><line class="cf-sep" x1="372.00" x2="372.00" y1="4" y2="26"/><line class="cf-sep" x1="384.00" x2="384.00" y1="4" y2="26"/><line class="cf-sep" x1="396.00" x2="396.00" y1="4" y2="26"/><line class="cf-sep" x1="408.00" x2="408.00" y1="4" y2="26"/><line class="cf-sep" x1="420.00" x2="420.00" y1="4" y2="26"/><line class="cf-sep" x1="432.00" x2="432.00" y1="4" y2="26"/><line class="cf-sep" x1="444.00" x2="444.00" y1="4" y2="26"/><line class="cf-sep" x1="456.00" x2="456.00" y1="4" y2="26"/><line class="cf-sep" x1="468.00" x2="468.00" y1="4" y2="26"/><line class="cf-sep" x1="480.00" x2="480.00" y1="4" y2="26"/><line class="cf-sep" x1="492.00" x2="492.00" y1="4" y2="26"/><line class="cf-sep" x1="504.00" x2="504.00" y1="4" y2="26"/><line class="cf-sep" x1="516.00" x2="516.00" y1="4" y2="26"/><line class="cf-sep" x1="528.00" x2="528.00" y1="4" y2="26"/><line class="cf-sep" x1="540.00" x2="540.00" y1="4" y2="26"/><line class="cf-sep" x1="552.00" x2="552.00" y1="4" y2="26"/><line class="cf-sep" x1="564.00" x2="564.00" y1="4" y2="26"/><line class="cf-sep" x1="576.00" x2="576.00" y1="4" y2="26"/><line class="cf-sep" x1="588.00" x2="588.00" y1="4" y2="26"/><line class="cf-sep" x1="600.00" x2="600.00" y1="4" y2="26"/><line class="cf-sep" x1="612.00" x2="612.00" y1="4" y2="26"/><line class="cf-sep" x1="624.00" x2="624.00" y1="4" y2="26"/><line class="cf-sep" x1="636.00" x2="636.00" y1="4" y2="26"/><line class="cf-sep" x1="648.00" x2="648.00" y1="4" y2="26"/><line class="cf-sep" x1="660.00" x2="660.00" y1="4" y2="26"/><line class="cf-sep" x1="672.00" x2="672.00" y1="4" y2="26"/><line class="cf-sep" x1="684.00" x2="684.00" y1="4" y2="26"/><line class="cf-sep" x1="696.00" x2="696.00" y1="4" y2="26"/><line class="cf-sep" x1="708.00" x2="708.00" y1="4" y2="26"/><rect x="0.0" y="38" width="10" height="10" fill="#0072B2"/><text class="cf-label" x="15.0" y="47">dense ×3</text><rect x="90.6" y="38" width="10" height="10" fill="#E69F00"/><text class="cf-label" x="105.6" y="47">sparse_attn_moe ×57</text></svg></div>
 
@@ -5444,24 +5470,45 @@
 <td style="text-align: left;"><code>GEMM</code></td>
 <td style="text-align: left;">router</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">n=128, k=6144, weight_dtype=fp32, tp=replicated</td>
+<td style="text-align: left;">n=128, k=6144, tp=replicated, weight_dtype=fp32</td>
 </tr>
 <tr>
 <td style="text-align: right;">9</td>
 <td style="text-align: left;"><code>GroupedGEMM</code></td>
 <td style="text-align: left;">experts</td>
 <td style="text-align: left;"></td>
-<td style="text-align: left;">shared=False, n=3072, k=6144, experts=128, top_k=4, shared_experts=1</td>
+<td style="text-align: left;">shared=False, n=3072, k=6144, experts=128, top_k=4</td>
 </tr>
 <tr>
 <td style="text-align: right;">10</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_gate_up</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=6144, k=6144, tp=column</td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
+<td style="text-align: left;"><code>Elementwise</code></td>
+<td style="text-align: left;">shared_act</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">tp=sharded, bytes_per_token=18432</td>
+</tr>
+<tr>
+<td style="text-align: right;">12</td>
+<td style="text-align: left;"><code>GEMM</code></td>
+<td style="text-align: left;">shared_down</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">n=6144, k=3072, tp=row</td>
+</tr>
+<tr>
+<td style="text-align: right;">13</td>
 <td style="text-align: left;"><code>All2All</code></td>
 <td style="text-align: left;">moe_dispatch_combine</td>
 <td style="text-align: left;"><code>expert_parallel</code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr>
-<td style="text-align: right;">11</td>
+<td style="text-align: right;">14</td>
 <td style="text-align: left;"><code>AllReduce</code></td>
 <td style="text-align: left;">mlp_out</td>
 <td style="text-align: left;"><code>tensor_parallel_unless_sp_moe</code></td>

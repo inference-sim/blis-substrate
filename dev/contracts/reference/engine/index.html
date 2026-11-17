@@ -979,6 +979,8 @@
       
         
       
+        
+      
     
     
     
@@ -1499,6 +1501,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5608,6 +5638,11 @@ and stays in flight until <code>Complete</code> names it. Any number of batches 
 which is how vLLM's engine core consumes its batch queue: it appends each scheduled batch at
 one end and takes results from the other. A batch that runs nothing (<code>Empty</code>) is not in
 flight, but may still start transfers.</p>
+<p><code>Batch.SkipDrafts</code> says the drafter proposes no drafts in the step, because no request on any
+rank of the engine's data-parallel group can use them (vLLM v0.33.0's <code>skip_drafts</code>, ANDed across
+the group). The engine states the same value on every rank's batch of the step, and its
+<code>StepTime</code> prices the step without the passes that propose (<code>kernel.Batch.SkipDrafts</code>). An engine
+that does not speculate leaves it false.</p>
 <h2 id="transfers">Transfers<a class="headerlink" href="#transfers" title="Permanent link">&para;</a></h2>
 <p>An engine reports each asynchronous <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> move once, as an <code>engine.Transfer</code> among a batch's
 <code>TransfersStarted</code>. The simulator asks the Environment what the move demands of the fabric

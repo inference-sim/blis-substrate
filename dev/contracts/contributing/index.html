@@ -977,6 +977,8 @@
       
         
       
+        
+      
     
     
     
@@ -1497,6 +1499,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5347,6 +5377,10 @@ release it models; for vLLM they are in blis-vllm. The contracts define only the
 <tr>
 <td><code>contracts/conformance/</code></td>
 <td>The suites implementers run: <code>enginetest</code>, <code>kerneltest</code>, <code>embedtest</code>, <code>shapetest</code></td>
+</tr>
+<tr>
+<td><code>contracts/harness/</code></td>
+<td>What every engine repository shares: the <code>Upstream</code> record, the provenance and no-clock checks, the golangci-lint settings, and the oracle's lock, manifest and golden-trace checks, which each engine keeps as copies</td>
 </tr>
 <tr>
 <td><code>contracts/testdata/</code></td>

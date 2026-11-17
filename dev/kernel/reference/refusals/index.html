@@ -966,6 +966,8 @@
       
         
       
+        
+      
     
     
     
@@ -1483,6 +1485,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -4811,17 +4841,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#a-quantization-spelling-the-kernel-does-not-price" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        A quantization spelling the kernel does not price
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#a-coefficient-is-missing" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5361,17 +5380,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#a-quantization-spelling-the-kernel-does-not-price" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        A quantization spelling the kernel does not price
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#a-coefficient-is-missing" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5454,42 +5462,18 @@ change. The engine's reasons cite the vLLM v0.31.0 source in the code beside the
   implementation it is valid for, and the primitive and what runs it.</li>
 </ul>
 <h2 id="the-engine-would-not-start-it">The engine would not start it<a class="headerlink" href="#the-engine-would-not-start-it" title="Permanent link">&para;</a></h2>
-<p>These are layouts vLLM v0.31.0 refuses at startup.</p>
+<p>These are layouts vLLM v0.31.0 refuses at startup that depend on the model graph or the parallel
+layout alone. The refusals that depend on an engine setting (a cache data type, a block size, a
+decode-context combine or interleave, a backend choice) are the engine's lowering's, made before
+the kernel is built; for vLLM they are blis-vllm's <code>compat/lowering</code>.</p>
 <p><strong>Context parallelism</strong></p>
 <ul>
 <li>Prefill-context parallelism on a model with any layer whose attention is not latent, or
   with a recurrent layer.</li>
 <li>Prefill- and decode-context parallelism together on anything but <abbr title="DeepSeek sparse attention">DSA</abbr> sparse attention.</li>
-<li>The <code>a2a</code> decode-context combine together with prefill-context parallelism.</li>
-<li>A decode-context combine backend the engine release does not accept.</li>
-<li>With decode-context parallelism on, a stated <code>cp_kv_cache_interleave_size</code> larger than the
-  block size or not dividing it, unless a <abbr title="NVIDIA's inference transfer library, used to move KV caches between engines">NIXL</abbr> connector is configured. With a
-  <code>MultiConnector</code>, whose child connectors a deployment cannot name, an interleave that does
-  not fit, or one left unstated, is refused because the outcome cannot be known.</li>
 </ul>
-<p><strong>Sparse attention (DeepSeek sparse attention, <abbr title="DeepSeek sparse attention">DSA</abbr>: DeepSeek-V3.2, GLM-5)</strong></p>
+<p><strong>Architecture</strong></p>
 <ul>
-<li>A stated block size that is not a multiple of 64.</li>
-<li>A chip older than Hopper, where no sparse-attention backend runs.</li>
-<li>A cache data type no backend on the chip serves under the requested parallelism.</li>
-<li>Decode-context parallelism on FlashMLA's sparse backend with a 16-bit cache, with the
-  <code>a2a</code> combine, with local and gathered head counts that pad to different kernel sizes, or,
-  without prefill-context parallelism, with 32 or more attention heads per rank; or prefill-
-  and decode-context parallelism there on a cache other than <code>fp8_ds_mla</code>.</li>
-</ul>
-<p><strong>Cache data types</strong></p>
-<ul>
-<li>A cache data type vLLM does not accept, or a recurrent-state data type it does not accept.</li>
-<li><code>fp8_inc</code>, which no CUDA attention backend serves.</li>
-<li>The packed <code>fp8_ds_mla</code> and <code>nvfp4_ds_mla</code> layouts on a model whose target stack holds any
-  attention that is not sparse.</li>
-<li>Plain <code>nvfp4</code> on a model with latent attention.</li>
-</ul>
-<p><strong>Block size and architecture</strong></p>
-<ul>
-<li>A block size a DeepSeek-V4-family model's sparse backends do not accept: DeepSeek-V4.1's
-  run 64-token kernel blocks on SM90 and 128-token ones on SM100, and DeepSeek-V4's run
-  256-token blocks on every part.</li>
 <li>A model graph that states facts by GPU generation, on a chip whose compute capability the
   catalog does not state or whose generation the graph does not describe.</li>
 </ul>
@@ -5539,7 +5523,7 @@ the lane.</p>
 does not price a prefill that runs B, a pool that reports A for decode and nothing for prefill
 does not admit it, and a prefill that runs two kernels is priced only by a pair that lists both.</p>
 <p>The registry's pairs are <code>transferred</code> from vLLM 0.25.0 and list no implementation, because no
-engine release publishes kernel hashes yet (<code>kernel_impls.json</code>; inference-sim/blis-registry#73).
+engine release publishes kernel hashes yet (<code>kernel_impls.json</code>; inference-sim/blis-substrate#149).
 So on the committed registry the lane is not priced and an engine's report changes no price. The
 lane is dormant until an entry lists the hash of the prefill kernel and the engine reports it.</p>
 <p>A setting that selects a kernel the registry has not measured is the engine model's to refuse:
@@ -5553,35 +5537,27 @@ kernel reads no setting and applies no engine default.</p>
   whose graph states its caches, whose sizes are per layer kind over the whole stack rather
   than per stage. A drafter that reads an auxiliary hidden state of a layer outside the
   target's stack.</li>
-<li><code>dcp_q_replicate</code> where it would take effect: decode-context parallelism without
-  prefill-context parallelism, on a latent-attention model. It trades a collective for a
-  replicated projection the kernel cannot identify in the graph, so pricing only the saving
-  would make it look free.</li>
-<li>A cache data type vLLM accepts whose page layout the kernel does not size: the <code>turboquant</code>
-  and per-token-head formats.</li>
-<li>A quantization, CUDA graph mode or decode-context combine backend the kernel does not
-  price.</li>
+<li>A plan whose resolved settings no engine can mean (a negative count, a memory share outside
+  (0, 1], a word outside its list), or that leaves out a value the kernel needs and applies no
+  default to: the request and token limits per step, the page size, and the <abbr title="The attention keys and values a request keeps for every token it has processed">KV</abbr> and recurrent
+  element widths (SUB-6).</li>
+<li>A pair of graph launches the registry states no capture memory for.</li>
 <li>A deployment that speculates through an autoregressive drafter, a named EAGLE3 head or the
   graph's own MTP, when the pool's plan does not state which rows the drafter's first pass
   processes or for which requests its head and later passes run (<code>draft_passes_unstated</code>,
   naming the drafter and the missing fact), or states a word outside the fixed list
   (<code>draft_passes_unknown</code>). The facts are <code>plan.DraftPolicy.FirstPassRows</code> and <code>PassRequests</code>;
-  the engine settings carry neither.</li>
+  the engine settings carry neither. A parallel-block drafter (DFlash, DSpark) is refused the
+  same way when the plan does not state <code>PassRequests</code>, the requests its query pass runs for; it
+  states no first pass.</li>
 </ul>
 <h2 id="the-weight-layout-the-engine-says-it-serves">The weight layout the engine says it serves<a class="headerlink" href="#the-weight-layout-the-engine-says-it-serves" title="Permanent link">&para;</a></h2>
-<p><code>Settings.ServedWeights</code> states, class by class (linear, linear scale, routed experts, router,
+<p><code>plan.Lowered.ServedLayout</code> states, class by class (linear, linear scale, routed experts, router,
 head, embedding), the dtype the engine serves the checkpoint in. The kernel proves the target
 graph stores exactly that and refuses a difference as <code>served_weights_mismatch</code>, naming each class
 with both values. A class the graph does not contain is empty, so a graph with its router, head or
 embedding removed cannot match, and a class at another dtype cannot either. The engine model
 resolves its own quantization setting and passes the result.</p>
-<h2 id="a-quantization-spelling-the-kernel-does-not-price">A quantization spelling the kernel does not price<a class="headerlink" href="#a-quantization-spelling-the-kernel-does-not-price" title="Permanent link">&para;</a></h2>
-<p>The kernel prices the quantization spellings <code>servedDType</code> lists (<code>fp8</code>, <code>ptpc_fp8</code>,
-<code>fbgemm_fp8</code>, <code>modelopt</code>, <code>modelopt_fp4</code>, <code>nvfp4</code>, <code>mxfp4</code> and the weight-only integer names) and
-refuses any other as "not one this kernel prices". It recognises no engine's own resolution of a
-quantization setting: vLLM's <code>mxfp8</code>, <code>modelopt_mxfp8</code>, <code>gpt_oss_mxfp4</code> and <code>modelopt_mixed</code> name
-a method the checkpoint declares, which the engine model reads, so it leaves <code>Quantization</code> empty
-for a checkpoint served as stored and states the layout in <code>ServedWeights</code> above.</p>
 <h2 id="a-coefficient-is-missing">A coefficient is missing<a class="headerlink" href="#a-coefficient-is-missing" title="Permanent link">&para;</a></h2>
 <ul>
 <li>A required coefficient has no entry in the sets the scenario names, or none whose scope
@@ -5599,10 +5575,9 @@ for a checkpoint served as stored and states the layout in <code>ServedWeights</
 <h2 id="in-the-source">In the source<a class="headerlink" href="#in-the-source" title="Permanent link">&para;</a></h2>
 <p>The checks run in <code>New</code> and the functions it calls in
 <a href="https://github.com/inference-sim/blis-substrate/blob/main/kernel/new.go"><code>new.go</code></a>,
-<a href="https://github.com/inference-sim/blis-substrate/blob/main/kernel/sparse_mla.go"><code>sparse_mla.go</code></a>
+<a href="https://github.com/inference-sim/blis-substrate/blob/main/kernel/lowered.go"><code>lowered.go</code></a>
 and <a href="https://github.com/inference-sim/blis-substrate/tree/main/kernel/internal/resolve"><code>internal/resolve</code></a>,
-and the tests in <code>refusals_test.go</code>, <code>sparse_mla_test.go</code> and <code>dcp_knobs_test.go</code> check most of
-them.</p>
+and its tests check most of them.</p>
 
 
 

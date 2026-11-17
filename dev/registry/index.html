@@ -968,6 +968,8 @@
       
         
       
+        
+      
     
     
     
@@ -1485,6 +1487,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5216,12 +5246,12 @@
 latency estimate: the coefficients a cost model fits from measurements or, where no
 measurement exists, assumes. Each coefficient records how it was obtained and which
 hardware it applies to, so an estimate can be traced back to the evidence it rests on.</p>
-<p>At revision <a href="https://github.com/inference-sim/blis-substrate/tree/f9f3c9327794d543a0915c4deb1259ff9985c753"><code>f9f3c9327794</code></a>, the registry holds 1,241
+<p>At revision <a href="https://github.com/inference-sim/blis-substrate/tree/883a2709c250e4724ce11d1d6ba2cc12662b01e7"><code>883a2709c250</code></a>, the registry holds 1,315
 coefficient entries in 9 sets, covering
-13 GPU parts. By method: 901
+14 GPU parts. By method: 944
 <code>measured</code>, 51 <code>vendor_spec</code> (transcribed from NVIDIA's
 AISimulate), 263 <code>assumed</code>, and
-2 <code>not_charged</code> (a declared zero).</p>
+10 <code>not_charged</code> (a declared zero).</p>
 <h2 id="where-it-sits">Where it sits<a class="headerlink" href="#where-it-sits" title="Permanent link">&para;</a></h2>
 <p>BLIS keeps different kinds of number in different places. The registry, <code>registry/</code> in
 blis-substrate, holds one kind: numbers that a measurement could revise.</p>
@@ -5270,7 +5300,7 @@ behind each decision, and the claims later withdrawn.</p>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="nt">rationale</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">      </span><span class="no">The token count at which the ramp reaches half its asymptote, so it sets how fast a widening batch approaches peak. Fitted jointly with gemm_eps_max_bf16 on the same envelope; residual 0.0673.</span>
 </code></pre></div>
-<p class="reg-caption">Quoted from <a href="https://github.com/inference-sim/blis-substrate/blob/f9f3c9327794d543a0915c4deb1259ff9985c753/registry/coefficients/cost-model-primitives.yaml#L49">the committed file</a> at build time.</p>
+<p class="reg-caption">Quoted from <a href="https://github.com/inference-sim/blis-substrate/blob/883a2709c250e4724ce11d1d6ba2cc12662b01e7/registry/coefficients/cost-model-primitives.yaml#L49">the committed file</a> at build time.</p>
 
 <p>It is a measured, fitted constant of the <abbr title="General matrix multiply">GEMM</abbr> efficiency ramp, scoped to two names for
 the same A100 silicon, citing the exact sweep it was fitted on. The

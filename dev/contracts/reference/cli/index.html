@@ -979,6 +979,8 @@
       
         
       
+        
+      
     
     
     
@@ -1519,6 +1521,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../router-table/" class="md-nav__link">
         
   
@@ -1773,6 +1803,17 @@
     <span class="md-ellipsis">
       
         validate-measurements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unselected-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        unselected-entries
       
     </span>
   </a>
@@ -5276,6 +5317,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#unselected-entries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        unselected-entries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exit-codes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5321,6 +5373,7 @@ and exits with a code a CI step can read.</p>
 <div class="language-sh highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>go<span class="w"> </span>run<span class="w"> </span>./validate/cmd/validate-catalog<span class="w">      </span>&lt;catalog<span class="w"> </span>dir&gt;
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>go<span class="w"> </span>run<span class="w"> </span>./validate/cmd/validate-registry<span class="w">     </span>&lt;registry<span class="w"> </span>dir&gt;
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>go<span class="w"> </span>run<span class="w"> </span>./validate/cmd/validate-measurements<span class="w"> </span><span class="o">[</span>-local<span class="o">]</span><span class="w"> </span>&lt;measurements<span class="w"> </span>dir&gt;
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>go<span class="w"> </span>run<span class="w"> </span>./validate/cmd/unselected-entries<span class="w">    </span><span class="o">[</span>-selected<span class="w"> </span>RESULT<span class="o">]</span>...<span class="w"> </span><span class="o">[</span>-kernel-impls<span class="w"> </span>TABLE<span class="o">]</span>...<span class="w"> </span>&lt;registry<span class="w"> </span>dir&gt;
 </code></pre></div>
 <p>The repository's own data is <code>catalog</code>, <code>registry</code> and <code>catalog/measurements</code>. Any
 directory with the same layout may be given instead.</p>
@@ -5398,6 +5451,14 @@ out of the repository.</p>
 <p>It writes one line per file to standard output, the verdict for a run, and exits <code>0</code> when
 every file validates, <code>1</code> when any fails, and <code>2</code> on wrong arguments or a path that is not a
 directory.</p>
+<h2 id="unselected-entries">unselected-entries<a class="headerlink" href="#unselected-entries" title="Permanent link">&para;</a></h2>
+<p>Lists the coefficient entries under <code>coefficients/</code> that meet neither condition of design
+VAL-8: no <code>-selected</code> Result names the entry in its <code>selected_entries</code>, and no <code>-kernel-impls</code>
+<a href="../kernel-impls/#which-entries-the-tables-account-for">kernel-implementation table</a> lists one
+of the entry's <code>kernel_impls</code>. Both flags repeat. It writes one line per entry it lists to
+standard output and a summary to standard error, and exits <code>0</code> when it lists none, <code>1</code> when it
+lists some, and <code>2</code> on wrong arguments, a root with no coefficient sets, or a file that does not
+load.</p>
 <h2 id="exit-codes">Exit codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -5427,7 +5488,8 @@ directory.</p>
 </table>
 <p>Source: <a href="https://github.com/inference-sim/blis-substrate/tree/main/validate/cmd/validate-catalog"><code>validate/cmd/validate-catalog</code></a>,
 <a href="https://github.com/inference-sim/blis-substrate/tree/main/validate/cmd/validate-registry"><code>validate/cmd/validate-registry</code></a>,
-<a href="https://github.com/inference-sim/blis-substrate/tree/main/validate/cmd/validate-measurements"><code>validate/cmd/validate-measurements</code></a>.</p>
+<a href="https://github.com/inference-sim/blis-substrate/tree/main/validate/cmd/validate-measurements"><code>validate/cmd/validate-measurements</code></a>,
+<a href="https://github.com/inference-sim/blis-substrate/tree/main/validate/cmd/unselected-entries"><code>validate/cmd/unselected-entries</code></a>.</p>
 
 
 

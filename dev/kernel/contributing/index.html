@@ -966,6 +966,8 @@
       
         
       
+        
+      
     
     
     
@@ -1483,6 +1485,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contracts/reference/kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5380,11 +5410,11 @@ changes <code>kernel/</code> or <code>contracts/</code>, with <code>gofmt</code>
 </tr>
 <tr>
 <td><code>kernel/new.go</code></td>
-<td><code>New</code>: validation, resolution, coefficient lookup, everything computed once</td>
+<td><code>New</code>: validation, coefficient lookup, everything computed once from the documents and the lowered plan</td>
 </tr>
 <tr>
-<td><code>kernel/sparse_mla.go</code></td>
-<td>Which sparse-attention backend vLLM chooses, and what that decides</td>
+<td><code>kernel/chip_family.go</code></td>
+<td>A chip's generation and a graph's model family, where they decide kernel selection</td>
 </tr>
 <tr>
 <td><code>kernel/open.go</code></td>
@@ -5396,7 +5426,7 @@ changes <code>kernel/</code> or <code>contracts/</code>, with <code>gofmt</code>
 </tr>
 <tr>
 <td><code>kernel/internal/resolve</code></td>
-<td>From a deployment to a layout: widths, groups, which collectives run</td>
+<td>From a deployment to a layout's geometry: widths, groups, the nodes they span</td>
 </tr>
 <tr>
 <td>blis-vllm <code>kerneltests/</code></td>

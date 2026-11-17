@@ -979,6 +979,8 @@
       
         
       
+        
+      
     
     
     
@@ -1269,6 +1271,17 @@
     <span class="md-ellipsis">
       
         trajectory_start
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load
       
     </span>
   </a>
@@ -1729,6 +1742,34 @@
     
   
     Field list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kernel-impls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kernel-implementation table
   
 
     
@@ -5499,6 +5540,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#load" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#warmup" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5839,7 +5891,7 @@ stated value the scenario's validator would refuse is an error. Citations are to
 <td><code>harness_version</code></td>
 <td>string</td>
 <td>yes</td>
-<td>The harness release the replay reproduces. <code>0.12.0</code> for <code>inferencex-agentx-mvp</code>.</td>
+<td>The harness release the replay reproduces. <code>0.12.0</code> for both scenarios.</td>
 </tr>
 <tr>
 <td><code>corpus</code></td>
@@ -5857,7 +5909,7 @@ stated value the scenario's validator would refuse is an error. Citations are to
 <td><code>benchmark_duration_s</code></td>
 <td>number</td>
 <td>no</td>
-<td>The sending window, at least 900. Omitted, 1800.</td>
+<td>The sending window. Under <code>inferencex-agentx-mvp</code>, at least 900, and omitted it is 1800. Under <code>aiperf-constant-load</code> it is required, with no floor, because aiperf without <code>--scenario</code> has no default.</td>
 </tr>
 <tr>
 <td><code>grace_period_s</code></td>
@@ -5961,8 +6013,15 @@ stated value the scenario's validator would refuse is an error. Citations are to
 <td>no</td>
 <td>The traffic's own measured routing imbalance, an <a href="../routing/#inline-values">inline value</a>. Outranks the registry's.</td>
 </tr>
+<tr>
+<td><code>load</code></td>
+<td>mapping</td>
+<td><code>aiperf-constant-load</code></td>
+<td>How the constant-load scenario holds its load, below. Refused for any other scenario.</td>
+</tr>
 </tbody>
 </table>
+<p>Under <code>aiperf-constant-load</code>, <code>system_idle_gap_cap_s</code>, <code>trajectory_start</code> and <code>warmup</code> are refused, because only the agentic replay strategy reads them, and <code>trace_idle_gap_cap_s</code> is stated in <code>load</code>. The scenario's other locks do not apply.</p>
 <h3 id="catalog-replay-workload">Catalog replay workload<a class="headerlink" href="#catalog-replay-workload" title="Permanent link">&para;</a></h3>
 <p>A catalog file under <code>workloads/</code> whose top-level key is <code>replay:</code> is a replay workload
 rather than a shape. It holds a definition, with no lane count, and is named by its file.
@@ -6100,6 +6159,51 @@ in [0, 1]. The scenario fills [0, 1]; unlike its locks, aiperf honours a stated 
 <td>number</td>
 <td>no</td>
 <td>Upper bound, at least <code>min_ratio</code>. Omitted, 1.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="load"><code>load</code><a class="headerlink" href="#load" title="Permanent link">&para;</a></h3>
+<p>The load of an aiperf run without <code>--scenario</code> over an agentic corpus. The binding's
+<code>concurrency</code> is aiperf's <code>--concurrency</code>: the number of live root sessions. A session holds
+one slot from its first request until its root conversation's final turn returns; its
+sub-agents' requests take no slot, so requests in flight can exceed <code>concurrency</code>, and a
+session in a think-time gap holds a slot with nothing in flight. Citations are to aiperf
+commit <code>be53bf2953d30e46c500e6a80fc1f8b6f84bc718</code> (tag <code>v0.12.0</code>) in <code>replay.go</code>.</p>
+<!-- fields: workload.ConstantLoad -->
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>recycling</code></td>
+<td>string</td>
+<td>no</td>
+<td>How a freed slot picks the next corpus root: one of the <a href="../vocabularies/#session-recycling-rules">session recycling rules</a>. Omitted, <code>sequential</code>, the Weka loader's preference.</td>
+</tr>
+<tr>
+<td><code>measured_sessions</code></td>
+<td>integer</td>
+<td>no</td>
+<td>The sessions the measured phase may start (<code>--num-sessions</code>). Omitted, the window alone bounds the phase. A reference to a catalog entry may state it.</td>
+</tr>
+<tr>
+<td><code>warmup_duration_s</code></td>
+<td>number</td>
+<td>no</td>
+<td>The unmeasured warmup phase's length (<code>--warmup-duration</code>), run at the same load. Omitted, no warmup phase.</td>
+</tr>
+<tr>
+<td><code>trace_idle_gap_cap_s</code></td>
+<td>number</td>
+<td>no</td>
+<td>Positive. Within one root trace, every gap between request submissions, parent or sub-agent, is cut to this many seconds. Omitted, no gap is cut.</td>
 </tr>
 </tbody>
 </table>
