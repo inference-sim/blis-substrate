@@ -91,6 +91,11 @@ type Kernel struct {
 	layerFits [][]gemmFit
 	// prefillFit is the BF16 fit a recurrent prefill with no measured form is priced on.
 	prefillFit gemmFit
+	// encoder is what the engine says it does with the graph's towers (plan.Lowered.Encoder), nil
+	// when it says nothing.
+	encoder *plan.EncoderRun
+	// encoderFit is the BF16 ramp the tower's GEMMs run on.
+	encoderFit gemmFit
 
 	// layerKV is each target layer's cache view, caches every cache a layer owns with its
 	// paging resolved (caches.go), and draftLayerKV the drafter's layers' views.
@@ -249,6 +254,9 @@ type Kernel struct {
 	// the data-parallel ranks (see lift), and 1 when it is on, because an expert-parallel
 	// rank owns whole experts.
 	expertTensorShards float64
+	// nonTorchInBudget is the measured non-torch growth inside the KV budget (liftMemory), zero
+	// where no fit-unit group measured it, which liftMemory records.
+	nonTorchInBudget int64
 
 	// tp and localExpertShare are the per-rank divisors, held as floats so the hot path
 	// multiplies rather than converting. localExpertShare is the fraction of the model's
