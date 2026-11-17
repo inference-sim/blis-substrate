@@ -1618,6 +1618,11 @@ def test_expert_shape_matches_config(d: Path):
 # everything would pass every per-model check above.
 EXPECTED_IDENTICAL = {
 
+    frozenset({"gpt-oss-120b", "gpt-oss-120b-w-mxfp4-a-fp8"}):
+        "one architecture and one set of stored widths: OpenAI's checkpoint and AMD's Quark "
+        "re-export both store the routed experts MXFP4 and attention, router and head BF16. The "
+        "Quark one also carries FP8 activation scales, which the graph does not price",
+
     frozenset({"deepseek-r1-0528-mxfp4", "deepseek-r1-0528-mxfp4-preview"}):
         "one set of files under two repository names. amd/DeepSeek-R1-0528-MXFP4 and "
         "amd/DeepSeek-R1-0528-MXFP4-Preview both resolve to one revision with the same "
@@ -9188,6 +9193,37 @@ def test_quark_qwen35_places_routed_experts_mxfp4_from_headers_and_leaves_the_re
                  if n.get("role") not in ("experts",) and (w := n.get("weight_dtype"))}
     assert "mxfp4" not in quantized
     assert _widths(g, "mtp_moe")["experts"][0] == "bf16"
+
+
+def test_quark_gpt_oss_places_the_experts_mxfp4_from_headers_and_keeps_attention_bf16(tmp_path):
+    """amd/gpt-oss-120b-w-mxfp4-a-fp8 is a Quark re-export of gpt-oss: per-expert gate_up_proj and
+    down_proj stored MXFP4 (U8, a U8 scale per 32 values), attention, router and head BF16. With
+    its headers pinned the experts node takes MXFP4; the OpenAI checkpoint, which states mxfp4
+    in config.json and pins no headers, derives as before."""
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    cfg = config_of(MODELS / "gpt-oss-120b")
+    cfg["torch_dtype"] = "bfloat16"
+    cfg["quantization_config"] = {"quant_method": "quark", "exclude": ["lm_head"]}
+    k, inter = cfg["hidden_size"], cfg["intermediate_size"]
+    h = {"lm_head.weight": {"dtype": "BF16", "shape": [cfg["vocab_size"], k]}}
+    for i in range(cfg["num_hidden_layers"]):
+        p = f"model.layers.{i}."
+        for a in ("q_proj", "k_proj", "v_proj", "o_proj"):
+            h[p + f"self_attn.{a}.weight"] = {"dtype": "BF16", "shape": [512, k]}
+        h[p + "mlp.router.weight"] = {"dtype": "BF16", "shape": [128, k]}
+        for e in range(2):
+            for n, rows, cols in (("gate_up_proj", 2 * inter, k), ("down_proj", k, inter)):
+                m = p + f"mlp.experts.{e}.{n}"
+                h[m + ".weight"] = {"dtype": "U8", "shape": [rows, cols // 2]}
+                h[m + ".weight_scale"] = {"dtype": "U8", "shape": [rows, cols // 32]}
+    f = tmp_path / "config.json"
+    f.write_text(json.dumps(cfg))
+    g = derive_graph.derive(f, "gpt-oss-120b-w-mxfp4-a-fp8", headers=h)
+    for kid in {kd["id"] for kd in g["layer_kinds"]}:
+        w = _widths(g, kid)
+        assert w["experts"][0] == "mxfp4"
+        assert {w[r][0] for r in ("qkv_proj", "o_proj")} == {"bf16"}
 
 
 KIMI_K26_NVFP4 = MODELS / "kimi-k2.6-nvfp4"
