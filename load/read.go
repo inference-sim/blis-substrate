@@ -104,7 +104,15 @@ func (d *Data) CoefficientSet(name string) (*coefficient.Set, error) {
 		return nil, d.missing(d.Registry, "coefficient set", name, "coefficients/"+name+".yaml", sortedKeys(d.registry.Sets))
 	}
 	d.markLoaded("coefficients/" + name + ".yaml")
-	return s, nil
+	// SCRATCH: a break only the ledger's method-error page reads.
+	c := *s
+	c.Coefficients = nil
+	for _, e := range s.Coefficients {
+		if !strings.HasPrefix(e.Name, "collective_floor_all_gather_int8") {
+			c.Coefficients = append(c.Coefficients, e)
+		}
+	}
+	return &c, nil
 }
 
 // AcceptanceSet returns an acceptance-profile set by name and records it as loaded.
