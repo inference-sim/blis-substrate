@@ -6755,7 +6755,32 @@ def handler_muse_spark(cfg, raw, model):
     quant = raw.get("quantization_config") or {}
     expert_fmt = None
     bf16_experts: set[int] = set()
-    if quant:
+    if quant and _HEADERS is not None and str(quant.get("quant_method", "")).lower() == "quark":
+        # A Quark checkpoint states its layout in a matcher this deriver does not re-implement;
+        # its shards store the result. Each layer's routed experts are read from them: stored
+        # MXFP4 or BF16 (amd/Muse-Spark-Open-816B-A42B-Quark-MXFP4 keeps layers 0 and 61 BF16),
+        # and attention and the head must be stored BF16, as this handler prices them.
+        widths = header_module_widths(_HEADERS, model)
+        per_layer: dict[int, set] = {}
+        for module, w in widths.items():
+            m = re.match(r"model\.(?:language_model\.)?layers\.(\d+)\.(?:mlp|feed_forward)\.experts\.\d+\.", module + ".")
+            if m:
+                per_layer.setdefault(int(m.group(1)), set()).add(w)
+            elif re.search(r"\.self_attn\.(?:q|k|v|o|gate)_proj$", module) or module.endswith("lm_head"):
+                if w is not None:
+                    raise DeriveError(f"{model}: the headers store {module} at {w}; this handler "
+                                      f"prices attention and the head at the base")
+        mixed = sorted(i for i, ws in per_layer.items() if len(ws) != 1)
+        if mixed:
+            raise DeriveError(f"{model}: the headers store the experts of layers {mixed} at two "
+                              f"widths; one node cannot price both")
+        fmts = {w for ws in per_layer.values() for w in ws if w}
+        if len(fmts) != 1:
+            raise DeriveError(f"{model}: the headers store routed experts at {sorted(fmts)}; this "
+                              f"handler places one quantized width")
+        expert_fmt = fmts.pop()
+        bf16_experts = {i for i, ws in per_layer.items() if ws == {None}}
+    elif quant:
         if str(quant.get("quant_method", "")).lower() != "modelopt":
             raise DeriveError(f"{model}: quant_method {quant.get('quant_method')!r}; this "
                               f"handler reads ModelOpt's layout")
