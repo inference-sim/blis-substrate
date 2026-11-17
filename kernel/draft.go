@@ -415,6 +415,14 @@ func (k *Kernel) liftStepTerms(c *resolve.Coefficients, g *model.Graph) error {
 			return fmt.Errorf("a vision tower is priced on the BF16 ramp: %w", err)
 		}
 		k.encoderFit = k.fit(bf16, false)
+		// The measured bidirectional attention pair, where the registry carries it for the part.
+		if c.Has("attention_encoder_floor") && c.Has("attention_encoder_work_scale") {
+			f, _ := c.Value("attention_encoder_floor")
+			w, _ := c.Value("attention_encoder_work_scale")
+			if f > 0 && w > 0 {
+				k.encoderAttn = &prefillPair{floor: time.Duration(f * float64(time.Microsecond)), scale: w}
+			}
+		}
 	}
 
 	k.attentionByRole = map[string]floorRate{}

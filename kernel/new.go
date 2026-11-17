@@ -368,7 +368,6 @@ func construct(in Inputs) (*Kernel, error) {
 			return nil, fmt.Errorf("a resident vision tower under pipeline parallelism (pp %d) is not priced: "+
 				"the tower sits on the first stage only", pool.Parallel.PP)
 		}
-		k.assume("encoder", "priced as a substitution", encoderSubstitution)
 	} else if in.Model.PricesEncoder() {
 		k.assume("modality", string(in.Model.Modality),
 			"the graph prices a vision tower, but the engine states none resident, so the tower's weights and any "+
@@ -451,6 +450,10 @@ func construct(in Inputs) (*Kernel, error) {
 	// prices, so every pricing term is settled first (adaptive.go).
 	if err := k.resolveAdaptive(in.Acceptance); err != nil {
 		return nil, err
+	}
+	if in.Model.PricesEncoder() && k.encoder != nil && k.encoder.Resident {
+		t, _ := in.Model.ImageTower()
+		k.assume("encoder", "priced as a substitution", encoderSubstitution+encoderAttentionNote(k.encoderAttentionMeasured(t)))
 	}
 	k.buildProvenance(coeffs)
 	k.selected = coeffs.Selected()

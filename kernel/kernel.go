@@ -96,6 +96,9 @@ type Kernel struct {
 	encoder *plan.EncoderRun
 	// encoderFit is the BF16 ramp the tower's GEMMs run on.
 	encoderFit gemmFit
+	// encoderAttn is the measured pair for a bidirectional tower attention on this part, nil where
+	// the registry carries none.
+	encoderAttn *prefillPair
 
 	// layerKV is each target layer's cache view, caches every cache a layer owns with its
 	// paging resolved (caches.go), and draftLayerKV the drafter's layers' views.
