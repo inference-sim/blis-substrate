@@ -7,6 +7,7 @@ source:
 licence:
   id: MIT
   evidence: https://huggingface.co/amd/DeepSeek-R1-0528-MXFP4-Preview/raw/913fc83b2d3962dbc2682d6b97e9ef31acb4bf5a/README.md
+drafters: [speculator]
 shard_index:
   path: model.safetensors.index.json
   sha256: 1ccb070699e6e3dc8c8006bdd78b705a4ba01162e18568c11d5c8dd2092a3c52
