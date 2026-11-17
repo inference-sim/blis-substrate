@@ -549,9 +549,7 @@ func (k *Kernel) priceLayers(layers []price.PlannedLayer, fits [][]gemmFit, kv [
 				// cancellation the native ramps rest on was measured on them, not on it.
 				// A grouped ramp per MoE backend (rankOwn) was fitted the same way, on each
 				// rank's own slice at moe_tp 1 to 8 (scripts/fit_hopper_fp8_grouped_ramp.py).
-				if f := k.fit(l.RoutedFormat, true); f.weightOnly || f.rankOwn {
-					dpSlice = k.expertTensorShards
-				}
+				dpSlice = k.expertTensorShards
 			}
 			// Marlin pads a tensor-parallel slice of each expert's intermediate width to a
 			// multiple of 128 (see expertPadding), which is work and weight it runs.
