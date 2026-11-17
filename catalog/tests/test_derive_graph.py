@@ -9109,6 +9109,37 @@ def test_dsr1_second_mxfp4_repository_name_prices_the_same_weights():
         ya["source"]["revision"], ya["shard_index"], ya["headers"])
 
 
+def test_quark_minimax_m2_experts_are_read_under_the_checkpoints_block_sparse_moe_names(tmp_path):
+    """amd/MiniMax-M2.5-MXFP4 stores its routed experts as MXFP4 under block_sparse_moe.experts.N.w1,
+    w2 and w3, which vLLM builds as mlp.experts; its attention, router and head are BF16. The
+    pinned headers name the stored tensors, so the experts node takes MXFP4 from them."""
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    mm = MODELS / "minimax-m2.5"
+    cfg = config_of(mm)
+    cfg["torch_dtype"] = "bfloat16"
+    cfg["quantization_config"] = {"quant_method": "quark", "exclude": ["lm_head"]}
+    k, inter = cfg["hidden_size"], cfg["intermediate_size"]
+    h = {"lm_head.weight": {"dtype": "BF16", "shape": [cfg["vocab_size"], k]}}
+    for i in range(cfg["num_hidden_layers"]):
+        p = f"model.layers.{i}."
+        for a in ("q_proj", "k_proj", "v_proj", "o_proj"):
+            h[p + f"self_attn.{a}.weight"] = {"dtype": "BF16", "shape": [1024, k]}
+        h[p + "block_sparse_moe.gate.weight"] = {"dtype": "BF16", "shape": [cfg["num_local_experts"], k]}
+        for e in range(2):
+            for w, rows in (("w1", inter), ("w3", inter), ("w2", k)):
+                cols = k if w != "w2" else inter
+                m = p + f"block_sparse_moe.experts.{e}.{w}"
+                h[m + ".weight"] = {"dtype": "U8", "shape": [rows, cols // 2]}
+                h[m + ".weight_scale"] = {"dtype": "U8", "shape": [rows, cols // 32]}
+    f = tmp_path / "config.json"
+    f.write_text(json.dumps(cfg))
+    g = derive_graph.derive(f, "minimax-m2.5-mxfp4", headers=h)
+    w = _widths(g, "attn_moe")
+    assert w["experts"][0] == "mxfp4"
+    assert {w[r][0] for r in ("qkv_proj", "o_proj")} == {"bf16"}
+
+
 KIMI_K26_NVFP4 = MODELS / "kimi-k2.6-nvfp4"
 
 

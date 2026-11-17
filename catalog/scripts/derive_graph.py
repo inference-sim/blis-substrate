@@ -512,6 +512,9 @@ MODELOPT_MODULES: dict[str, dict[str, Any]] = {
         "prefix": {},
         "stacked": {".q_proj": ".qkv_proj", ".k_proj": ".qkv_proj",
                     ".v_proj": ".qkv_proj"},
+        # The checkpoint stores the MoE under block_sparse_moe and vLLM builds it as mlp
+        # (minimax_m2.py:285-288); a pinned header names the stored tensor.
+        "header_renames": {".block_sparse_moe.": ".mlp."},
     },
     # LlamaForCausalLM (vLLM v0.33.0 model_executor/models/llama.py): the decoder layers are
     # model.layers.{i} (:392, :498), the attention self_attn.qkv_proj and o_proj (:165-183), the
@@ -984,6 +987,8 @@ def header_width_of(spec: dict[str, Any], model: str):
             if module.startswith(old):
                 module = new + module[len(old):]
                 break
+        for old, new in spec.get("header_renames", {}).items():
+            module = module.replace(old, new)
         widths[module] = w
 
     def uniform(found: set, prefix: str):
