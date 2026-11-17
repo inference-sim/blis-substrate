@@ -8362,8 +8362,12 @@ def header_tower_dtype(model: str) -> str | None:
     """The dtype the pinned headers give the tower's tensors, None when no headers are pinned."""
     if not _HEADERS:
         return None
+    # The patch embedding is a convolution over raw pixels that checkpoints keep in F32 beside a
+    # BF16 transformer (MiniMax-M3's, 1,280 x 3 x 2 x 14 x 14); it is not one of the tower's
+    # transformer GEMMs, so it does not decide the dtype the encoder states.
     seen = {t["dtype"] for name, t in _HEADERS.items()
-            if any(f".{p}." in "." + name + "." or name.startswith(p) for p in TOWER_PREFIXES)}
+            if any(f".{p}." in "." + name + "." or name.startswith(p) for p in TOWER_PREFIXES)
+            and "patch_embedding" not in name}
     if not seen:
         return None
     if len(seen) > 1:

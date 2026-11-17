@@ -9265,6 +9265,22 @@ def test_quark_minimax_m3_places_experts_and_shared_experts_mxfp4_and_leaves_the
     assert {v[0] for v in dense.values()} == {"bf16"}
 
 
+def test_tower_dtype_ignores_an_f32_patch_embedding_beside_a_bf16_transformer(monkeypatch):
+    """MiniMax-M3's Quark checkpoints store the vision tower's transformer BF16 and its patch
+    embedding F32; the encoder states the transformer's dtype, and a tower whose transformer is
+    stored at two dtypes is still refused."""
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    h = {"vision_tower.vision_model.embeddings.patch_embedding.weight": {"dtype": "F32", "shape": [1280, 3, 2, 14, 14]},
+         "vision_tower.vision_model.encoder.layers.0.mlp.fc1.weight": {"dtype": "BF16", "shape": [5120, 1280]}}
+    monkeypatch.setattr(derive_graph, "_HEADERS", h)
+    assert derive_graph.header_tower_dtype("m") == "bf16"
+    h["vision_tower.vision_model.encoder.layers.0.mlp.fc2.weight"] = {"dtype": "F8_E4M3", "shape": [1280, 5120]}
+    with pytest.raises(derive_graph.DeriveError, match="one dtype per tower"):
+        derive_graph.header_tower_dtype("m")
+
+
+
 KIMI_K26_NVFP4 = MODELS / "kimi-k2.6-nvfp4"
 
 
