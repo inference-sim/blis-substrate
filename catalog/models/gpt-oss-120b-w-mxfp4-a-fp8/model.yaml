@@ -1,0 +1,43 @@
+name: gpt-oss-120b-w-mxfp4-a-fp8
+source:
+  provider: huggingface
+  repo: amd/gpt-oss-120b-w-mxfp4-a-fp8
+  revision: 67f173edc7899c7cc8322de699df6b849d8448e9
+  retrieved: 2026-11-17
+licence:
+  id: Apache-2.0
+  evidence: https://huggingface.co/api/models/amd/gpt-oss-120b-w-mxfp4-a-fp8/revision/67f173edc7899c7cc8322de699df6b849d8448e9
+config:
+  sha256: e0ca624d191eb572560873896108699c8c4ade1ccb0ebd3aa08b61f4ec021e25
+shard_index:
+  path: model.safetensors.index.json
+  sha256: a6fc0ee4efedf092bb00b8858858a9817bd84eb32d6b02adb055d9a0036edd39
+headers:
+  - path: model-00001-of-00014.safetensors
+    sha256: c710daed16ea6611ad5adbc9d5d79145d8cc4908b21ba635377187d8d2ea8096
+  - path: model-00002-of-00014.safetensors
+    sha256: bc71f5c4b3dea9a90e2258cf68f2610550f1ced59e9d2ddae176dde1d8f04332
+  - path: model-00003-of-00014.safetensors
+    sha256: 16eb7d5f710e1c5663a349c62a5e3db72bb2de04395c000077d0aceff4360460
+  - path: model-00004-of-00014.safetensors
+    sha256: 375217d724ebd44e02f87cc4c63a48ac4ac3a5c02882f598087048374d49fd4d
+  - path: model-00005-of-00014.safetensors
+    sha256: fc05ad393a50c28756ed89edcf7fe3dbd9b0834dc0c48a5d838e758a59a0f8a5
+  - path: model-00006-of-00014.safetensors
+    sha256: 8f51e21adc19bf916c963235f28bfe88b1c2b6dab0d32e369878932b95327a37
+  - path: model-00007-of-00014.safetensors
+    sha256: 3f3eef67482bcccc18dc90b9e59fd9193d73a68cb43cf403bd8d67580eff92f1
+  - path: model-00008-of-00014.safetensors
+    sha256: acb75f9704f2e371aba3d5d7eb6c323a262e45b598920c6e58a4d3ff5d852b09
+  - path: model-00009-of-00014.safetensors
+    sha256: 8db8126da2261fc90998cec72b9067ecb4add4afe8e18a2d96a85c610f6eebe9
+  - path: model-00010-of-00014.safetensors
+    sha256: 0db0dc5555be21bc969fb0d485df1fa125b9aeb8b93e08092e096165247f8ab3
+  - path: model-00011-of-00014.safetensors
+    sha256: 1d3caafcf061e9e23d238d6118c842e13ff8e0c34aab9056c294427ce11b7c78
+  - path: model-00012-of-00014.safetensors
+    sha256: 8c462ed61c8015276099cf029d20c801fcb01823f4da6e65ae9b36ef3b015f4d
+  - path: model-00013-of-00014.safetensors
+    sha256: 2d6600591a5ef8c2d741b6a478363e028891f530161ee2c1a87aa3aac699beb1
+  - path: model-00014-of-00014.safetensors
+    sha256: a0683165c4a0d162d7c1f283cc3b76433249e2bc451825cef83ed095641c95cb

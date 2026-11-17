@@ -495,6 +495,23 @@ MODELOPT_MODULES: dict[str, dict[str, Any]] = {
     # MiniMaxM2ForCausalLM: attention is self_attn.qkv_proj and o_proj, the MoE is built
     # as "mlp" (minimax_m2.py:249-288) whatever the checkpoint calls it, its experts a
     # FusedMoE at ".experts" and its router a GateLinear with no quant config (:110-117).
+    # GptOssForCausalLM (vLLM v0.33.0 gpt_oss.py): decoder layers model.layers.{i}, attention
+    # self_attn.qkv_proj and o_proj, the routed experts mlp.experts, the head lm_head. Only a
+    # Quark checkpoint that pins its headers reaches the per-node placement; the OpenAI
+    # checkpoint states its mxfp4 in config.json and is priced by handler_moe unchanged.
+    "GptOssForCausalLM": {
+        "layer": "model.layers.{i}.",
+        "head": "lm_head",
+        "roles": {
+            "qkv_proj": "self_attn.qkv_proj",
+            "o_proj": "self_attn.o_proj",
+            "experts": "mlp.experts",
+        },
+        "shared": (),
+        "prefix": {},
+        "stacked": {".q_proj": ".qkv_proj", ".k_proj": ".qkv_proj",
+                    ".v_proj": ".qkv_proj"},
+    },
     "MiniMaxM2ForCausalLM": {
         "layer": "model.layers.{i}.",
         "head": "lm_head",
@@ -2883,6 +2900,17 @@ def handler_moe(cfg, raw, model):
         }
     declare_draft(kinds)
     return kinds, {"pattern": ["attn_moe"], "repeat": layers}
+
+
+def handler_gpt_oss(cfg, raw, model):
+    """gpt-oss, priced by handler_moe, with a Quark checkpoint's widths placed node by node
+    from its pinned headers (amd/gpt-oss-120b-w-mxfp4-a-fp8 stores the routed experts MXFP4 and
+    leaves attention, router and head BF16). The OpenAI checkpoint states mxfp4 in config.json
+    and pins no headers, so it keeps handler_moe's graph."""
+    result = handler_moe(cfg, raw, model)
+    if _HEADERS is None:
+        return result
+    return modelopt_placed(result, raw, model)
 
 
 def handler_minimax_m2(cfg, raw, model):
@@ -7834,7 +7862,7 @@ HANDLERS = {
     "DeepseekV41ForCausalLM": handler_deepseek_v41,
     "GlmMoeDsaForCausalLM": handler_glm_moe_dsa,
     "InklingForConditionalGeneration": handler_moe,
-    "GptOssForCausalLM": handler_moe,
+    "GptOssForCausalLM": handler_gpt_oss,
     "MiniMaxM2ForCausalLM": handler_minimax_m2,
     "MiniMaxM3SparseForCausalLM": handler_minimax_m3,
     "MiniMaxM3SparseForConditionalGeneration": handler_minimax_m3,
