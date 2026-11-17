@@ -9226,6 +9226,61 @@ def test_quark_gpt_oss_places_the_experts_mxfp4_from_headers_and_keeps_attention
         assert {w[r][0] for r in ("qkv_proj", "o_proj")} == {"bf16"}
 
 
+def test_quark_minimax_m3_places_experts_and_shared_experts_mxfp4_and_leaves_the_rest_bf16(tmp_path):
+    """amd/MiniMax-M3-MXFP4 stores the routed and shared experts of its MoE layers MXFP4 (U8 with a
+    U8 scale per 32 values) and everything else BF16: the dense layers' MLP, attention, the
+    indexer and the head, with the router in fp32. The pinned headers name the text decoder under
+    language_model.model.layers; the checkpoints that state their layout in config.json pin none
+    and derive as before."""
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    cfg = config_of(MODELS / "minimax-m3")
+    cfg["torch_dtype"] = "bfloat16"
+    cfg["quantization_config"] = {"quant_method": "quark", "exclude": ["lm_head"]}
+    t = cfg.get("text_config", cfg)
+    k, inter = t["hidden_size"], t["intermediate_size"]
+    h = {"language_model.lm_head.weight": {"dtype": "BF16", "shape": [t["vocab_size"], k]}}
+    for i in range(t["num_hidden_layers"]):
+        p = f"language_model.model.layers.{i}."
+        for a in ("q_proj", "k_proj", "v_proj", "o_proj"):
+            h[p + f"self_attn.{a}.weight"] = {"dtype": "BF16", "shape": [512, k]}
+        if i < 3:
+            for a in ("gate_proj", "up_proj", "down_proj"):
+                h[p + f"mlp.{a}.weight"] = {"dtype": "BF16", "shape": [4 * inter, k]}
+            continue
+        h[p + "block_sparse_moe.gate.weight"] = {"dtype": "F32", "shape": [128, k]}
+        for who in ("experts.0", "experts.1", "shared_experts"):
+            for a, rows, cols in (("w1", inter, k), ("w3", inter, k), ("w2", k, inter)) if "experts." in who \
+                    else (("gate_proj", inter, k), ("up_proj", inter, k), ("down_proj", k, inter)):
+                m = p + f"block_sparse_moe.{who}.{a}"
+                h[m + ".weight"] = {"dtype": "U8", "shape": [rows, cols // 2]}
+                h[m + ".weight_scale"] = {"dtype": "U8", "shape": [rows, cols // 32]}
+    f = tmp_path / "config.json"
+    f.write_text(json.dumps(cfg))
+    g = derive_graph.derive(f, "minimax-m3-mxfp4", headers=h)
+    moe = _widths(g, "sparse_attn_moe")
+    assert (moe["experts"][0], moe["shared_gate_up"][0], moe["shared_down"][0]) == ("mxfp4",) * 3
+    assert {moe[r][0] for r in ("qkv_proj", "o_proj")} == {"bf16"}
+    dense = _widths(g, "dense")
+    assert {v[0] for v in dense.values()} == {"bf16"}
+
+
+def test_tower_dtype_ignores_an_f32_patch_embedding_beside_a_bf16_transformer(monkeypatch):
+    """MiniMax-M3's Quark checkpoints store the vision tower's transformer BF16 and its patch
+    embedding F32; the encoder states the transformer's dtype, and a tower whose transformer is
+    stored at two dtypes is still refused."""
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    h = {"vision_tower.vision_model.embeddings.patch_embedding.weight": {"dtype": "F32", "shape": [1280, 3, 2, 14, 14]},
+         "vision_tower.vision_model.encoder.layers.0.mlp.fc1.weight": {"dtype": "BF16", "shape": [5120, 1280]}}
+    monkeypatch.setattr(derive_graph, "_HEADERS", h)
+    assert derive_graph.header_tower_dtype("m") == "bf16"
+    h["vision_tower.vision_model.encoder.layers.0.mlp.fc2.weight"] = {"dtype": "F8_E4M3", "shape": [1280, 5120]}
+    with pytest.raises(derive_graph.DeriveError, match="one dtype per tower"):
+        derive_graph.header_tower_dtype("m")
+
+
+
 KIMI_K26_NVFP4 = MODELS / "kimi-k2.6-nvfp4"
 
 

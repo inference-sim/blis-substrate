@@ -517,6 +517,31 @@ MODELOPT_MODULES: dict[str, dict[str, Any]] = {
         "stacked": {".q_proj": ".qkv_proj", ".k_proj": ".qkv_proj",
                     ".v_proj": ".qkv_proj"},
     },
+    # MiniMaxM3SparseForConditionalGeneration (vLLM v0.34.0rc0 models/minimax_m3/nvidia/model.py):
+    # the text decoder under language_model.model.layers.{i}, attention self_attn.qkv_proj and
+    # o_proj (:779-790), the dense layers' MLP mlp.gate_up_proj and down_proj (:435-445), the
+    # MoE block_sparse_moe with its shared_experts MiniMaxM3MLP and FusedMoE experts
+    # (:531-577), the head language_model.lm_head. Only an entry that pins its headers reaches
+    # this placement (handler_minimax_m3_placed); the checkpoints that state their layout in
+    # config.json are priced as before.
+    "MiniMaxM3SparseForConditionalGeneration": {
+        "layer": "language_model.model.layers.{i}.",
+        "head": "language_model.lm_head",
+        "roles": {
+            "qkv_proj": "self_attn.qkv_proj",
+            "o_proj": "self_attn.o_proj",
+            "mlp_gate_up": "mlp.gate_up_proj",
+            "mlp_down": "mlp.down_proj",
+            "experts": "block_sparse_moe.experts",
+            # The indexer's projections are built without a quant config (model.py:903-925).
+            "index_qk_proj": None,
+        },
+        "shared": ("block_sparse_moe.shared_experts.gate_up_proj",
+                   "block_sparse_moe.shared_experts.down_proj"),
+        "prefix": {},
+        "stacked": {".q_proj": ".qkv_proj", ".k_proj": ".qkv_proj", ".v_proj": ".qkv_proj",
+                    ".gate_proj": ".gate_up_proj", ".up_proj": ".gate_up_proj"},
+    },
     "MiniMaxM2ForCausalLM": {
         "layer": "model.layers.{i}.",
         "head": "lm_head",
@@ -2960,6 +2985,16 @@ def handler_gpt_oss(cfg, raw, model):
     leaves attention, router and head BF16). The OpenAI checkpoint states mxfp4 in config.json
     and pins no headers, so it keeps handler_moe's graph."""
     result = handler_moe(cfg, raw, model)
+    if _HEADERS is None:
+        return result
+    return modelopt_placed(result, raw, model)
+
+
+def handler_minimax_m3_placed(cfg, raw, model):
+    """MiniMax-M3, priced by handler_minimax_m3, with a checkpoint that pins its headers (a
+    Quark MXFP4 export) placed node by node from them. A checkpoint that states its layout in
+    config.json (MXFP8, ModelOpt) pins none and keeps handler_minimax_m3's graph."""
+    result = handler_minimax_m3(cfg, raw, model)
     if _HEADERS is None:
         return result
     return modelopt_placed(result, raw, model)
@@ -7923,7 +7958,7 @@ HANDLERS = {
     "GptOssForCausalLM": handler_gpt_oss,
     "MiniMaxM2ForCausalLM": handler_minimax_m2,
     "MiniMaxM3SparseForCausalLM": handler_minimax_m3,
-    "MiniMaxM3SparseForConditionalGeneration": handler_minimax_m3,
+    "MiniMaxM3SparseForConditionalGeneration": handler_minimax_m3_placed,
     "NemotronHForCausalLM": handler_nemotron_h,
     "Qwen3_5MoeForConditionalGeneration": handler_qwen3_5_moe,
     "Qwen4ExpForConditionalGeneration": handler_qwen4_exp,
@@ -8327,8 +8362,12 @@ def header_tower_dtype(model: str) -> str | None:
     """The dtype the pinned headers give the tower's tensors, None when no headers are pinned."""
     if not _HEADERS:
         return None
+    # The patch embedding is a convolution over raw pixels that checkpoints keep in F32 beside a
+    # BF16 transformer (MiniMax-M3's, 1,280 x 3 x 2 x 14 x 14); it is not one of the tower's
+    # transformer GEMMs, so it does not decide the dtype the encoder states.
     seen = {t["dtype"] for name, t in _HEADERS.items()
-            if any(f".{p}." in "." + name + "." or name.startswith(p) for p in TOWER_PREFIXES)}
+            if any(f".{p}." in "." + name + "." or name.startswith(p) for p in TOWER_PREFIXES)
+            and "patch_embedding" not in name}
     if not seen:
         return None
     if len(seen) > 1:
