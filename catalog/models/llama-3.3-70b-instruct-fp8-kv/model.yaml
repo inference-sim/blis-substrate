@@ -1,0 +1,11 @@
+name: llama-3.3-70b-instruct-fp8-kv
+source:
+  provider: huggingface
+  repo: amd/Llama-3.3-70B-Instruct-FP8-KV
+  revision: 48ecf9e082634419b816dad3bf9b5966affd142c
+  retrieved: 2026-11-17
+licence:
+  id: LicenseRef-llama3.3
+  evidence: https://huggingface.co/amd/Llama-3.3-70B-Instruct-FP8-KV/raw/48ecf9e082634419b816dad3bf9b5966affd142c/README.md
+config:
+  sha256: ffe286cc6bd34a49f095ecce145fe27877ad703337e6ae2772279298d179a29b
