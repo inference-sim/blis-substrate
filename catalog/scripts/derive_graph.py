@@ -899,10 +899,18 @@ def header_module_widths(headers: dict[str, dict[str, Any]], model: str) -> dict
             out[module] = "fp8"
         elif dtype == "U8":
             scale = headers.get(module + ".weight_scale") or {}
+            cols, scols = t["shape"][-1], (scale.get("shape") or [0])[-1]
+            if scale.get("dtype") == "U8":
+                # Quark's OCP MXFP4 export: two values a byte and a U8 (e8m0) weight_scale of
+                # one column per 32 values (QuarkOCP_MX, quantization/quark/schemes/quark_ocp_mx.py).
+                if not scols or 2 * cols != 32 * scols:
+                    raise DeriveError(f"{model}: {name} packs {2 * cols} values a row against "
+                                      f"{scols} U8 scales, not one scale per 32 (MXFP4)")
+                out[module] = "mxfp4"
+                continue
             if scale.get("dtype") != "F8_E4M3":
-                raise DeriveError(f"{model}: {name} is U8 with no F8_E4M3 weight_scale; this deriver "
-                                  f"reads U8 only as NVFP4")
-            cols, scols = t["shape"][-1], scale["shape"][-1]
+                raise DeriveError(f"{model}: {name} is U8 with no F8_E4M3 weight_scale (NVFP4) and no "
+                                  f"U8 one (MXFP4); this deriver reads U8 only as those two")
             if not scols or 2 * cols != 16 * scols:
                 raise DeriveError(f"{model}: {name} packs {2 * cols} values a row against "
                                   f"{scols} scales, not one scale per 16 (NVFP4)")
@@ -1088,6 +1096,10 @@ def weight_dtype(cfg: dict[str, Any], raw: dict[str, Any], model: str) -> str:
     per parameter would overstate both occupancy and decode-time traffic."""
     quant = raw.get("quantization_config") or cfg.get("quantization_config") or {}
     if isinstance(quant, dict) and quant:
+        # A Quark checkpoint whose entry pins its headers is placed from them node by node
+        # (modelopt_placed); the global width stays the base dtype, as for ModelOpt's.
+        if _HEADERS is not None and str(quant.get("quant_method", "")).lower() == "quark":
+            return base_dtype(cfg, raw, model)
         # Kimi-K3's family quantizes its routed experts and nothing else, whatever the
         # block's Linear target says (see kimi_k3_expert_width); the experts carry the
         # narrow width and the global one is the base.
@@ -2898,7 +2910,10 @@ def modelopt_placed(result, raw, model, draft=None):
     placed from those headers (SUB-15)."""
     quant = raw.get("quantization_config") or {}
     if _HEADERS is not None:
-        if quant:
+        # Quark states its layout in a nested per-layer matcher (layer_quant_config, exclude)
+        # that this deriver does not re-implement; the shards store it, so a Quark checkpoint
+        # is placed from its headers like a ModelOpt one whose config says nothing.
+        if quant and str(quant.get("quant_method", "")).lower() != "quark":
             raise DeriveError(f"{model}: the entry pins its headers and its config.json states a "
                               f"quantization; read one, so pin no headers")
         kinds = modelopt_place_widths(result[0], result[1], raw, model, draft=draft)

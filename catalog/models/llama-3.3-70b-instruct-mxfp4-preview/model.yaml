@@ -1,0 +1,33 @@
+name: llama-3.3-70b-instruct-mxfp4-preview
+source:
+  provider: huggingface
+  repo: amd/Llama-3.3-70B-Instruct-MXFP4-Preview
+  revision: 466cbf4f0eede699f225ace0a6bd98a34e0292c0
+  retrieved: 2026-11-17
+licence:
+  id: LicenseRef-llama3.3
+  evidence: https://huggingface.co/amd/Llama-3.3-70B-Instruct-MXFP4-Preview/raw/466cbf4f0eede699f225ace0a6bd98a34e0292c0/README.md
+config:
+  sha256: 12b13f6f4eb43ba1824c92209a7ca788a47e97f7d75dce2c625e41288c4985f1
+shard_index:
+  path: model.safetensors.index.json
+  sha256: dbad1bd54104d9814534ce4d5968d577ac6e733e019c2686a8e7675707acf4c8
+headers:
+  - path: model-00001-of-00009.safetensors
+    sha256: f59c11ce2ffc302ec2b36ba36c70e1f28b447fbac4cac41d064d0cae7ea6b841
+  - path: model-00002-of-00009.safetensors
+    sha256: c53327865adc15f869e51cc22c10aa1f691f59841988beefbb85c0c1e95a62e8
+  - path: model-00003-of-00009.safetensors
+    sha256: 608ccd84d1d2b2803835df9a441acc4a5bd1484d663211bbb2407d59ce07f3b7
+  - path: model-00004-of-00009.safetensors
+    sha256: 4ab82bb59c777c5499ee011c5350c6bb24b409cb7270be68fe3cfcc35957812c
+  - path: model-00005-of-00009.safetensors
+    sha256: 03d6bab5ea8524c70a23e6bae8bf9cd8e8a26c6d78805ce73d553247f0e8edad
+  - path: model-00006-of-00009.safetensors
+    sha256: 8c979d30188a40c96d6f04a982cfc2648da86ed1e00c0dfd5fd3a2410d42ab2e
+  - path: model-00007-of-00009.safetensors
+    sha256: 1de49bf98613f8738850a2f22a6699c67836bd34e188539d3a6caff2f2ac6693
+  - path: model-00008-of-00009.safetensors
+    sha256: 54d33fd9a0df03f37bd3071a5056193313228987cfd608581f8b5c3d76ff3137
+  - path: model-00009-of-00009.safetensors
+    sha256: 1faaccfc4073cfa541ea76e45673be92b8e49ee356640a404d2b4a710680b544

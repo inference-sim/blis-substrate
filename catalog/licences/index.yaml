@@ -36,6 +36,18 @@ models:
       - file: MIT.nvidia.txt
         source: https://huggingface.co/nvidia/DeepSeek-R1-0528-FP4-V2/raw/25a138f28f49022958b9f2d205f9b7de0cdb6e18/LICENSE
         sha256: c6bbdbdabe1aa56ade66f961688a8e4d5663b00c8566213f26d2cd9443fccc95
+  - model: deepseek-r1-0528-mxfp4
+    licence: MIT
+    texts:
+      - file: MIT.amd-deepseek.txt
+        source: https://huggingface.co/amd/DeepSeek-R1-0528-MXFP4/raw/913fc83b2d3962dbc2682d6b97e9ef31acb4bf5a/LICENSE
+        sha256: 1c8f573e830ca9b3ebfeb7ace1823146e22b66f99ee223840e7637c9e745e1c7
+  - model: deepseek-r1-0528-mxfp4-preview
+    licence: MIT
+    texts:
+      - file: MIT.amd-deepseek.txt
+        source: https://huggingface.co/amd/DeepSeek-R1-0528-MXFP4-Preview/raw/913fc83b2d3962dbc2682d6b97e9ef31acb4bf5a/LICENSE
+        sha256: 1c8f573e830ca9b3ebfeb7ace1823146e22b66f99ee223840e7637c9e745e1c7
   - model: deepseek-v2-lite
     licence: LicenseRef-deepseek
     texts:
