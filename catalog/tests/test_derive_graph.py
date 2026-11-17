@@ -9265,6 +9265,38 @@ def test_quark_minimax_m3_places_experts_and_shared_experts_mxfp4_and_leaves_the
     assert {v[0] for v in dense.values()} == {"bf16"}
 
 
+def test_quark_muse_spark_reads_which_layers_store_experts_mxfp4_from_the_headers(tmp_path):
+    """amd/Muse-Spark-Open-816B-A42B-Quark-MXFP4 stores the routed experts of layers 1 to 60 MXFP4
+    and those of the first and last layer BF16, as the NVFP4 checkpoint does; attention and the
+    head are BF16. The handler reads the layer split from the pinned headers."""
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    cfg = config_of(MODELS / "muse-spark-open-816b-a42b")
+    cfg["torch_dtype"] = "bfloat16"
+    cfg["quantization_config"] = {"quant_method": "quark", "exclude": ["lm_head"]}
+    t = cfg.get("text_config", cfg)
+    n, k = t["num_hidden_layers"], t["hidden_size"]
+    h = {"lm_head.weight": {"dtype": "BF16", "shape": [t["vocab_size"], k]}}
+    for i in range(n):
+        p = f"model.language_model.layers.{i}."
+        for a in ("q_proj", "k_proj", "v_proj", "o_proj", "gate_proj"):
+            h[p + f"self_attn.{a}.weight"] = {"dtype": "BF16", "shape": [64, k]}
+        for e in range(2):
+            for a in ("gate_proj", "up_proj", "down_proj"):
+                m = p + f"mlp.experts.{e}.{a}"
+                if i in (0, n - 1):
+                    h[m + ".weight"] = {"dtype": "BF16", "shape": [64, k]}
+                else:
+                    h[m + ".weight"] = {"dtype": "U8", "shape": [64, k // 2]}
+                    h[m + ".weight_scale"] = {"dtype": "U8", "shape": [64, k // 32]}
+    f = tmp_path / "config.json"
+    f.write_text(json.dumps(cfg))
+    g = derive_graph.derive(f, "muse-spark-open-816b-a42b-quark-mxfp4", headers=h)
+    seq = layer_sequence(g["stack"])
+    assert _widths(g, seq[0])["experts"][0] == "bf16" and _widths(g, seq[-1])["experts"][0] == "bf16"
+    assert {_widths(g, kid)["experts"][0] for kid in seq[1:-1]} == {"mxfp4"}
+
+
 def test_tower_dtype_ignores_an_f32_patch_embedding_beside_a_bf16_transformer(monkeypatch):
     """MiniMax-M3's Quark checkpoints store the vision tower's transformer BF16 and its patch
     embedding F32; the encoder states the transformer's dtype, and a tower whose transformer is
