@@ -1860,6 +1860,7 @@ HEAD_AT_BASE_ARCHS = frozenset({
     "KimiK25ForConditionalGeneration",    # kimi-k2.5, kimi-k2.6 (int4, lm_head ignored)
     "MiniMaxM2ForCausalLM",               # minimax-m2.5, minimax-m2.7 (fp8)
     "Qwen3_5MoeForConditionalGeneration",  # qwen3.5-397b-a17b-fp8
+    "LlamaForCausalLM",                   # llama-3.3-70b-instruct-fp8-kv (fp8, lm_head ignored)
 })
 
 

@@ -8875,6 +8875,32 @@ def test_llama_header_widths_refuse_what_one_node_cannot_price(tmp_path, edit, w
         _derive_llama(_llama_headers("fp8", edit), tmp_path)
 
 
+def _derive_llama_fp8(ignored, tmp_path):
+    """The config of a Llama whose quantization_config is vLLM's plain fp8 block, as
+    amd/Llama-3.3-70B-Instruct-FP8-KV states it (static activation and KV scales)."""
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    cfg = config_of(LLAMA70B)
+    cfg["quantization_config"] = {"quant_method": "fp8", "activation_scheme": "static",
+                                  "kv_cache_scheme": "static", "ignored_layers": ignored}
+    p = tmp_path / "config.json"
+    p.write_text(json.dumps(cfg))
+    return derive_graph.derive(p, "llama-3.3-70b-instruct-fp8-kv")
+
+
+def test_llama_fp8_head_is_bf16_whatever_the_ignore_list_says(tmp_path):
+    """vLLM's fp8 config leaves the LM head unquantized (it hands a ParallelLMHead the
+    embedding method), and amd/Llama-3.3-70B-Instruct-FP8-KV stores it BF16: the head node is
+    priced at two bytes and every decoder linear at one, with the head listed in
+    ignored_layers or not."""
+    for ignored in (["lm_head"], []):
+        g = _derive_llama_fp8(ignored, tmp_path)
+        assert g["global"]["weight_dtype"] == "fp8"
+        head = [n for n in g["head"] if n.get("role") == "lm_head"][0]
+        assert head["weight_dtype"] == "bf16"
+        assert {v[0] for v in _widths(g, "dense").values()} == {"fp8"}
+
+
 DSR1_FP4 = MODELS / "deepseek-r1-0528-fp4-v2"
 
 
