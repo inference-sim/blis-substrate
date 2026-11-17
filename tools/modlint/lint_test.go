@@ -1,6 +1,9 @@
 package main
 
 import (
+	"errors"
+	"io/fs"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -302,5 +305,23 @@ func TestPseudoDirectPinEqualToSelectedOnlyDefers(t *testing.T) {
 	}
 	if len(bad) != 1 || !strings.Contains(bad[0], "is not a release tag") {
 		t.Fatalf("want the one release-tag finding, got:\n%s", strings.Join(bad, "\n"))
+	}
+}
+
+// The shared pull-request checks hand modlint the deferral file of the substrate commit they
+// call (.github/workflows/shared-pr-checks.yml). After the M1 consumers are tagged (X11,
+// LIF-2) that file does not exist, and a commit pin in any repository must fail on any day,
+// not only after an expiry date.
+func TestTheSubstratesOwnDeferralInputDefersNothing(t *testing.T) {
+	src, err := os.ReadFile("../../.github/modlint-deferral.yaml")
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		t.Fatal(err)
+	}
+	pin := "github.com/inference-sim/blis-vllm resolves to v0.0.0-20261105193227-4a3becf2d09a, which is not a release tag (X11, LIF-2)"
+	for _, d := range []string{"2026-11-16", "2026-11-30"} {
+		day, _ := time.Parse("2006-01-02", d)
+		if fail, deferred := ApplyDeferral(src, day, []string{pin}); len(deferred) != 0 || len(fail) != 1 {
+			t.Fatalf("%s: a commit pin was deferred by the repository's deferral file: fail=%v deferred=%v", d, fail, deferred)
+		}
 	}
 }
