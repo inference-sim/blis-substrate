@@ -1,0 +1,25 @@
+name: qwen3.5-397b-a17b-mxfp4-attnfp8-v2
+source:
+  provider: huggingface
+  repo: amd/Qwen3.5-397B-A17B-MXFP4-AttnFP8-V2
+  revision: 410f915fe9d79e952a6ae2d6544848a23975413f
+  retrieved: 2026-11-17
+licence:
+  id: Apache-2.0
+  evidence: https://huggingface.co/api/models/amd/Qwen3.5-397B-A17B-MXFP4-AttnFP8-V2/revision/410f915fe9d79e952a6ae2d6544848a23975413f
+config:
+  sha256: 1c4be2b5f382718d30d8087ec41fd2da57db05d069521054c05ec11de1c03a08
+shard_index:
+  path: model.safetensors.index.json
+  sha256: e1c30b022e7d7d37acde590d0b0ae92b3aff302ef37a8fe234e9c2e4d3799217
+headers:
+  - path: model-00001-of-00005.safetensors
+    sha256: 62c3c3904d8a1a0b05b8ff66087eba3fd92406f970e985efcc38f3990cfe65f6
+  - path: model-00002-of-00005.safetensors
+    sha256: f65d40e88a0ba31fc031cd8a7cd30cd038aa424028f546296fc172fb55d881a8
+  - path: model-00003-of-00005.safetensors
+    sha256: 51dc171af0b24b57948f645fbfb849e94eee79a3a7389945227110ec43389a1e
+  - path: model-00004-of-00005.safetensors
+    sha256: 49f40e91065dbb551547b1d04f9b01b068180b05b41be93fe8751011c8a0862e
+  - path: model-00005-of-00005.safetensors
+    sha256: 1e51b761f66eb5eaecc02286dbf5d9b4c7b479091d17e194326808928405809d

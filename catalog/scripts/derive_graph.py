@@ -932,8 +932,10 @@ def header_width_of(spec: dict[str, Any], model: str):
     widths = {}
     for module, w in header_module_widths(_HEADERS or {}, model).items():
         for old, new in spec["prefix"].items():
-            if module.startswith(old):
-                module = new + module[len(old):]
+            # The renames end in a dot ("lm_head."), so a module that is exactly the head is
+            # compared with its dot restored.
+            if (module + ".").startswith(old):
+                module = (new + (module + ".")[len(old):]).rstrip(".")
                 break
         for old, new in spec.get("header_renames", {}).items():
             module = module.replace(old, new)
@@ -5591,7 +5593,9 @@ def handler_qwen3_5_moe(cfg, raw, model):
         draft = lead + [dict(n) for n in full]
         kinds.append({"id": DRAFT_KIND_ID, "nodes": draft, "edges": chain(draft)})
     quant = raw.get("quantization_config") or {}
-    if str(quant.get("quant_method", "")).lower() not in MODELOPT_METHODS:
+    # An entry that pins its headers is placed from them whatever the config says (a Quark
+    # checkpoint states its layout in a matcher this deriver does not re-implement).
+    if _HEADERS is None and str(quant.get("quant_method", "")).lower() not in MODELOPT_METHODS:
         return kinds, stack
     kinds = modelopt_place_widths(kinds, stack, raw, model,
                                   draft=(DRAFT_KIND_ID, list(range(mtp))) if mtp else None)

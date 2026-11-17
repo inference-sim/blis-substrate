@@ -9135,6 +9135,56 @@ def test_quark_minimax_m2_experts_are_read_under_the_checkpoints_block_sparse_mo
     assert {w[r][0] for r in ("qkv_proj", "o_proj")} == {"bf16"}
 
 
+def test_quark_qwen35_places_routed_experts_mxfp4_from_headers_and_leaves_the_rest_bf16(tmp_path):
+    """amd/Qwen3.5-397B-A17B-MXFP4 stores only the routed experts MXFP4 (U8 with a U8 scale per
+    32 values); the GatedDeltaNet and attention projections, the shared expert, the router and
+    the head are BF16, and so is the whole MTP layer. The head is named `lm_head` in the
+    checkpoint and `language_model.lm_head` by vLLM, which the header path maps."""
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    cfg = config_of(MODELS / "qwen3.5-397b-a17b-nvfp4")
+    t = cfg["text_config"]
+    cfg["quantization_config"] = {"quant_method": "quark", "exclude": ["lm_head"]}
+    k, e = t["hidden_size"], t["moe_intermediate_size"]
+    h = {"lm_head.weight": {"dtype": "BF16", "shape": [t["vocab_size"], k]}}
+
+    def bf16(m, rows=64, cols=64):
+        h[m + ".weight"] = {"dtype": "BF16", "shape": [rows, cols]}
+
+    def moe(p, quant):
+        bf16(p + "mlp.gate")
+        for n in ("gate_proj", "up_proj", "down_proj"):
+            bf16(p + "mlp.shared_expert." + n)
+        for x in range(2):
+            for n in ("gate_proj", "up_proj", "down_proj"):
+                m = p + f"mlp.experts.{x}.{n}"
+                if quant:
+                    h[m + ".weight"] = {"dtype": "U8", "shape": [e, k // 2]}
+                    h[m + ".weight_scale"] = {"dtype": "U8", "shape": [e, k // 32]}
+                else:
+                    bf16(m)
+
+    for i, kind in enumerate(t["layer_types"]):
+        p = f"model.language_model.layers.{i}."
+        for n in (("linear_attn.in_proj_qkv", "linear_attn.in_proj_z", "linear_attn.in_proj_a",
+                   "linear_attn.in_proj_b", "linear_attn.out_proj") if kind == "linear_attention" else
+                  ("self_attn.q_proj", "self_attn.k_proj", "self_attn.v_proj", "self_attn.o_proj")):
+            bf16(p + n)
+        moe(p, True)
+    for n in ("self_attn.q_proj", "self_attn.k_proj", "self_attn.v_proj", "self_attn.o_proj"):
+        bf16("mtp.layers.0." + n)
+    moe("mtp.layers.0.", False)
+    f = tmp_path / "config.json"
+    f.write_text(json.dumps(cfg))
+    g = derive_graph.derive(f, "qwen3.5-397b-a17b-mxfp4", headers=h)
+    for kid in ("gdn_moe", "attn_moe"):
+        assert _widths(g, kid)["experts"][0] == "mxfp4"
+    quantized = {w for kd in g["layer_kinds"] if kd["id"] != "mtp_moe" for n in kd["nodes"]
+                 if n.get("role") not in ("experts",) and (w := n.get("weight_dtype"))}
+    assert "mxfp4" not in quantized
+    assert _widths(g, "mtp_moe")["experts"][0] == "bf16"
+
+
 KIMI_K26_NVFP4 = MODELS / "kimi-k2.6-nvfp4"
 
 
