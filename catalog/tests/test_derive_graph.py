@@ -1618,6 +1618,11 @@ def test_expert_shape_matches_config(d: Path):
 # everything would pass every per-model check above.
 EXPECTED_IDENTICAL = {
 
+    frozenset({"deepseek-r1-0528-mxfp4", "deepseek-r1-0528-mxfp4-preview"}):
+        "one set of files under two repository names. amd/DeepSeek-R1-0528-MXFP4 and "
+        "amd/DeepSeek-R1-0528-MXFP4-Preview both resolve to one revision with the same "
+        "config.json and shard headers; InferenceX's recipes serve it by either name",
+
     frozenset({"minimax-m2.5", "minimax-m2.7"}):
         "one architecture across two MiniMax-M2 generations. Every cost-relevant field is "
         "identical: 62 layers, hidden 3072, 256 experts at top-8, intermediate 1536, 48 "
@@ -8906,6 +8911,67 @@ def test_llama_fp8_head_is_bf16_whatever_the_ignore_list_says(tmp_path):
         assert {v[0] for v in _widths(g, "dense").values()} == {"fp8"}
 
 
+def _llama_mxfp4_headers(edit=None) -> dict:
+    """Headers in the layout amd/Llama-3.3-70B-Instruct-MXFP4-Preview's shards state (read from
+    the pinned headers; not committed): every decoder linear a U8 weight, two values a byte,
+    with a U8 (e8m0) weight_scale of one column per 32 values; the embedding, norms and head
+    BF16."""
+    t = config_of(LLAMA70B)
+    k = t["hidden_size"]
+    h = {"lm_head.weight": {"dtype": "BF16", "shape": [t["vocab_size"], k]},
+         "model.embed_tokens.weight": {"dtype": "BF16", "shape": [t["vocab_size"], k]}}
+
+    def put(m):
+        h[m + ".weight"] = {"dtype": "U8", "shape": [1024, k // 2]}
+        h[m + ".weight_scale"] = {"dtype": "U8", "shape": [1024, k // 32]}
+
+    for i in range(t["num_hidden_layers"]):
+        p = f"model.layers.{i}."
+        for a in ("q_proj", "k_proj", "v_proj", "o_proj"):
+            put(p + "self_attn." + a)
+        for a in ("gate_proj", "up_proj", "down_proj"):
+            put(p + "mlp." + a)
+    if edit:
+        edit(h)
+    return h
+
+
+def _derive_llama_quark(headers, tmp_path):
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    cfg = config_of(LLAMA70B)
+    cfg["quantization_config"] = {"quant_method": "quark", "exclude": ["lm_head"],
+                                  "global_quant_config": {"weight": {"dtype": "fp4", "group_size": 32}}}
+    p = tmp_path / "config.json"
+    p.write_text(json.dumps(cfg))
+    return derive_graph.derive(p, "llama-3.3-70b-instruct-mxfp4-preview", headers=headers)
+
+
+def test_quark_mxfp4_widths_come_from_its_shard_headers(tmp_path):
+    """A Quark MXFP4 checkpoint states its layout in a nested per-layer matcher; its shards store
+    the result. With the headers pinned, each of the four Llama GEMMs takes MXFP4 and the global
+    and head widths stay BF16, though the config states a quantization."""
+    g = _derive_llama_quark(_llama_mxfp4_headers(), tmp_path)
+    assert g["global"]["weight_dtype"] == "bf16"
+    w = _widths(g, "dense")
+    assert {r: w[r][0] for r in ("qkv_proj", "o_proj", "mlp_gate_up", "mlp_down")} == \
+        dict.fromkeys(("qkv_proj", "o_proj", "mlp_gate_up", "mlp_down"), "mxfp4")
+    head = [n for n in g["head"] if n.get("role") == "lm_head"][0]
+    assert head.get("weight_dtype", "bf16") == "bf16"
+
+
+def test_quark_mxfp4_refuses_a_scale_that_is_not_one_per_32_values(tmp_path):
+    """A U8 weight with a U8 scale at another group size is not MXFP4 and is refused rather
+    than priced as it."""
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+
+    def edit(h):
+        h["model.layers.5.mlp.up_proj.weight_scale"] = {"dtype": "U8", "shape": [1024, 8192 // 16]}
+    with pytest.raises(derive_graph.DeriveError, match="not one scale per 32"):
+        _derive_llama_quark(_llama_mxfp4_headers(edit), tmp_path)
+
+
 DSR1_FP4 = MODELS / "deepseek-r1-0528-fp4-v2"
 
 
@@ -8989,6 +9055,58 @@ def test_dsr1_fp4_refuses_a_draft_layer_its_one_node_cannot_price(tmp_path):
         h[m + ".weight_scale"] = {"dtype": "F8_E4M3", "shape": [2048, 7168 // 16]}
     with pytest.raises(derive_graph.DeriveError, match="one node cannot price both"):
         _derive_dsr1_fp4(_dsr1_fp4_headers(edit), tmp_path)
+
+
+def _derive_dsr1_quark(headers, tmp_path):
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    cfg = config_of(DSR1_FP4)
+    cfg["quantization_config"] = {"quant_method": "quark", "exclude": ["re:model.layers.61.*"],
+                                  "global_quant_config": {"weight": {"dtype": "fp4", "group_size": 32}}}
+    p = tmp_path / "config.json"
+    p.write_text(json.dumps(cfg))
+    return derive_graph.derive(p, "deepseek-r1-0528-mxfp4-preview", headers=headers)
+
+
+def _mxfp4_of(headers):
+    """The headers of amd/DeepSeek-R1-0528-MXFP4-Preview's layout: the NVFP4 layout's U8 weights
+    with U8 (e8m0) scales of one column per 32 values; attention, router, head and the MTP layer
+    stay BF16."""
+    out = {}
+    for k, v in headers.items():
+        if k.endswith(".weight_scale"):
+            v = {"dtype": "U8", "shape": [v["shape"][0], v["shape"][1] // 2]}
+        out[k] = v
+    return out
+
+
+def test_dsr1_quark_mxfp4_places_dense_mlps_and_experts_and_leaves_attention_bf16(tmp_path):
+    """amd/DeepSeek-R1-0528-MXFP4-Preview stores the dense MLPs, routed experts and shared
+    experts MXFP4 and keeps attention (o_proj too), the router, the head and the whole MTP layer
+    BF16 (its exclude list names model.layers.61.*). The graph takes each from the headers."""
+    h = _mxfp4_of(_dsr1_fp4_headers())
+    for k in [k for k in h if k.endswith("self_attn.o_proj.weight_scale")]:
+        h.pop(k)
+        h[k[:-len("_scale")]] = {"dtype": "BF16", "shape": [7168, 16384]}
+    g = _derive_dsr1_quark(h, tmp_path)
+    dense = _widths(g, "attn_dense")
+    assert dense["mlp_gate_up"][0] == dense["mlp_down"][0] == "mxfp4"
+    assert dense["o_proj"][0] == "bf16"
+    assert _widths(g, "attn_moe")["experts"][0] == "mxfp4"
+    assert {w for w, _ in _widths(g, "mtp_moe").values()} == {"bf16"}
+
+
+def test_dsr1_second_mxfp4_repository_name_prices_the_same_weights():
+    """amd/DeepSeek-R1-0528-MXFP4 and amd/DeepSeek-R1-0528-MXFP4-Preview are one revision under two
+    names, as the NVIDIA FP4-V2 and NVFP4-v2 pair is: the second entry's graph and pins equal the
+    first's."""
+    a, b = MODELS / "deepseek-r1-0528-mxfp4-preview", MODELS / "deepseek-r1-0528-mxfp4"
+    ga, gb = graph_of(a), graph_of(b)
+    ga.pop("name"), gb.pop("name")
+    assert ga == gb
+    ya, yb = (yaml.safe_load((d / "model.yaml").read_text()) for d in (a, b))
+    assert (yb["source"]["revision"], yb["shard_index"], yb["headers"]) == (
+        ya["source"]["revision"], ya["shard_index"], ya["headers"])
 
 
 KIMI_K26_NVFP4 = MODELS / "kimi-k2.6-nvfp4"
