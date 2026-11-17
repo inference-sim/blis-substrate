@@ -7,6 +7,7 @@ source:
 licence:
   id: MIT
   evidence: https://huggingface.co/api/models/amd/GLM-5.1-MXFP4/revision/74fb7daa204e98ea138730bbbb53af87d9e11776
+drafters: [speculator]
 config:
   sha256: 03d2dd249386c446d3c6011c4e16248fc7357041459b860a2aae956be143f57b
 shard_index:
