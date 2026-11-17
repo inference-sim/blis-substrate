@@ -42,9 +42,38 @@ type EncodeEstimate struct {
 const encoderHostNote = "unmeasured: no allowed source records a per-image preprocess or dispatch cost"
 
 // encoderSubstitution is the named substitution the encoder is priced under (X19).
-const encoderSubstitution = "the tower is priced with the decoder's GEMM efficiency ramp (BF16) and its measured " +
-	"prefill-attention rate, bidirectional and with no KV cache; no allowed data measures an encoder step, so " +
-	"every point with an encode step is capped, and the tower's collectives and fused kernels are not priced"
+const encoderSubstitution = "the tower's GEMMs are priced on the decoder's BF16 efficiency ramp; no allowed data measures an " +
+	"encoder step end to end, so every point with an encode step is capped, and the tower's collectives and " +
+	"fused kernels are not priced"
+
+// encoderAttentionNote says where the tower's attention rate comes from.
+func encoderAttentionNote(measured bool) string {
+	if measured {
+		return "; its attention is priced from the measured encoder_attention pair for this part (head dimensions 64, 72, 80)"
+	}
+	return "; its attention is priced at the decoder's measured prefill rate, bidirectional and with no KV cache, because " +
+		"the part or a head dimension is outside the measured encoder_attention sweep"
+}
+
+// measuredEncoderHeadDim reports whether the encoder-attention sweep covers a head dimension:
+// the sweep timed 64, 72 and 80 only, so a tower outside them keeps the decoder's prefill pair.
+func measuredEncoderHeadDim(d int) bool { return d == 64 || d == 72 || d == 80 }
+
+// encoderAttentionMeasured reports whether every attention of the tower is priced from the
+// measured encoder-attention pair on this part.
+func (k *Kernel) encoderAttentionMeasured(t model.Tower) bool {
+	if k.encoderAttn == nil {
+		return false
+	}
+	for _, lk := range t.LayerKinds {
+		for _, n := range lk.Nodes {
+			if n.Op == model.EncoderAttention && !measuredEncoderHeadDim(n.HeadDim) {
+				return false
+			}
+		}
+	}
+	return true
+}
 
 // imageTowerRun is the priced tower and how the engine runs it, nil when the kernel prices
 // no encode step.
@@ -281,6 +310,9 @@ func (k *Kernel) towerNodeSeconds(t model.Tower, mode plan.EncoderMode, n model.
 		// over every pair: the tower attends bidirectionally.
 		work := pairs * heads * float64(n.HeadDim)
 		pair := k.prefillFor(model.AttentionGQA)
+		if k.encoderAttn != nil && measuredEncoderHeadDim(n.HeadDim) {
+			pair = *k.encoderAttn
+		}
 		if pair.scale <= 0 {
 			fit := k.encoderFit
 			eff := price.Efficiency(rows, fit.epsMax, fit.mHalf)

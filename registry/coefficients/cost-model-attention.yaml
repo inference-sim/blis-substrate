@@ -1752,3 +1752,146 @@ coefficients:
       rationale: >
         The fraction of the bf16 GEMM efficiency ramp the trtllm-gen prefill kernel reaches on gb300 at a fp8 KV cache: 0.42 against the pooled 0.38. Valid only against the ramp this registry carries (gemm_eps_max_bf16, gemm_m_half_bf16), and refitted with it. Fitted jointly with attention_prefill_floor_trtllm_gen_kv_fp8. The pair of the fp8 KV cache sweep, moved to the pinned FlashInfer 0.7.2.post1's build from the FlashInfer 0.6.13 build it was measured on (measured_on). A pool that reports the pinned build reads it at the transferred grade (VAL-8). Fitted rows span batch 1 to 256, prompt length 16 to 16384 and 1 to 96 query heads, all with no cached prefix (the sweep's step is 0 throughout), so a prefill with cached context is outside the data whatever its size; the fit_range records the span. The interval is the 2.5 and 97.5 percentiles of 200 bootstrap refits that resample rows, read on the fitter's grid (floor step 0.5 us, scale step 0.02) and widened by half a step either side, because the optimum is only located to the grid. Rows of one shape family are correlated, so it is narrower than the data would justify.
   # END trtllm-gen prefill lane
+
+# Encoder (vision-tower) attention primitive: AISimulate's encoder_attention sweeps (a kernel microbenchmark of vLLM's ViT flash attention, collected 2026-10-07, not derived from any scored run).
+# latency = floor + 4*b*n_heads*head_dim*isl^2 / (peak * eff(tokens) * work_scale), over every query-key pair; scripts/fit_attention_encoder.py.
+  - attention_encoder_floor:
+      value: 9.0
+      units: us_per_transfer
+      method: measured
+      fitted: true
+      scope: {hardware: [b200]}
+      sources:
+        - {kind: model, cite: "NVIDIA AISimulate systems/data/b200_sxm/encoder_attention/vllm/0.30.0/encoder_attention_perf.parquet (NVIDIA B200), 7679 points, sha256 c350586eb5ea81eece5e491d65469c837b1546c11702cbe5872fb07237467522, pull 6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18", role: primary}
+      rationale: >
+        The minimum cost of a bidirectional vision-tower attention kernel, independent of sequence length. Fitted jointly with attention_encoder_work_scale over 7679 points on the vLLM 0.30.0 lane (batch 1 to 64, sequence 1 to 65536, 1 to 32 heads, head dimension 64, 72 or 80, bf16); geometric error 1.248x. Covers head dimensions 64, 72 and 80 only: a tower outside them keeps the decoder's prefill pair as a recorded substitution.
+  - attention_encoder_work_scale:
+      value: 0.32
+      units: dimensionless
+      method: measured
+      fitted: true
+      scope: {hardware: [b200]}
+      sources:
+        - {kind: model, cite: "NVIDIA AISimulate systems/data/b200_sxm/encoder_attention/vllm/0.30.0/encoder_attention_perf.parquet (NVIDIA B200), 7679 points, sha256 c350586eb5ea81eece5e491d65469c837b1546c11702cbe5872fb07237467522, pull 6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18", role: primary}
+      rationale: >
+        The fraction of the bf16 dense-GEMM efficiency ramp a bidirectional tower attention kernel reaches (FA4): 0.32. A fraction OF THE bf16 ramp this registry carries, so a relane of gemm_eps_max_bf16 requires a refit. Work is 4 x batch x heads x head_dim x isl^2 (every pair, no causal half). Fitted jointly with attention_encoder_floor; geometric error 1.248x.
+  - attention_encoder_floor:
+      value: 9.0
+      units: us_per_transfer
+      method: measured
+      fitted: true
+      scope: {hardware: [b300]}
+      sources:
+        - {kind: model, cite: "NVIDIA AISimulate systems/data/b300_sxm/encoder_attention/vllm/0.30.0/encoder_attention_perf.parquet (NVIDIA B300), 7679 points, sha256 02758e18684c7fa54aa7371f42327d913338d1e5f36abe00bde97655545ffb53, pull 6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18", role: primary}
+      rationale: >
+        The minimum cost of a bidirectional vision-tower attention kernel, independent of sequence length. Fitted jointly with attention_encoder_work_scale over 7679 points on the vLLM 0.30.0 lane (batch 1 to 64, sequence 1 to 65536, 1 to 32 heads, head dimension 64, 72 or 80, bf16); geometric error 1.256x. Covers head dimensions 64, 72 and 80 only: a tower outside them keeps the decoder's prefill pair as a recorded substitution.
+  - attention_encoder_work_scale:
+      value: 0.44
+      units: dimensionless
+      method: measured
+      fitted: true
+      scope: {hardware: [b300]}
+      sources:
+        - {kind: model, cite: "NVIDIA AISimulate systems/data/b300_sxm/encoder_attention/vllm/0.30.0/encoder_attention_perf.parquet (NVIDIA B300), 7679 points, sha256 02758e18684c7fa54aa7371f42327d913338d1e5f36abe00bde97655545ffb53, pull 6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18", role: primary}
+      rationale: >
+        The fraction of the bf16 dense-GEMM efficiency ramp a bidirectional tower attention kernel reaches (FA4): 0.44. A fraction OF THE bf16 ramp this registry carries, so a relane of gemm_eps_max_bf16 requires a refit. Work is 4 x batch x heads x head_dim x isl^2 (every pair, no causal half). Fitted jointly with attention_encoder_floor; geometric error 1.256x.
+  - attention_encoder_floor:
+      value: 9.5
+      units: us_per_transfer
+      method: measured
+      fitted: true
+      scope: {hardware: [gb200-nvl72]}
+      sources:
+        - {kind: model, cite: "NVIDIA AISimulate systems/data/gb200/encoder_attention/vllm/0.30.0/encoder_attention_perf.parquet (NVIDIA GB200), 7679 points, sha256 46daac5ba2f184b7c6959093e09cf0be831b47bbe38390a83d3c7edd19a203b5, pull 6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18", role: primary}
+      rationale: >
+        The minimum cost of a bidirectional vision-tower attention kernel, independent of sequence length. Fitted jointly with attention_encoder_work_scale over 7679 points on the vLLM 0.30.0 lane (batch 1 to 64, sequence 1 to 65536, 1 to 32 heads, head dimension 64, 72 or 80, bf16); geometric error 1.242x. Covers head dimensions 64, 72 and 80 only: a tower outside them keeps the decoder's prefill pair as a recorded substitution.
+  - attention_encoder_work_scale:
+      value: 0.32
+      units: dimensionless
+      method: measured
+      fitted: true
+      scope: {hardware: [gb200-nvl72]}
+      sources:
+        - {kind: model, cite: "NVIDIA AISimulate systems/data/gb200/encoder_attention/vllm/0.30.0/encoder_attention_perf.parquet (NVIDIA GB200), 7679 points, sha256 46daac5ba2f184b7c6959093e09cf0be831b47bbe38390a83d3c7edd19a203b5, pull 6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18", role: primary}
+      rationale: >
+        The fraction of the bf16 dense-GEMM efficiency ramp a bidirectional tower attention kernel reaches (FA4): 0.32. A fraction OF THE bf16 ramp this registry carries, so a relane of gemm_eps_max_bf16 requires a refit. Work is 4 x batch x heads x head_dim x isl^2 (every pair, no causal half). Fitted jointly with attention_encoder_floor; geometric error 1.242x.
+  - attention_encoder_floor:
+      value: 9.0
+      units: us_per_transfer
+      method: measured
+      fitted: true
+      scope: {hardware: [gb300]}
+      sources:
+        - {kind: model, cite: "NVIDIA AISimulate systems/data/gb300/encoder_attention/vllm/0.30.0/encoder_attention_perf.parquet (NVIDIA GB300), 7679 points, sha256 f0dc4a4d85ca12f296add7560bfcd745462036f1208861b127ea860290b395f7, pull 6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18", role: primary}
+      rationale: >
+        The minimum cost of a bidirectional vision-tower attention kernel, independent of sequence length. Fitted jointly with attention_encoder_work_scale over 7679 points on the vLLM 0.30.0 lane (batch 1 to 64, sequence 1 to 65536, 1 to 32 heads, head dimension 64, 72 or 80, bf16); geometric error 1.248x. Covers head dimensions 64, 72 and 80 only: a tower outside them keeps the decoder's prefill pair as a recorded substitution.
+  - attention_encoder_work_scale:
+      value: 0.44
+      units: dimensionless
+      method: measured
+      fitted: true
+      scope: {hardware: [gb300]}
+      sources:
+        - {kind: model, cite: "NVIDIA AISimulate systems/data/gb300/encoder_attention/vllm/0.30.0/encoder_attention_perf.parquet (NVIDIA GB300), 7679 points, sha256 f0dc4a4d85ca12f296add7560bfcd745462036f1208861b127ea860290b395f7, pull 6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18", role: primary}
+      rationale: >
+        The fraction of the bf16 dense-GEMM efficiency ramp a bidirectional tower attention kernel reaches (FA4): 0.44. A fraction OF THE bf16 ramp this registry carries, so a relane of gemm_eps_max_bf16 requires a refit. Work is 4 x batch x heads x head_dim x isl^2 (every pair, no causal half). Fitted jointly with attention_encoder_floor; geometric error 1.248x.
+  - attention_encoder_floor:
+      value: 12.5
+      units: us_per_transfer
+      method: measured
+      fitted: true
+      scope: {hardware: [h100]}
+      sources:
+        - {kind: model, cite: "NVIDIA AISimulate systems/data/h100_sxm/encoder_attention/vllm/0.30.0/encoder_attention_perf.parquet (NVIDIA H100 80GB HBM3), 7679 points, sha256 8756039abd63416b3335919e2e3b1a9ad65909296f6056e9ef93fa4271dde24c, pull 6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18", role: primary}
+      rationale: >
+        The minimum cost of a bidirectional vision-tower attention kernel, independent of sequence length. Fitted jointly with attention_encoder_work_scale over 7679 points on the vLLM 0.30.0 lane (batch 1 to 64, sequence 1 to 65536, 1 to 32 heads, head dimension 64, 72 or 80, bf16); geometric error 1.227x. Covers head dimensions 64, 72 and 80 only: a tower outside them keeps the decoder's prefill pair as a recorded substitution.
+  - attention_encoder_work_scale:
+      value: 0.46
+      units: dimensionless
+      method: measured
+      fitted: true
+      scope: {hardware: [h100]}
+      sources:
+        - {kind: model, cite: "NVIDIA AISimulate systems/data/h100_sxm/encoder_attention/vllm/0.30.0/encoder_attention_perf.parquet (NVIDIA H100 80GB HBM3), 7679 points, sha256 8756039abd63416b3335919e2e3b1a9ad65909296f6056e9ef93fa4271dde24c, pull 6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18", role: primary}
+      rationale: >
+        The fraction of the bf16 dense-GEMM efficiency ramp a bidirectional tower attention kernel reaches (FA3): 0.46. A fraction OF THE bf16 ramp this registry carries, so a relane of gemm_eps_max_bf16 requires a refit. Work is 4 x batch x heads x head_dim x isl^2 (every pair, no causal half). Fitted jointly with attention_encoder_floor; geometric error 1.227x.
+  - attention_encoder_floor:
+      value: 12.5
+      units: us_per_transfer
+      method: measured
+      fitted: true
+      scope: {hardware: [h200]}
+      sources:
+        - {kind: model, cite: "NVIDIA AISimulate systems/data/h200_sxm/encoder_attention/vllm/0.30.0/encoder_attention_perf.parquet (NVIDIA H200), 7679 points, sha256 7e5288ea5346a449d3c706bdf14d012b62a59459deed0dab1f7ba98ff95c72ec, pull 6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18", role: primary}
+      rationale: >
+        The minimum cost of a bidirectional vision-tower attention kernel, independent of sequence length. Fitted jointly with attention_encoder_work_scale over 7679 points on the vLLM 0.30.0 lane (batch 1 to 64, sequence 1 to 65536, 1 to 32 heads, head dimension 64, 72 or 80, bf16); geometric error 1.229x. Covers head dimensions 64, 72 and 80 only: a tower outside them keeps the decoder's prefill pair as a recorded substitution.
+  - attention_encoder_work_scale:
+      value: 0.48
+      units: dimensionless
+      method: measured
+      fitted: true
+      scope: {hardware: [h200]}
+      sources:
+        - {kind: model, cite: "NVIDIA AISimulate systems/data/h200_sxm/encoder_attention/vllm/0.30.0/encoder_attention_perf.parquet (NVIDIA H200), 7679 points, sha256 7e5288ea5346a449d3c706bdf14d012b62a59459deed0dab1f7ba98ff95c72ec, pull 6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18", role: primary}
+      rationale: >
+        The fraction of the bf16 dense-GEMM efficiency ramp a bidirectional tower attention kernel reaches (FA3): 0.48. A fraction OF THE bf16 ramp this registry carries, so a relane of gemm_eps_max_bf16 requires a refit. Work is 4 x batch x heads x head_dim x isl^2 (every pair, no causal half). Fitted jointly with attention_encoder_floor; geometric error 1.229x.
+  - attention_encoder_floor:
+      value: 8.0
+      units: us_per_transfer
+      method: measured
+      fitted: true
+      scope: {hardware: [l40s]}
+      sources:
+        - {kind: model, cite: "NVIDIA AISimulate systems/data/l40s/encoder_attention/vllm/0.30.0/encoder_attention_perf.parquet (NVIDIA L40S), 7679 points, sha256 65c857789407353eab6f07d338250b233dbf8097f3adede349fef06fdab86bef, pull 6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18", role: primary}
+      rationale: >
+        The minimum cost of a bidirectional vision-tower attention kernel, independent of sequence length. Fitted jointly with attention_encoder_work_scale over 7679 points on the vLLM 0.30.0 lane (batch 1 to 64, sequence 1 to 65536, 1 to 32 heads, head dimension 64, 72 or 80, bf16); geometric error 1.21x. Covers head dimensions 64, 72 and 80 only: a tower outside them keeps the decoder's prefill pair as a recorded substitution.
+  - attention_encoder_work_scale:
+      value: 0.6
+      units: dimensionless
+      method: measured
+      fitted: true
+      scope: {hardware: [l40s]}
+      sources:
+        - {kind: model, cite: "NVIDIA AISimulate systems/data/l40s/encoder_attention/vllm/0.30.0/encoder_attention_perf.parquet (NVIDIA L40S), 7679 points, sha256 65c857789407353eab6f07d338250b233dbf8097f3adede349fef06fdab86bef, pull 6fdf6fb6b2e1c15b8f5cd1ba35fd2d50cdb2eb18", role: primary}
+      rationale: >
+        The fraction of the bf16 dense-GEMM efficiency ramp a bidirectional tower attention kernel reaches (FA2): 0.60. A fraction OF THE bf16 ramp this registry carries, so a relane of gemm_eps_max_bf16 requires a refit. Work is 4 x batch x heads x head_dim x isl^2 (every pair, no causal half). Fitted jointly with attention_encoder_floor; geometric error 1.21x.

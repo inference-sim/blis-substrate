@@ -38,13 +38,19 @@ func towerOf(hidden int) model.Tower {
 // on, and the engine's statement of what it does with it.
 func towerCase(t *testing.T, tp int, tower func(int) model.Tower, run *plan.EncoderRun) Inputs {
 	t.Helper()
+	return towerCaseOn(t, "", tp, tower, run)
+}
+
+// towerCaseOn is towerCase on the named chip ("" for the first that builds).
+func towerCaseOn(t *testing.T, chip string, tp int, tower func(int) model.Tower, run *plan.EncoderRun) Inputs {
+	t.Helper()
 	d, err := load.Embedded()
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, c := range perturbationScenarios(t, d, "qwen3-30b-a3b") {
 		p := c.in.Deployment.Pools[c.in.PoolIndex].Parallel
-		if p.TP != tp || p.DP > 1 || p.PP > 1 {
+		if p.TP != tp || p.DP > 1 || p.PP > 1 || (chip != "" && c.in.Chip.Name != chip) {
 			continue
 		}
 		b, err := yaml.Marshal(*c.in.Model)
@@ -232,5 +238,47 @@ func TestBatchSplitSpreadsImagesOverRanks(t *testing.T) {
 	}
 	if shard.Total <= 0 || split.Total <= 0 {
 		t.Errorf("both modes should price: %v %v", shard.Total, split.Total)
+	}
+}
+
+// Where the registry carries the measured encoder-attention pair for the part and the tower's head
+// dimension is one the sweep timed (64, 72, 80), the attention is priced from it and the kernel says
+// so; a head dimension outside the sweep keeps the decoder's prefill pair and says that.
+func TestEncoderAttentionIsMeasuredOnlyWhereTheSweepCoversIt(t *testing.T) {
+	scope := func(k *Kernel) string {
+		for _, o := range k.Provenance() {
+			if o.Name == "encoder" {
+				return o.Scope
+			}
+		}
+		t.Fatal("no encoder assumption recorded for a resident tower")
+		return ""
+	}
+	withHD := func(hd int) func(int) model.Tower {
+		return func(h int) model.Tower {
+			tw := towerOf(h)
+			for i := range tw.LayerKinds[0].Nodes {
+				if tw.LayerKinds[0].Nodes[i].Op == model.EncoderAttention {
+					tw.LayerKinds[0].Nodes[i].HeadDim = hd
+				}
+			}
+			return tw
+		}
+	}
+	for _, chip := range []string{"h100", "b200"} {
+		covered := build(t, towerCaseOn(t, chip, 4, withHD(72), sharded))
+		if !strings.Contains(scope(covered), "measured encoder_attention pair") {
+			t.Errorf("%s, head dimension 72: %q", chip, scope(covered))
+		}
+		outside := build(t, towerCaseOn(t, chip, 4, withHD(96), sharded))
+		if !strings.Contains(scope(outside), "outside the measured encoder_attention sweep") {
+			t.Errorf("%s, head dimension 96: %q", chip, scope(outside))
+		}
+		// Both name the part's GEMM substitution and the cap.
+		for _, k := range []*Kernel{covered, outside} {
+			if !strings.Contains(scope(k), "every point with an encode step is capped") {
+				t.Errorf("%s: the encoder assumption does not state the cap: %q", chip, scope(k))
+			}
+		}
 	}
 }
