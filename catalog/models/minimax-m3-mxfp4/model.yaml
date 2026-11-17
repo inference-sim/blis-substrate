@@ -7,6 +7,7 @@ source:
 licence:
   id: LicenseRef-minimax-community
   evidence: https://huggingface.co/api/models/amd/MiniMax-M3-MXFP4/revision/b83d14e3d64bf373a207f3c2a7e9f0b0f1e7fc3a
+drafters: [speculator]
 config:
   sha256: f9206d22c6b6af823ed19846dd958b9a1d10d53918324514a319ac44303a36f7
 shard_index:

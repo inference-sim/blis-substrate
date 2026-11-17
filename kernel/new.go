@@ -355,6 +355,25 @@ func construct(in Inputs) (*Kernel, error) {
 	if err := refuseUnsplittableKVHeads(in.Model, layout.TP); err != nil {
 		return nil, err
 	}
+	if in.Lowered.Encoder != nil {
+		e := *in.Lowered.Encoder
+		if e.Resident && !e.Mode.Valid() {
+			return nil, fmt.Errorf("the engine runs the vision tower in mode %q, which is not one of %q or %q",
+				e.Mode, plan.EncoderWeightsSharded, plan.EncoderBatchSplit)
+		}
+		k.encoder = &e
+	}
+	if in.Model.PricesEncoder() && k.encoder != nil && k.encoder.Resident {
+		if pool.Parallel.PP > 1 {
+			return nil, fmt.Errorf("a resident vision tower under pipeline parallelism (pp %d) is not priced: "+
+				"the tower sits on the first stage only", pool.Parallel.PP)
+		}
+		k.assume("encoder", "priced as a substitution", encoderSubstitution)
+	} else if in.Model.PricesEncoder() {
+		k.assume("modality", string(in.Model.Modality),
+			"the graph prices a vision tower, but the engine states none resident, so the tower's weights and any "+
+				"encode step are not priced")
+	}
 	if in.Model.Modality == model.ModalityTextDecoderOfMultimodal {
 		k.assume("modality", string(in.Model.Modality),
 			"the graph prices the text decoder of a multimodal model: its vision or audio "+
@@ -1176,6 +1195,18 @@ func (k *Kernel) liftMemory(c *resolve.Coefficients, g *model.Graph) error {
 	}
 	k.workspaceBytes = int64(workspace)
 
+	// The non-torch memory vLLM counts inside the budget, measured per model and part on fit units
+	// (registry scripts/fit_memory_startup.py). Where no group measured it, nothing is charged and
+	// the gap is stated on the point rather than priced as a silent zero.
+	nonTorch := fmt.Sprintf("nontorch_in_budget_bytes_%drank", min(max(k.layout.TP, 1), 8))
+	if c.Has(nonTorch) {
+		k.nonTorchInBudget = int64(c.ValueOr(nonTorch, 0))
+	} else {
+		k.assume(nonTorch, "0", "no fit-unit group measures the non-torch memory vLLM grows inside the "+
+			"KV budget for this model and part (non_kv_cache_memory, gpu_worker.py:720-756@v0.33.0), so "+
+			"none is charged and the KV budget is overstated by it")
+	}
+
 	capture, err := need("cudagraph_capture_bytes_" + k.graphModeName)
 	if err != nil {
 		return err
@@ -1956,6 +1987,8 @@ func (k *Kernel) computeFixedBytes(g *model.Graph) kernel.MemoryBreakdown {
 			CUDAGraph:      k.captureBytes,
 			EPLBRedundant:  int64(m.eplbRedundant),
 			CommBuffers:    k.deepEPBufferBytes(g),
+			// Every stage's rank grows it; the binding stage is the one sized.
+			NonTorchInBudget: k.nonTorchInBudget,
 		}
 	}
 	var weights float64
@@ -1966,6 +1999,8 @@ func (k *Kernel) computeFixedBytes(g *model.Graph) kernel.MemoryBreakdown {
 	weights += k.embeddingResidentBytes(g)
 	// The drafter's weights, while the deployment speculates.
 	weights += k.draftResidentBytes()
+	// The vision tower, while the engine keeps it resident.
+	weights += k.towerResidentBytes()
 	eplb := k.eplbRedundantBytes(k.plan.Layers)
 	return kernel.MemoryBreakdown{
 		Weights:        int64(weights - eplb),
@@ -1976,7 +2011,8 @@ func (k *Kernel) computeFixedBytes(g *model.Graph) kernel.MemoryBreakdown {
 		// holds them before the memory snapshot its budget is measured from, so they are
 		// outside gpu_memory_utilization (PreSnapshotBytes). DeepEP's buffers are made
 		// after it, so they are (deepEPBufferBytes).
-		CommBuffers: k.deepEPBufferBytes(g),
+		CommBuffers:      k.deepEPBufferBytes(g),
+		NonTorchInBudget: k.nonTorchInBudget,
 	}
 }
 

@@ -7,6 +7,7 @@ source:
 licence:
   id: Apache-2.0
   evidence: https://huggingface.co/api/models/amd/Qwen3.5-397B-A17B-MXFP4-AttnFP8-V2/revision/410f915fe9d79e952a6ae2d6544848a23975413f
+drafters: [speculator]
 config:
   sha256: 1c4be2b5f382718d30d8087ec41fd2da57db05d069521054c05ec11de1c03a08
 shard_index:

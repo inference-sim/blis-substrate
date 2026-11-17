@@ -7,6 +7,7 @@ source:
 licence:
   id: MIT
   evidence: https://huggingface.co/api/models/amd/DeepSeek-R1-0528-MXFP4-v2/revision/c0a89c717350eaa2d03efa5adbb3e0870472b376
+drafters: [speculator]
 config:
   sha256: 62707fb86619224ef9c0396f8c4b10701d2da7a876c7344e638bc277a0a9229e
 shard_index:

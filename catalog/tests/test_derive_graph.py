@@ -6005,8 +6005,11 @@ def test_muse_spark_nvfp4_reads_the_list_vllm_reads(tmp_path):
     D = deriver()
     raw = config_of(MUSE_NVFP4)
     committed = graph_of(MUSE_NVFP4)
-    same = lambda a, b: {k: v for k, v in a.items() if k != "derived_from"} == {
-        k: v for k, v in b.items() if k != "derived_from"}
+    # The expert layers are the decoder's; the tower's dtype is read from every exclusion
+    # list (tower_dtype), so the encoder section is compared apart.
+    skip = ("derived_from", "encoder", "modality")
+    same = lambda a, b: {k: v for k, v in a.items() if k not in skip} == {
+        k: v for k, v in b.items() if k not in skip}
     assert same(_derive_raw(raw, tmp_path, MUSE_NVFP4.name), committed)
     no_legacy = json.loads(json.dumps(raw))
     del no_legacy["quantization_config"]["modules_to_not_convert"]
@@ -7486,6 +7489,8 @@ def _m31_cfg(**edit) -> dict:
     }
     raw = {"architectures": ["MiniMaxM3SparseForConditionalGeneration"],
            "model_type": "minimax_m3_vl", "torch_dtype": "bfloat16",
+           "vision_config": {"hidden_size": 1280, "num_attention_heads": 16, "num_hidden_layers": 32,
+                             "intermediate_size": 5120, "patch_size": 14, "image_size": 672},
            "text_config": text, "quantization_config": quant}
     for key, value in edit.items():
         where, _, name = key.rpartition("__")
@@ -9292,6 +9297,22 @@ def test_quark_muse_spark_reads_which_layers_store_experts_mxfp4_from_the_header
     assert {_widths(g, kid)["experts"][0] for kid in seq[1:-1]} == {"mxfp4"}
 
 
+def test_tower_dtype_ignores_an_f32_patch_embedding_beside_a_bf16_transformer(monkeypatch):
+    """MiniMax-M3's Quark checkpoints store the vision tower's transformer BF16 and its patch
+    embedding F32; the encoder states the transformer's dtype, and a tower whose transformer is
+    stored at two dtypes is still refused."""
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    h = {"vision_tower.vision_model.embeddings.patch_embedding.weight": {"dtype": "F32", "shape": [1280, 3, 2, 14, 14]},
+         "vision_tower.vision_model.encoder.layers.0.mlp.fc1.weight": {"dtype": "BF16", "shape": [5120, 1280]}}
+    monkeypatch.setattr(derive_graph, "_HEADERS", h)
+    assert derive_graph.header_tower_dtype("m") == "bf16"
+    h["vision_tower.vision_model.encoder.layers.0.mlp.fc2.weight"] = {"dtype": "F8_E4M3", "shape": [1280, 5120]}
+    with pytest.raises(derive_graph.DeriveError, match="one dtype per tower"):
+        derive_graph.header_tower_dtype("m")
+
+
+
 KIMI_K26_NVFP4 = MODELS / "kimi-k2.6-nvfp4"
 
 
@@ -10071,6 +10092,141 @@ def test_modelopt_mixed_is_refused_where_no_map_has_been_read(tmp_path):
     raw = _kimi_k25_nvfp4_raw(quant_method="modelopt_mixed", quant_algo="MIXED_PRECISION")
     with pytest.raises(deriver().DeriveError, match="modelopt_mixed picks the algorithm per layer"):
         _derive_raw(raw, tmp_path, "x-nvfp4")
+# --- Vision towers (the encoder section) ----------------------------------------------
+# Each count below is vLLM v0.33.0's own parameter count for the tower, worked from the
+# model code's layer shapes (kimi_k25_vit.py, qwen3_vl.py, glm5next/common/multimodal.py,
+# mllama4.py, kimi_k3), and for Gemma 4 and Qwen3.5-NVFP4 also equal to the sum of the
+# checkpoint's tower tensors in the safetensors headers.
+
+def _write_cfg(raw: dict, tmp_path: Path) -> Path:
+    p = tmp_path / "config.json"
+    p.write_text(json.dumps(raw))
+    return p
+
+
+def _tower_params(tower: dict) -> int:
+    def one(n):
+        if n["op"] == "gemm":
+            return n["n"] * n["k"] + (n["n"] if n.get("bias") else 0)
+        return n.get("params", 0)
+    kinds = {k["id"]: k for k in tower["layer_kinds"]}
+    total = sum(one(n) for n in tower["embedding"] + tower["projector"])
+    for kid in layer_sequence(tower["stack"]):
+        total += sum(one(n) for n in kinds[kid]["nodes"])
+    return total
+
+
+def _only_tower(g: dict) -> dict:
+    assert [t["modality"] for t in g["encoder"]["towers"]] == ["image"]
+    return g["encoder"]["towers"][0]
+
+
+def _tower_attention(tower: dict) -> dict:
+    atts = [n for k in tower["layer_kinds"] for n in k["nodes"] if n["op"] == "attention"]
+    assert atts, "the tower has no attention node"
+    return atts[0]
+
+
+@pytest.mark.parametrize("name,layers,heads,head_dim,merge,out,params", [
+    ("kimi-k2.5", 27, 16, 72, 4, 7168, 471_143_920),
+    ("kimi-k3", 27, 12, 128, 4, 7168, 447_358_976),
+    ("qwen3.5-397b-a17b", 27, 16, 72, 4, 4096, 456_010_480),
+    ("qwen3.6-35b-a3b", 27, 16, 72, 4, 2048, 446_571_248),
+    ("glm-5.3-flash", 24, 16, 64, 4, 4096, 563_627_008),
+    ("gemma-4-31b-it", 27, 16, 72, 9, 5376, 575_743_536),
+    ("llama-4-scout-17b-16e-instruct-fp8-dynamic", 34, 16, 88, 4, 5120, 871_932_416),
+], ids=lambda v: str(v))
+def test_the_derived_tower_has_the_layers_and_widths_vllm_builds(name, layers, heads, head_dim, merge, out, params):
+    g = graph_of(MODELS / name)
+    t = _only_tower(g)
+    assert layer_sequence(t["stack"]).__len__() == layers
+    att = _tower_attention(t)
+    assert (att["n_heads"], att["d_h"]) == (heads, head_dim)
+    assert t["merge_ratio"] == merge
+    assert t["output_hidden_size"] == out == g["global"]["hidden_size"]
+    assert _tower_params(t) == params
+    assert g["modality"] == "multimodal"
+
+
+def test_gemma4_tower_is_replicated_padded_and_capped():
+    t = _only_tower(graph_of(GEMMA4_DENSE))
+    assert t["parallel"] == "replicated"
+    assert t["input"]["fixed_rows"] == 280 * 9
+    assert t["max_output_tokens"] == 280
+
+
+def test_llama4_tower_cuts_the_image_into_336_pixel_tiles_with_a_class_token():
+    t = _only_tower(graph_of(MODELS / "llama-4-scout-17b-16e-instruct-fp8-dynamic"))
+    assert t["input"]["tile_pixels"] == 336 and t["input"]["class_tokens"] == 1
+
+
+def test_muse_spark_tower_windows_three_layers_in_four_and_omits_its_audio_tower():
+    g = graph_of(MUSE)
+    t = _only_tower(g)
+    windows = [n.get("window", 0) for k in t["layer_kinds"] for n in k["nodes"] if n["op"] == "attention"]
+    assert sorted(windows) == [0, 32 * 32]
+    seq = layer_sequence(t["stack"])
+    kinds = {k["id"]: k for k in t["layer_kinds"]}
+    win = [any(n.get("window") for n in kinds[i]["nodes"]) for i in seq]
+    assert len(seq) == 50 and win.count(True) == 37
+    assert [o["modality"] for o in g["encoder"]["omitted"]] == ["audio"]
+    assert g["modality"] == "text_decoder_of_multimodal"
+    assert re.fullmatch(r"[\w.-]+/[\w.-]+#\d+", g["encoder"]["omitted"][0]["issue"])
+
+
+def test_a_quantized_checkpoint_that_does_not_exclude_its_tower_omits_it_by_name(tmp_path):
+    """DeepSeek-V4.1-Flash's fp8 quantization config names no vision module, so the tower's
+    stored width is unknown: the graph lists the tower as omitted with an open issue and
+    states no encoder weight."""
+    g = graph_of(MODELS / "deepseek-v4.1-flash")
+    assert g["encoder"]["towers"] == []
+    [o] = g["encoder"]["omitted"]
+    assert o["modality"] == "image" and "dtype" in o["reason"]
+    assert g["modality"] == "text_decoder_of_multimodal"
+
+
+def test_pinned_headers_state_the_dtype_a_quantized_config_cannot(tmp_path):
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    raw = config_of(MODELS / "deepseek-v4.1-flash")
+    g = derive_graph.derive(_write_cfg(raw, tmp_path), "deepseek-v4.1-flash",
+                            headers={"vision.layers.0.wqkv.weight": {"dtype": "BF16", "shape": [3072, 1024]}})
+    assert _only_tower(g)["weight_dtype"] == "bf16"
+    assert g["modality"] == "multimodal"
+
+
+def test_a_tower_without_a_builder_is_refused_by_name(tmp_path):
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    raw = config_of(MODELS / "qwen3.5-397b-a17b")
+    raw["vision_config"]["deepstack_visual_indexes"] = [8, 16, 24]
+    with pytest.raises(derive_graph.DeriveError, match="deepstack"):
+        _derive_raw(raw, tmp_path, "qwen3.5-397b-a17b")
+    raw = config_of(MODELS / "qwen3.5-397b-a17b")
+    del raw["vision_config"]["depth"]
+    with pytest.raises(derive_graph.DeriveError, match="depth"):
+        _derive_raw(raw, tmp_path, "qwen3.5-397b-a17b")
+
+
+def test_gemma4_clipped_linears_are_refused(tmp_path):
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    raw = config_of(GEMMA4_DENSE)
+    raw["vision_config"]["use_clipped_linears"] = True
+    with pytest.raises(derive_graph.DeriveError, match="use_clipped_linears"):
+        _derive_raw(raw, tmp_path, GEMMA4_DENSE.name)
+
+
+def test_every_catalog_model_with_a_vision_config_states_its_tower_or_why_not():
+    for d in model_dirs():
+        if "vision_config" not in config_of(d):
+            continue
+        g = graph_of(d)
+        enc = g.get("encoder")
+        assert enc is not None, f"{d.name} has a vision_config and states no encoder section"
+        assert enc["towers"] or enc["omitted"], d.name
+        for o in enc.get("omitted", []):
+            assert re.fullmatch(r"[\w.-]+/[\w.-]+#\d+", o["issue"]), (d.name, o)
 
 # ---- Resident widths and splits vLLM v0.33.0 builds (inference-sim/blis-substrate#254, #255, #107)
 
@@ -10179,3 +10335,70 @@ def test_a_served_format_does_not_reprice_what_a_partial_checkpoint_left_unquant
     plain = _derived_edited(tmp_path, "qwen3-14b")
     head = next(n for n in plain["head"] if n.get("role") == "lm_head")
     assert _resident_bytes(plain, head, served="fp8") == head["n"] * head["k"]
+
+
+def test_qwen38_tower_is_omitted_by_name_because_the_pinned_release_lacks_its_class():
+    """Qwen3.8's architecture is absent from vLLM v0.33.0, so its tower (which resembles
+    Qwen3.5's) is not priced on that resemblance: it is omitted with its open issue."""
+    for name in ("qwen3.8-flash-next", "qwen3.8-flash-next-fp8"):
+        d = MODELS / name
+        if not (d / "graph.yaml").is_file():
+            pytest.skip(f"{name} is not in this catalog")
+        g = graph_of(d)
+        assert g["encoder"]["towers"] == []
+        [o] = g["encoder"]["omitted"]
+        assert o["modality"] == "image" and "v0.33.0" in o["reason"]
+        assert o["issue"] == "inference-sim/blis-substrate#304"
+        assert g["modality"] == "text_decoder_of_multimodal"
+
+
+def test_a_mixed_precision_config_that_lists_its_quantized_layers_states_the_tower_unquantized(tmp_path):
+    """modelopt_mixed's quantized_layers names every quantized module; a vision tower it does not name
+    is stored at the config's dtype, so the tower is priced without pinned headers."""
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    raw = config_of(MODELS / "qwen3.5-397b-a17b-fp8")
+    raw["quantization_config"] = {"quant_method": "modelopt_mixed", "quant_algo": "MIXED_PRECISION",
+                                  "quantized_layers": {"model.language_model.layers.0.self_attn.q_proj": {}}}
+    raw["vision_config"]["dtype"] = "bfloat16"
+    assert derive_graph.tower_dtype(raw, "t") == "bf16"
+    raw["quantization_config"]["quantized_layers"]["model.visual.blocks.0.attn.qkv"] = {}
+    assert derive_graph.tower_dtype(raw, "t") is None
+def test_qwen4_exp_modelopt_mixed_precision_places_the_experts_and_nothing_else(tmp_path):
+    """Qwen3.8-Flash-Next-NVFP4's quantized_layers names the decoder layers' routed experts
+    (NVFP4), the MTP layer's (block-wise FP8) and the n-gram table; its ignore list names the
+    rest. The placed width of each module vLLM names follows that map."""
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    ignore = ["lm_head", "model.language_model.embed_tokens", "model.language_model.hyper_connection_mixer*",
+              "model.language_model.layers.0.attn_hyper_connection*", "model.language_model.layers.0.linear_attn*",
+              "model.language_model.layers.0.mlp.gate", "model.language_model.layers.0.mlp.shared_expert*",
+              "model.language_model.layers.0.mlp.shared_expert_gate",
+              "model.language_model.layers.0.mlp_hyper_connection*"]
+    raw = _qwen4_cfg()
+    raw["quantization_config"] = {
+        "quant_method": "modelopt", "quant_algo": "MIXED_PRECISION", "ignore": ignore,
+        "quantized_layers": {
+            "model.language_model.layers.0.mlp.experts": {"quant_algo": "NVFP4", "group_size": 16},
+            "mtp.layers.0.mlp.experts": {"quant_algo": "FP8_PB_WO", "group_size": 128},
+        },
+    }
+    width = derive_graph.modelopt_placed_width(raw, "qwen4-test", "Qwen4ExpForConditionalGeneration")
+    assert width("language_model.model.layers.0.mlp.experts") == "nvfp4"
+    assert width("mtp.layers.0.mlp.experts") == "fp8"
+    assert width("language_model.model.layers.0.linear_attn.in_proj_qkvz") is None
+    assert width("language_model.model.layers.0.mlp.shared_expert.gate_up_proj") is None
+
+
+def test_qwen4_exp_fused_expert_tensors_are_one_unquantized_module(tmp_path):
+    """RadixArk's NVFP4 conversion leaves the MTP layer's experts as two fused BF16 tensors with no
+    .weight suffix. The module they form is read from the header; a quantized fused tensor is refused."""
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    fused = {"mtp.layers.0.mlp.experts.gate_up_proj": {"dtype": "BF16", "shape": [16, 64, 256]},
+             "mtp.layers.0.mlp.experts.down_proj": {"dtype": "BF16", "shape": [16, 256, 32]},
+             "mtp.layers.0.mlp.gate.weight": {"dtype": "BF16", "shape": [16, 256]}}
+    assert derive_graph.header_module_widths(fused, "x")["mtp.layers.0.mlp.experts"] is None
+    bad = {"mtp.layers.0.mlp.experts.down_proj": {"dtype": "F8_E4M3", "shape": [16, 256, 32]}}
+    with pytest.raises(deriver().DeriveError, match="fused expert tensor"):
+        derive_graph.header_module_widths(bad, "x")
