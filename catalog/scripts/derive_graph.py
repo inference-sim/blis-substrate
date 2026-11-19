@@ -406,6 +406,12 @@ MODELOPT_PER_NODE_ARCHS = frozenset({
     "GlmMoeDsaForCausalLM",
     "Glm5NextForConditionalGeneration",
     "NemotronHForCausalLM",
+    # Inkling2Attention builds qkvr/wo_ud with no quant config and Inkling2MoE's experts
+    # are a custom NVFP4 class reading U8-packed weights with F8 scales directly
+    # (vllm/models/inkling2/nvidia/{attention,moe}.py at abb8194d, the merge of
+    # vllm-project/vllm#67325), so the config's ModelOpt block places nothing: the
+    # handler carries the experts' width and the rest is base.
+    "Inkling2ForConditionalGeneration",
 })
 
 # The per-node architectures whose MIXED_PRECISION checkpoints are placed from their
@@ -1754,6 +1760,9 @@ MOE_FAMILIES: dict[str, dict[str, Any]] = {
     # 225, 279-341, 409-470).
     "InklingForConditionalGeneration": {"router": "base", "shared": "gated",
                                         "router_counts_shared": True},
+    # Inkling2MoE (vllm/models/inkling2/nvidia/moe.py at abb8194d): a BF16 gate over
+    # 384 experts with an FP32 bias (use_gate_bias), no shared expert.
+    "Inkling2ForConditionalGeneration": {"router": "base", "shared": "gated"},
 }
 
 
@@ -1935,6 +1944,9 @@ HEAD_AT_BASE_ARCHS = frozenset({
 NODE_BIAS_ROLES = {
     "GptOssForCausalLM": {"qkv_proj": "attention_bias", "o_proj": "attention_bias",
                           "router": None, "experts": None},
+    # Inkling2MoE's gate carries an FP32 bias unconditionally (use_gate_bias; gate.bias
+    # F32 [384] in the pinned headers).
+    "Inkling2ForConditionalGeneration": {"router": None},
 }
 
 
@@ -3034,6 +3046,166 @@ def handler_glm_moe_dsa(cfg, raw, model):
     has_draft = any(k["id"] == DRAFT_KIND_ID for k in result[0])
     draft = (DRAFT_KIND_ID, list(range(layers, layers + spec))) if spec and has_draft else None
     return modelopt_placed(result, raw, model, draft=draft)
+
+
+def handler_inkling2(cfg, raw, model):
+    """Inkling 2 Small: 39 windowed layers and 9 attention-residual layers around routed
+    experts, with short-conv input mixing, relative-position attention features, gated
+    outputs with per-token attention sinks, and NVFP4 experts beside BF16 everything else.
+
+    Priced as vLLM serves it at abb8194dc35e4d72e0b81a41ed7d786a96b97e7c, the merge of
+    vllm-project/vllm#67325 (vllm/models/inkling2/nvidia/{model,attention,moe}.py; the
+    class names and shapes below cite the pinned shard headers at 1df2d97d). No RELEASED
+    vLLM carries Inkling2ForConditionalGeneration -- the merge is on main alone -- which
+    is the citation tension recorded on inference-sim/blis-substrate#88, and this
+    handler exists on the maintainers' answer to it.
+
+    The two layer kinds, from the config's local_layer_ids (the 39 ids name windowed
+    layers; the other 9, one per n_layers_per_attn_res_block block, are the
+    attention-residual ones):
+
+      * local: ONE input norm (attn_norm), attention bounded by sliding_window_size,
+        and static K/V convolutions (attn.k_sconv.weight);
+      * full: THREE input norms (q/k/v_input_norm), the block's three residual outputs
+        mixed by the attention-residual pseudo-queries (attn_res, attn_queries [3,
+        hidden] FP32 on exactly these layers), unbounded attention, and DYNAMIC K/V
+        convolutions (attn.k_sconv.weight_proj [32, hidden] beside static_w [4,
+        n_kv*d_h]).
+
+    Both kinds project through one fused qkvr GEMM (MergedColumnParallelLinear,
+    attention.py split_sizes): query n_q*d_h, the relative-position query n_q*d_rel, an
+    output gate n_q*d_h, one attention sink a head, then k and v at n_kv*d_h each --
+    15,152 rows from hidden 4,608 at this checkpoint. The output projection wo_ud is
+    row-parallel with reduce_results=False, so the layer runs TWO reductions: the
+    attention partial is reduced before the MLP reads it (the model's own sequence
+    parallelism as a reduce-scatter, model.py:343; the fused all-reduce-mix, :349; or
+    the plain all-reduce, :353 and :357), and the MoE's all-reduce beside it produces
+    the next layer's inputs (:407-418).
+
+    The rel-attention features: the r query (n_q*d_rel wide) scores against
+    rel_logits_proj [d_rel, rel_extent] (BF16, resident beside its per-head scales --
+    tracked here rather than faked, the APE precedent); the query and r are log-scaled by
+    position (log_scaling_n_floor/alpha) and L2-clipped (q_l2_clip/rel_l2_clip scales,
+    resident), priced as one elementwise pass over both. The gate multiplies the
+    attention output and the sinks add per head: one elementwise pass over the output.
+
+    Short-conv mixing: a depthwise causal convolution (attn_sconv/mlp_sconv.weight
+    [hidden, 1, conv_kernel]) on the attention and MLP input streams of every layer, and
+    the K/V convolutions above on the KV streams (n_kv*d_h wide, kernel sconv_kernel_size)
+    -- all RecurrentUpdate short_conv nodes, their per-request state at the base dtype.
+
+    The experts: 384 routed, top-8, no shared expert, inner 2304, stored NVFP4 (U8-packed
+    w13/w2 with F8_E4M3 scales at group 16 -- the headers; the config's modelopt NVFP4
+    with no exclusion list, so every expert tensor is quantized) beside BF16 linears.
+    Inkling2Experts shards its experts over the TENSOR-PARALLEL group and reads no
+    enable_expert_parallel (moe.py:92-96), so the graph states no dispatch all-to-all;
+    the router carries an FP32 bias (use_gate_bias; gate.bias F32 [384]).
+
+    The config's mtp_config is backed by NO tensor in the checkpoint (no mtp*/dspark*
+    name in any pinned header -- the evidence is on #88), so the graph states no
+    speculator: whichever drafter serves this model ships as a checkpoint of its own.
+
+    What the graph cannot carry, recorded so a reader does not have to rediscover it:
+    the resident tensors no GEMM prices -- the norms' weights, the rel_logits_proj
+    tables, the l2-clip scales, the static conv kernels and the FP32 attention-residual
+    pseudo-queries, a few hundred MB; and the vision tower (omitted below, #407), so a
+    request carrying an image understates its prefill.
+    """
+    def whole(value, what):
+        if type(value) is not int:
+            raise DeriveError(f"{model}: {what} is {value!r}, not a whole number")
+        return value
+
+    hidden = int(require(cfg, "hidden_size", model))
+    layers = int(require(cfg, "num_layers", model))
+    nq = int(require(cfg, "num_q_heads", model))
+    nkv = int(require(cfg, "num_kv_heads", model))
+    dh = head_dim(cfg, model)
+    window = int(require_key(cfg, "sliding_window_size", model))
+    d_rel = int(require_key(cfg, "d_rel", model))
+    conv = int(require_key(cfg, "sconv_kernel_size", model))
+    block = int(require_key(cfg, "n_layers_per_attn_res_block", model))
+    if cfg.get("n_shared_experts"):
+        raise DeriveError(f"{model}: this handler prices no shared expert; the config "
+                          f"declares {cfg['n_shared_experts']}")
+
+    local_ids = [whole(i, "an entry of local_layer_ids")
+                 for i in require_key(cfg, "local_layer_ids", model)]
+    if len(set(local_ids)) != len(local_ids) or any(not 0 <= i < layers for i in local_ids):
+        raise DeriveError(f"{model}: local_layer_ids must name each layer at most once "
+                          f"inside [0, {layers})")
+    # The attention-residual layers are one a block, and the first block's sits at its
+    # end: the config's own structure, checked rather than assumed.
+    full_ids = sorted(set(range(layers)) - set(local_ids))
+    if full_ids != [block - 1 + b * block for b in range(layers // block)]:
+        raise DeriveError(f"{model}: the non-local layers {full_ids[:4]}... are not one "
+                          f"a {block}-layer block, which is this architecture's shape")
+
+    base = base_dtype(cfg, raw, model)
+    act = DTYPE_WIDTHS[base]
+
+    def layer(is_local):
+        inputs = 1 if is_local else 3
+        nodes = [
+            {"op": "Elementwise", "role": "attn_input_norms",
+             "bytes_per_token": inputs * 2 * hidden * act},
+        ]
+        if not is_local:
+            nodes.append({"op": "Elementwise", "role": "attn_res_mix",
+                          "bytes_per_token": 4 * hidden * act})
+        nodes += [
+            {"op": "RecurrentUpdate", "recurrent_kind": "short_conv", "role": "attn_sconv",
+             "conv_kernel": conv, "intermediate_size": hidden, "state_dtype": base},
+            gemm("qkvr", nq * dh + nq * d_rel + nq * dh + nq + 2 * nkv * dh, hidden),
+        ]
+        if not is_local:
+            # The dynamic K/V convolutions generate their kernels a token
+            # (weight_proj [32, hidden] beside static_w).
+            nodes += [gemm("k_sconv_proj", 32, hidden), gemm("v_sconv_proj", 32, hidden)]
+        nodes += [
+            {"op": "RecurrentUpdate", "recurrent_kind": "short_conv", "role": "k_sconv",
+             "conv_kernel": conv, "intermediate_size": nkv * dh, "state_dtype": base},
+            {"op": "RecurrentUpdate", "recurrent_kind": "short_conv", "role": "v_sconv",
+             "conv_kernel": conv, "intermediate_size": nkv * dh, "state_dtype": base},
+            {"op": "Elementwise", "role": "q_r_log_scale",
+             "bytes_per_token": 2 * (nq * dh + nq * d_rel) * act},
+            attention(cfg, model, kind="swa" if is_local else None,
+                      window=window if is_local else None),
+            {"op": "Elementwise", "role": "attn_gate_sink",
+             "bytes_per_token": 3 * nq * dh * act},
+            gemm("o_proj", hidden, nq * dh),
+            # wo_ud is row-parallel with reduce_results=False, and the reduction moves
+            # into the layer loop: every path reduces the attention partial before the
+            # MLP reads it -- the model's own sequence parallelism as a reduce-scatter
+            # (model.py:343), the fused all-reduce-mix (:349), or the plain all-reduce
+            # (:353, :357).
+            collective("AllReduce", "attn_out",
+                       EMIT_TENSOR_PARALLEL_UNLESS_SEQUENCE_PARALLEL),
+            collective("ReduceScatter", "attn_out", EMIT_SEQUENCE_PARALLEL),
+            norm("mlp_norm"),
+            {"op": "RecurrentUpdate", "recurrent_kind": "short_conv", "role": "mlp_sconv",
+             "conv_kernel": conv, "intermediate_size": hidden, "state_dtype": base},
+        ]
+        nodes += moe_block(cfg, model, hidden, raw,
+                           family="Inkling2ForConditionalGeneration",
+                           routed_width="nvfp4")
+        # No all-to-all: Inkling2Experts sets its expert-parallel group to the
+        # tensor-parallel world (moe.py:92) and combines with the MoE's own all-reduce
+        # (model.py:407-418), which also produces the next layer's inputs. A scenario
+        # that states enable_expert_parallel for this architecture is refused by the
+        # engine, which the rules pack carries.
+        nodes += [
+            collective("AllReduce", "mlp_out", EMIT_TENSOR_PARALLEL_UNLESS_SP_MOE),
+        ]
+        return {"id": ("local_moe" if is_local else "full_moe"), "nodes": nodes,
+                "edges": chain(nodes)}
+
+    kinds = [layer(True), layer(False)]
+    sequence = ["local_moe" if i in set(local_ids) else "full_moe"
+                for i in range(layers)]
+    return kinds, compress(sequence), {
+        "global": {"context_window": int(cfg.get("model_max_length") or 0)},
+    }
 
 
 def handler_kimi_k25(cfg, raw, model):
@@ -7991,6 +8163,9 @@ HANDLERS = {
     "DeepseekV41ForCausalLM": handler_deepseek_v41,
     "GlmMoeDsaForCausalLM": handler_glm_moe_dsa,
     "InklingForConditionalGeneration": handler_moe,
+    # Inkling 2 Small's text decoder: hybrid windowed/attention-residual layers with
+    # short-conv mixing and NVFP4 experts. See handler_inkling2.
+    "Inkling2ForConditionalGeneration": handler_inkling2,
     "GptOssForCausalLM": handler_moe,
     "MiniMaxM2ForCausalLM": handler_minimax_m2,
     "MiniMaxM3SparseForCausalLM": handler_minimax_m3,
@@ -8352,6 +8527,10 @@ UNPRICED_IMAGE_TOWERS = {
                                          "inference-sim/blis-substrate#304"),
     "InklingForConditionalGeneration": ("the hmlp tower's layer widths come from a planner that has been read, "
                                         "not run", ENCODER_ISSUES["inkling"]),
+    # The inkling2 ViT (23 layers at hidden 1024, ~0.61 GiB BF16 in the pinned headers)
+    # has no builder here yet; #407 tracks pricing it.
+    "Inkling2ForConditionalGeneration": ("the inkling2 ViT has no builder in this deriver yet",
+                                         "inference-sim/blis-substrate#407"),
 }
 AUDIO_TOWERS = {
     "MuseSparkForConditionalGeneration": "a ConvNeXt-style stack with depthwise convolutions, which have no primitive",

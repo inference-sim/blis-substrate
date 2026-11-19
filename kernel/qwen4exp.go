@@ -8,7 +8,9 @@ import (
 )
 
 // pricesQwen4Exp prices the two kinds no allowed data measures: sparse GQA attention (the QSA
-// Triton kernel) and the short convolution. It is the stand-in, and says so.
+// Triton kernel) and the short convolution. It is the stand-in, and says so. Qwen3.8-Flash-Next
+// reaches it for its QSA layers and per-layer embedding branch; Inkling 2 Small (#88) for the
+// short convolutions that mix every layer's streams.
 //
 // Sparse GQA. A layer reads index_topk selected tokens of per-head K and V, and its indexer
 // scorer reads a key cache compressed by its ratio. Both are bounded reads the kernel already
