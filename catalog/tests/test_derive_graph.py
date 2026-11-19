@@ -709,16 +709,22 @@ def test_an_indexed_layer_never_costs_less_than_an_unindexed_one():
                     node_cost(n) for n in kinds[kid]["nodes"]
                     if n.get("role") != "qkv_a_layernorm")
 
-            lo, hi = comparable(sk), comparable(peers[0])
-            extra = lo - hi
-            assert not extra, (
-                f"{d.name}: the unindexed layer {sk!r} prices work the indexed layer "
-                f"{peers[0]!r} does not: {sorted(extra)[:2]}. Skipping the indexer only "
-                f"removes the scoring pass and narrows the fused norm; it cannot add or "
-                f"alter anything else")
-            assert hi - lo, (
-                f"{d.name}: the unindexed layer {sk!r} costs exactly what the indexed "
-                f"{peers[0]!r} costs, so skipping the indexer saved nothing")
+            # A model may vary other axes beside the indexer (Mistral Large 4 varies
+            # RoPE/NoPE and KV ownership in the same stack), so an unindexed kind's
+            # natural peer is the scoring kind it is a strict subset of, not the first
+            # one sorted. Any such peer satisfies the relation; none does is the fault.
+            lo = comparable(sk)
+            witness = None
+            for peer in peers:
+                hi = comparable(peer)
+                if not (lo - hi) and (hi - lo):
+                    witness = peer
+                    break
+            assert witness is not None, (
+                f"{d.name}: the unindexed layer {sk!r} prices work no indexed layer of "
+                f"the same MLP flavour omits: {sorted(lo - comparable(peers[0]))[:2]}. "
+                "Skipping the indexer only removes the scoring pass and narrows the "
+                "fused norm; it cannot add or alter anything else")
             checked += 1
     assert checked, "no model mixes indexed and unindexed layers"
 
@@ -1458,10 +1464,16 @@ def test_mla_prices_its_low_rank_stages_not_one_fused_projection(d: Path):
             f"{d.name}/{kind['id']}: still carries the fused qkv_proj alongside the "
             f"low-rank stages, so the projection work is counted twice")
 
-        # The up-projection of the cache: kv_lora_rank -> heads * (nope + v).
-        assert gemms["kv_b_proj"] == (nq * (nope + v), kv_lora), (
+        # The up-projection of the cache: kv_lora_rank -> heads * (nope + v). A NoPE
+        # kind spends the rope dims on nope (mistral_large4/nvidia/attention.py:79-82 at
+        # v0.34.0), so its width is the full head; the kind's own attention node says
+        # which it is, and the config alone cannot.
+        attn_node = next(n for n in kind["nodes"] if n.get("op") == "Attention"
+                         and n.get("holds_engine_kv"))
+        nope_here = nope + rope if not attn_node.get("qk_rope_head_dim") else nope
+        assert gemms["kv_b_proj"] == (nq * (nope_here + v), kv_lora), (
             f"{d.name}/{kind['id']}: kv_b_proj is {gemms['kv_b_proj']}; the config "
-            f"gives {nq} * ({nope} + {v}) from {kv_lora}")
+            f"gives {nq} * ({nope_here} + {v}) from {kv_lora}")
         if q_lora:
             # vLLM fuses the two A-stages into one GEMM over
             # [q_lora_rank, kv_lora_rank + qk_rope_head_dim].
@@ -1544,12 +1556,30 @@ def test_mla_prices_its_low_rank_stages_not_one_fused_projection(d: Path):
             assert gemms["q_proj"] == (nq * (nope + rope), hidden), (
                 f"{d.name}/{kind['id']}: q_proj is {gemms['q_proj']}; with no "
                 f"q_lora_rank it runs {nq} * ({nope} + {rope}) from {hidden}")
-            assert gemms["kv_a_proj"] == (kv_lora + rope, hidden)
-            # Only the KV side is compressed, so there is one latent norm to state.
+            # A NoPE kind stores no rope key (mistral_large4/nvidia/attention.py:94-101
+            # at v0.34.0), so its A-projection writes the rank alone. A kind whose
+            # attention reads another layer's cache builds no A-projection at all
+            # (mistral_large4/nvidia/attention.py:90-101: shares_kv skips it), which its
+            # unowned cache states.
+            if "kv_a_proj" in gemms:
+                rope_here = 0 if not attn_node.get("qk_rope_head_dim") else rope
+                assert gemms["kv_a_proj"] == (kv_lora + rope_here, hidden), (
+                    f"{d.name}/{kind['id']}: kv_a_proj is {gemms['kv_a_proj']}")
+            else:
+                assert any(not c.get("owned") for c in attn_node.get("caches", [])), (
+                    f"{d.name}/{kind['id']}: prices no kv_a_proj yet its attention "
+                    "owns its cache; the projection that fills it is missing")
+            # Only the KV side is compressed, so there is one latent norm to state --
+            # on the kinds that project a KV of their own; a reader has none to norm.
             kvn = next((n for n in kind["nodes"]
                         if n.get("role") == "kv_a_layernorm"), None)
-            assert kvn is not None and kvn.get("bytes_per_token"), (
-                f"{d.name}/{kind['id']}: the kv latent norm states no bytes_per_token")
+            if "kv_a_proj" in gemms:
+                assert kvn is not None and kvn.get("bytes_per_token"), (
+                    f"{d.name}/{kind['id']}: the kv latent norm states no bytes_per_token")
+            else:
+                assert kvn is None, (
+                    f"{d.name}/{kind['id']}: prices a kv latent norm with no kv_a_proj "
+                    "to normalize")
             assert "qkv_a_proj" not in gemms, (
                 f"{d.name}/{kind['id']}: declares no q_lora_rank, so there is no "
                 f"query A-stage to fuse the KV one with")
@@ -2187,6 +2217,10 @@ def indexed_layer_rule(t: dict) -> bool:
     # test_deepseek_v41_each_layer_pays_for_what_its_source_vectors_assign pins
     # layer by layer.
     if t.get("index_source_layer_ids"):
+        return True
+    # Mistral Large 4 spells it indexer_types, a per-layer full/shared vector
+    # (mistral/common/layer_spec.py:45-48 at v0.34.0).
+    if t.get("indexer_types"):
         return True
     return int(t.get("index_topk_freq") or 1) > 1
 
@@ -6183,6 +6217,8 @@ BOUNDARY_BYTES = {
     "deepseek-v4.1-flash": 4 * 5120 * 2 + 4 * 4,
     # hidden_states alone (inkling/nvidia/model.py:294-296, 354-359@v0.32.0).
     "inkling": 6144 * 2,
+    # hidden_states alone (mistral_large4/nvidia/model.py:239-241@v0.34.0).
+    "mistral-large-4-1t-a52b": 6144 * 2,
 }
 
 
@@ -7244,7 +7280,8 @@ def test_the_graphs_that_state_a_scale_are_the_block_scaled_ones():
     block = {"elements": 16384, "bytes": 4}
     assert {n for n, sc in scaled.items() if sc == block} == {
         "deepseek-r1-0528", "deepseek-v3", "glm-5", "glm-5.1-fp8", "glm-5.2-fp8", "glm-5.3", "glm-5.3-flash",
-        "minimax-m2.5", "minimax-m2.7", "qwen3.5-397b-a17b-fp8", "qwen3.8-flash-next-fp8"}
+        "minimax-m2.5", "minimax-m2.7", "mistral-large-4-1t-a52b",
+        "qwen3.5-397b-a17b-fp8", "qwen3.8-flash-next-fp8"}
     assert {n for n, sc in scaled.items() if sc != block} == {
         "minimax-m3-mxfp8", "minimax-m3-nvfp4", "minimax-m3.1-flash", "minimax-m3.1-flash-dspark",
         "deepseek-v4.1-flash"}
@@ -10257,3 +10294,136 @@ def test_the_mla_prefill_widths_come_from_the_config(tmp_path):
     text_config(bumped)["v_head_dim"] = 64
     g = _derive_raw(bumped, tmp_path, "kimi-k2.5")
     assert {(a["prefill_qk_head_dim"], a["prefill_v_head_dim"]) for a in _attention_nodes(g) if a["kind"] == "mla"} == {(192, 64)}, t.get("v_head_dim")
+
+
+# --- Mistral Large 4 (mistralai/Mistral-Large-4-1T-A52B) ----------------------------------
+
+ML4 = MODELS / "mistral-large-4-1t-a52b"
+
+
+def ml4_layers():
+    """The committed graph expanded layer by layer, with each layer's index."""
+    g = graph_of(ML4)
+    return list(enumerate(expanded_layers(g)))
+
+
+def test_ml4_kinds_follow_the_config_vectors():
+    """Five kinds: the dense first layer, full/shared indexers, RoPE/NoPE KV owners and
+    the nine NoPE readers, each keyed off the config's own vectors the way
+    get_layer_specs reads them (mistral/common/layer_spec.py at v0.34.0)."""
+    t = text_config(config_of(ML4))
+    g = graph_of(ML4)
+    seq = [k for k in g["stack"].get("prologue", [])]
+    seq += [k for _ in range(g["stack"].get("repeat", 0)) for k in g["stack"]["pattern"]]
+    seq += g["stack"].get("epilogue", [])
+    counts = collections.Counter(seq)
+    assert counts == {"dense_full_rope_layer": 1, "full_rope_layer": 25,
+                      "full_nope_layer": 9, "shared_rope_layer": 28,
+                      "full_kvreader_layer": 9}
+    assert len(seq) == t["num_hidden_layers"] == 72
+    # Layer 0 is the dense prologue (first_k_dense_replace 1).
+    assert seq[0] == "dense_full_rope_layer"
+    # The readers are every fourth layer from 39, all NoPE, all reading layer 35.
+    readers = [i for i in range(len(seq)) if seq[i] == "full_kvreader_layer"]
+    assert readers == [39, 43, 47, 51, 55, 59, 63, 67, 71]
+    assert all(t["no_rope_layers"][i] == 0 for i in readers)
+    assert {t["kv_source_layers"][i] for i in readers} == {35}
+    # The shared-indexer layers are all RoPE (at 1, 2 mod 4 from 17).
+    shared = [i for i in range(len(seq)) if seq[i] == "shared_rope_layer"]
+    assert all(t["no_rope_layers"][i] == 1 for i in shared)
+    assert all(t["indexer_types"][i] == "shared" for i in shared)
+
+
+def test_ml4_nope_layers_spend_the_rope_dims_on_nope():
+    """A NoPE layer's A-projection writes the rank alone, its up-projection is the full
+    head wide, and its latent cache holds no rope key
+    (mistral_large4/nvidia/attention.py:79-82, 94-101 at v0.34.0)."""
+    g = graph_of(ML4)
+    kinds = {k["id"]: k for k in g["layer_kinds"]}
+    for kid, kv_a, kv_b, d_h in (("full_rope_layer", 576, 12288, 576),
+                                  ("full_nope_layer", 512, 16384, 512),
+                                  ("full_kvreader_layer", None, 16384, 512)):
+        nodes = kinds[kid]["nodes"]
+        gemms = {n["role"]: (n["n"], n["k"]) for n in nodes if n["op"] == "GEMM"}
+        attn = next(n for n in nodes if n.get("op") == "Attention" and n.get("holds_engine_kv"))
+        assert attn["d_h"] == d_h, kid
+        if kv_a is None:
+            assert "kv_a_proj" not in gemms, f"{kid}: a KV reader builds no A-projection"
+        else:
+            assert gemms["kv_a_proj"] == (kv_a, 6144), kid
+        assert gemms["kv_b_proj"] == (kv_b, 512), kid
+
+
+def test_ml4_readers_bind_to_the_nope_owner_the_config_names():
+    """The two latent streams are named apart (kv_rope, kv_nope), so the schema's
+    nearest-preceding-owner rule binds every reader to layer 35 -- the NoPE source
+    kv_source_layers states -- and not to a RoPE layer in between."""
+    g = graph_of(ML4)
+    kinds = {k["id"]: k for k in g["layer_kinds"]}
+    rope = next(n for n in kinds["full_rope_layer"]["nodes"]
+                if n.get("op") == "Attention" and n.get("holds_engine_kv"))
+    nope = next(n for n in kinds["full_nope_layer"]["nodes"]
+                if n.get("op") == "Attention" and n.get("holds_engine_kv"))
+    reader = next(n for n in kinds["full_kvreader_layer"]["nodes"]
+                  if n.get("op") == "Attention" and n.get("holds_engine_kv"))
+    # 512 FP8 latent + 64 BF16 rope + 9 UE8M0 scales + a pad byte: the SM90 FlashMLA
+    # family V4.1 commits, at this checkpoint's widths.
+    assert rope["caches"] == [{"name": "kv_rope", "kind": "kv", "owned": True,
+                               "bytes_per_entry": 650}]
+    assert nope["caches"][0]["name"] == "kv_nope" and nope["caches"][0]["owned"]
+    assert reader["caches"][0]["name"] == "kv_nope" and not reader["caches"][0]["owned"]
+    assert reader["caches"][0]["bytes_per_entry"] == nope["caches"][0]["bytes_per_entry"]
+    # The reader's read shape must equal its owner's, or the binding is refused -- the
+    # committed pair states the same record, which the Go validator checks on load.
+
+
+def test_ml4_indexer_runs_only_on_the_full_layers():
+    """44 scorers on the full-indexer layers, none on the shared ones; every layer's
+    main read keeps the top-k bound the shared buffer carries
+    (mistral_large4/nvidia/model.py:47-52, mla_attention.py:564-566)."""
+    g = graph_of(ML4)
+    seq = [k for k in g["stack"].get("prologue", [])]
+    seq += [k for _ in range(g["stack"].get("repeat", 0)) for k in g["stack"]["pattern"]]
+    kinds = {k["id"]: k for k in g["layer_kinds"]}
+    scoring = [k for k in seq
+               if any(n.get("role") == "block_index_scores" for n in kinds[k]["nodes"])]
+    assert len(scoring) == 44
+    for kid, kind in kinds.items():
+        attn = next(n for n in kind["nodes"]
+                    if n.get("op") == "Attention" and n.get("holds_engine_kv"))
+        assert attn["kind"] == "sparse_mla" and attn["index_topk"] == 2048, kid
+
+
+def test_ml4_leaves_the_unquantized_tensors_at_the_base_width():
+    """kv_a, kv_b, the fused indexer K/weights projection and the head are BF16 beside
+    the FP8 blockwise linears (modules_to_not_convert; vLLM builds them with
+    quant_config=None). The indexer's wq_b is FP8 like the linears."""
+    g = graph_of(ML4)
+    assert g["global"]["weight_dtype"] == "fp8"
+    assert g["global"]["weight_scale"] == {"elements": 16384, "bytes": 4}
+    widths = {}
+    for k in g["layer_kinds"]:
+        for n in k["nodes"]:
+            if n.get("role") in ("kv_a_proj", "kv_b_proj", "index_wk_weights_proj",
+                                 "index_wq_b", "q_proj", "o_proj", "experts"):
+                widths.setdefault(n["role"], n.get("weight_dtype"))
+    assert widths["kv_a_proj"] == "bf16" and widths["kv_b_proj"] == "bf16"
+    assert widths["index_wk_weights_proj"] == "bf16"
+    assert widths["index_wq_b"] is None  # the global fp8
+    assert widths["q_proj"] is None and widths["o_proj"] is None
+    assert widths["experts"] is None
+    head = next(n for n in g["head"] if n.get("role") == "lm_head")
+    assert head["weight_dtype"] == "bf16"
+
+
+def test_ml4_refuses_a_reader_whose_source_is_a_rope_layer():
+    """The cache-naming rule expresses only a NoPE reader of a NoPE source; anything
+    else is refused rather than misbound."""
+    dg = deriver()
+    t = dict(text_config(config_of(ML4)))
+    t = json.loads(json.dumps(t))
+    # Point layer 43's KV at the RoPE layer 42.
+    t["kv_source_layers"][43] = 42
+    raw = dict(config_of(ML4), text_config=t)
+    with pytest.raises(Exception, match="NoPE layer reading an earlier NoPE layer"):
+        dg.handler_mistral_large4(t, raw, "synthetic")
