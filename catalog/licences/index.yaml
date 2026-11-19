@@ -243,6 +243,14 @@ models:
       - file: LicenseRef-minimax-community.txt
         source: https://huggingface.co/nvidia/MiniMax-M3-NVFP4/raw/901464083161bf8612a29ff7ad29914cd4ab4a85/LICENSE
         sha256: b53f2fdda3049b0e9013207be51efc2d372cda1fcfdd8bb4bb8b22658ca5db9c
+  - model: mistral-large-4-1t-a52b
+    licence: LicenseRef-modified-mit
+    texts:
+      - file: LicenseRef-modified-mit.mistral-large-4.txt
+        source: https://huggingface.co/mistralai/Mistral-Large-4-1T-A52B/raw/af26e7869af601441d5cdf75a1272469ddc3d059/LICENSE
+        sha256: d242ebedb53ffd7e26c220e3305665ca47e4e5267fa62ff4cdeb3953b8353c78
+    notice: "Attribution notice: 2026 - Mistral"
+    note: "The card names the Mistral Ecosystem Open-Weight License, a modified MIT whose Section 2 requires a separate commercial license for Model-as-a-Service use; redistribution of the config is permitted with the notice kept."
   - model: muse-spark-open-816b-a42b
     licence: LicenseRef-muse-model-license
     texts:
