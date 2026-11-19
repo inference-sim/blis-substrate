@@ -97,7 +97,7 @@ layer_kinds:
     - name: kv_rope
       kind: kv
       owned: true
-      bytes_per_entry: 650
+      bytes_per_entry: 576
   - op: GEMM
     role: o_proj
     n: 6144
@@ -237,7 +237,7 @@ layer_kinds:
     - name: kv_rope
       kind: kv
       owned: true
-      bytes_per_entry: 650
+      bytes_per_entry: 576
   - op: GEMM
     role: o_proj
     n: 6144
@@ -402,7 +402,7 @@ layer_kinds:
     - name: kv_nope
       kind: kv
       owned: true
-      bytes_per_entry: 521
+      bytes_per_entry: 512
   - op: GEMM
     role: o_proj
     n: 6144
@@ -535,7 +535,7 @@ layer_kinds:
     - name: kv_rope
       kind: kv
       owned: true
-      bytes_per_entry: 650
+      bytes_per_entry: 576
   - op: GEMM
     role: o_proj
     n: 6144
@@ -678,7 +678,7 @@ layer_kinds:
     - name: kv_nope
       kind: kv
       owned: false
-      bytes_per_entry: 521
+      bytes_per_entry: 512
   - op: GEMM
     role: o_proj
     n: 6144

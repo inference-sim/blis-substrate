@@ -10366,10 +10366,10 @@ def test_ml4_readers_bind_to_the_nope_owner_the_config_names():
                 if n.get("op") == "Attention" and n.get("holds_engine_kv"))
     reader = next(n for n in kinds["full_kvreader_layer"]["nodes"]
                   if n.get("op") == "Attention" and n.get("holds_engine_kv"))
-    # 512 FP8 latent + 64 BF16 rope + 9 UE8M0 scales + a pad byte: the SM90 FlashMLA
-    # family V4.1 commits, at this checkpoint's widths.
+    # The pure-FP8 reading of the checkpoint's fp8_kv_cache: the whole latent, rope
+    # included, at one byte a value.
     assert rope["caches"] == [{"name": "kv_rope", "kind": "kv", "owned": True,
-                               "bytes_per_entry": 650}]
+                               "bytes_per_entry": 576}]
     assert nope["caches"][0]["name"] == "kv_nope" and nope["caches"][0]["owned"]
     assert reader["caches"][0]["name"] == "kv_nope" and not reader["caches"][0]["owned"]
     assert reader["caches"][0]["bytes_per_entry"] == nope["caches"][0]["bytes_per_entry"]

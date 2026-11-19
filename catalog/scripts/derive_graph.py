@@ -3105,12 +3105,15 @@ def handler_mistral_large4(cfg, raw, model):
         = 132 B an entry), one entry a token, one "head" -- the record V4.1's index cache
         also stores.
 
-    Records stated with a documented uncertainty: the latent records follow the SM90
-    FlashMLA family V4.1 commits (512 FP8 nope + 64 BF16 rope + UE8M0 scales on a RoPE
-    layer, the rank alone on a NoPE layer), and this checkpoint's exact pad bytes and
-    page alignment are not verified against the mistral kernel -- a delta under one per
-    cent of the record, recorded here rather than guessed silently. Block size and page
-    alignment are left to the engine's defaults for the same reason.
+    Records stated with a documented uncertainty: the latent records take the
+    checkpoint's own fp8_kv_cache at its word -- the whole latent, rope key included,
+    at one byte a value, scales unpriced -- which is the form an engine's generic
+    latent mapping expresses. The SM90 FlashMLA family V4.1 commits instead stores the
+    rope key at BF16 beside FP8 nope values with UE8M0 scales (584 B for a 512-wide
+    latent), which would put ML4's RoPE record near 650 B; which of the two this
+    checkpoint's kernel packs is not verified against its source, and the delta is
+    under fifteen per cent of the record. Block size and page alignment are left to
+    the engine's defaults for the same reason.
 
     What the graph cannot carry, recorded so a reader does not have to rediscover it:
       * SSMax (log-position query scaling, ssmax_scaling true) runs on every query and
@@ -3216,10 +3219,12 @@ def handler_mistral_large4(cfg, raw, model):
             return dict(node, weight_dtype=unquant[role])
         return node
 
-    # The latent records: the SM90 FlashMLA family V4.1 commits, at this checkpoint's
-    # widths (see the docstring's uncertainty note).
-    rope_record = kv_lora + rope_dim * act + (kv_lora + rope_dim) // 64 + 1
-    nope_record = kv_lora + kv_lora // 64 + 1
+    # The latent records: the pure-FP8 reading of params.json's fp8_kv_cache, the whole
+    # latent at one byte a value (rope included), scales unpriced -- the form the
+    # engine's generic latent mapping can express, and within a few bytes of the SM90
+    # FlashMLA family's mixed record (see the docstring's uncertainty note).
+    rope_record = kv_lora + rope_dim
+    nope_record = kv_lora
     index_record = index_dim + index_dim // 128 * fp32
 
     def attention_node(i):
