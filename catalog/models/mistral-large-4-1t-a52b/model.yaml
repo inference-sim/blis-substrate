@@ -1,0 +1,12 @@
+name: mistral-large-4-1t-a52b
+# "Mistral Large 4" (Le Chonk), the fp8 base checkpoint. The NVFP4 twin
+# (mistralai/Mistral-Large-4-1T-A52B-NVFP4) is Mistral-native layout with no config.json
+# (params.json only), so it is a separate entry this deriver cannot read yet.
+source:
+  provider: huggingface
+  repo: mistralai/Mistral-Large-4-1T-A52B
+  revision: af26e7869af601441d5cdf75a1272469ddc3d059
+  retrieved: 2026-11-19
+licence:
+  id: LicenseRef-modified-mit
+  evidence: https://huggingface.co/mistralai/Mistral-Large-4-1T-A52B/raw/af26e7869af601441d5cdf75a1272469ddc3d059/LICENSE

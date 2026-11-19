@@ -1754,6 +1754,10 @@ MOE_FAMILIES: dict[str, dict[str, Any]] = {
     # 225, 279-341, 409-470).
     "InklingForConditionalGeneration": {"router": "base", "shared": "gated",
                                         "router_counts_shared": True},
+    # MistralMoE (vllm/models/mistral/nvidia/moe.py:41-73 at v0.34.0): a GateLinear with
+    # FP32 logits and no quant config, so the router stays at the base width, and
+    # shared_experts a gated MistralMLP at moe_intermediate_size x n_shared_experts.
+    "MistralLarge4ForConditionalGeneration": {"router": "base", "shared": "gated"},
 }
 
 
@@ -1908,6 +1912,21 @@ HEAD_UNQUANTIZED = {
     # MiniMax-M3-MXFP8 lists lm_head in ignored_layers, and its header holds it BF16
     # ([200064, 6144]) beside the F8_E4M3 decoder tensors.
     "MiniMaxM3SparseForConditionalGeneration": {"lm_head": "lm_head"},
+    # Mistral Large 4's fp8 exclusion list names lm_head
+    # (quantization_config.modules_to_not_convert), so the head stays at the base width.
+    "MistralLarge4ForConditionalGeneration": {"lm_head": "lm_head"},
+}
+
+# Mistral Large 4's fp8 exclusion list, checkpoint module name -> graph role. The names
+# are the Mistral-native ones _map_quant_config_layers renames into vLLM's modules
+# (mistral_large4/nvidia/model.py:_CHECKPOINT_NAME_MAP); kv_a, kv_b and the fused
+# indexer K/weights projection are the tensors vLLM builds with quant_config=None or
+# disable_tp=True, so they run at the base width whatever the global one is.
+MISTRAL_LARGE4_UNQUANTIZED = {
+    "kv_a_proj_with_mqa": "kv_a_proj",
+    "kv_b_proj": "kv_b_proj",
+    "indexer.wk": "index_wk_weights_proj",
+    "indexer.weights_proj": "index_wk_weights_proj",
 }
 
 
@@ -3034,6 +3053,296 @@ def handler_glm_moe_dsa(cfg, raw, model):
     has_draft = any(k["id"] == DRAFT_KIND_ID for k in result[0])
     draft = (DRAFT_KIND_ID, list(range(layers, layers + spec))) if spec and has_draft else None
     return modelopt_placed(result, raw, model, draft=draft)
+
+
+def handler_mistral_large4(cfg, raw, model):
+    """Mistral Large 4: MLA with a DSA lightning indexer, NoPE every fourth layer, KV
+    shared across layers, softmax top-4 routed experts with one always-on shared expert,
+    and a dense first layer.
+
+    Priced as vLLM v0.34.0 serves it on the text decoder of the multimodal checkpoint
+    (vllm/models/mistral/mistral_large4/nvidia/model.py; the registry also lists
+    MistralLarge4DSparkForCausalLM, a drafter of its own that this checkpoint does not
+    ship, so the graph states no speculator). Every layer index below is read from the
+    config's own vectors, the same ones get_layer_specs reads
+    (vllm/models/mistral/common/layer_spec.py):
+
+      * no_rope_layers[i] == 0 marks a NoPE layer: vLLM spends the rope dims on nope
+        (qk_nope_head_dim = qk_head_dim, attention.py:79-82), stores no rope key -- the
+        KV A-projection writes kv_lora_rank rows alone (attention.py:94-101) -- and pads
+        the query's zero rope dims inside SSMax (:211-217). A NoPE layer therefore has a
+        narrower latent cache and a wider kv_b_proj than a RoPE layer, which is why the
+        two are separate layer kinds rather than one kind with a per-instance width.
+      * kv_source_layers[i] != i marks a layer that attends to ANOTHER layer's latent KV:
+        vLLM builds no kv_a_proj on it and feeds zero latents (attention.py:187-192). On
+        this checkpoint the nine readers (39, 43, ... 71, every fourth from 39) are all
+        NoPE layers reading layer 35's cache, and the source of every reader is a NoPE
+        layer too. The two cache streams are named apart -- kv_rope and kv_nope -- so the
+        schema's reader rule (nearest preceding owner of the same-named cache) binds each
+        reader to layer 35 exactly as kv_source_layers states: the RoPE layers between
+        them own kv_rope, never kv_nope. A future checkpoint whose readers mix streams
+        would need that rule extended; the handler refuses it rather than misbind.
+      * indexer_types[i] == "shared" marks a layer without its own indexer, which reuses
+        the top-k indices of the closest preceding indexer (layer_spec.py:15-18, 45-48).
+        The scorer, its projections and the index cache belong to the "full" layers only.
+      * first_k_dense_replace 1 makes layer 0 a dense MistralMLP; layers 1-71 route.
+
+    The projections, per attention.py and indexer.py at v0.34.0:
+
+      * q_proj [heads x qk_head_dim, hidden] column-parallel, FP8 as the linears are;
+      * kv_a_proj_with_mqa [kv_lora (+ rope on RoPE layers), hidden] REPLICATED and
+        unquantized (quant_config=None, attention.py:94-101; modules_to_not_convert
+        agrees), with its RMSNorm over the latent rank;
+      * kv_b_proj [heads x (qk_nope + v), kv_lora] column-parallel and unquantized the
+        same way, WIDER on NoPE layers (qk_nope = qk_head_dim there);
+      * the indexer's wq_b [index_n_heads x index_head_dim, HIDDEN] -- Mistral's indexer
+        projects its query from the hidden states, not from a latent rank, which is the
+        one shape it does not share with the DeepSeek/GLM lightning indexer -- plus
+        wk_weights_proj [index_head_dim + index_n_heads, hidden] fused, replicated and
+        unquantized, a LayerNorm over hidden ahead of wq_b, and an FP32 k-norm;
+      * the indexer's key cache holds head_dim FP8 values plus one FP32 scale per
+        quant_block_size 128 values (indexer.py:153-158: head_dim + head_dim // 128 * 4
+        = 132 B an entry), one entry a token, one "head" -- the record V4.1's index cache
+        also stores.
+
+    Records stated with a documented uncertainty: the latent records follow the SM90
+    FlashMLA family V4.1 commits (512 FP8 nope + 64 BF16 rope + UE8M0 scales on a RoPE
+    layer, the rank alone on a NoPE layer), and this checkpoint's exact pad bytes and
+    page alignment are not verified against the mistral kernel -- a delta under one per
+    cent of the record, recorded here rather than guessed silently. Block size and page
+    alignment are left to the engine's defaults for the same reason.
+
+    What the graph cannot carry, recorded so a reader does not have to rediscover it:
+      * SSMax (log-position query scaling, ssmax_scaling true) runs on every query and
+        the indexer's query too; it is folded into the rope/pad elementwise nodes rather
+        than priced as its own launch, which is what the fused kernels do
+        (attention.py:193-210, indexer.py fused_q);
+      * the deferred all-reduce (fuse_allreduce_rms, model.py:56-67) fuses each
+        sublayer's reduction into the next RMSNorm when it applies; the graph keeps the
+        reductions as all-reduces, as V4.1's does for SM100's fused form;
+      * the Pixtral tower and the multimodal projector are not priced (omitted below,
+        tracked as the inkling tower is); a request carrying an image understates its
+        prefill;
+      * a pipeline boundary moves hidden_states alone at bf16
+        (make_empty_intermediate_tensors_factory(["hidden_states"], hidden),
+        model.py:239-241), not vLLM's standard hidden+residual pair, so
+        pipeline_boundary_bytes_per_token is one activation, not two.
+    """
+    def whole(value, what):
+        if type(value) is not int:
+            raise DeriveError(f"{model}: {what} is {value!r}, not a whole number")
+        return value
+
+    hidden = int(require(cfg, "hidden_size", model))
+    layers = int(require(cfg, "num_layers", model))
+    nq = int(require(cfg, "num_q_heads", model))
+    nope_dim = int(require_key(cfg, "qk_nope_head_dim", model))
+    rope_dim = int(require_key(cfg, "qk_rope_head_dim", model))
+    v_dim = int(require_key(cfg, "v_head_dim", model))
+    kv_lora = int(require_key(cfg, "kv_lora_rank", model))
+    index_heads = int(require_key(cfg, "index_n_heads", model))
+    index_dim = int(require_key(cfg, "index_head_dim", model))
+    index_topk = int(require_key(cfg, "index_topk", model))
+    if cfg.get("q_lora_rank"):
+        raise DeriveError(f"{model}: MistralLarge4 builds a direct q_proj; a q_lora_rank "
+                          f"would be another model")
+    qk_head = nope_dim + rope_dim
+    first_dense = int(cfg.get("first_k_dense_replace") or 0)
+
+    def vector(key, what, ok):
+        values = require_key(cfg, key, model)
+        if len(values) != layers:
+            raise DeriveError(f"{model}: {key} has {len(values)} entries for {layers} layers")
+        out = []
+        for v in values:
+            v = whole(v, f"an entry of {key}")
+            if v not in ok:
+                raise DeriveError(f"{model}: {key} names {v!r}; this handler reads {sorted(ok)}")
+            out.append(v)
+        return out
+
+    # no_rope_layers is 1 on RoPE layers and 0 on NoPE layers (every fourth from index
+    # 3 here), the polarity layer_spec.py reads through nope_layer_flags.
+    rope_vec = vector("no_rope_layers", "NoPE flags", {0, 1})
+    indexer_vec = [str(v) for v in require_key(cfg, "indexer_types", model)]
+    if len(indexer_vec) != layers or set(indexer_vec) - {"full", "shared"}:
+        raise DeriveError(f"{model}: indexer_types must name full/shared for each of "
+                          f"{layers} layers")
+    kv_sources = [whole(i, "an entry of kv_source_layers")
+                  for i in require_key(cfg, "kv_source_layers", model)]
+    if len(kv_sources) != layers:
+        raise DeriveError(f"{model}: kv_source_layers has {len(kv_sources)} entries for "
+                          f"{layers} layers")
+    mlp_vec = [str(v) for v in (cfg.get("mlp_layer_types") or [])]
+    if mlp_vec and (len(mlp_vec) != layers or set(mlp_vec) - {"dense", "sparse"}):
+        raise DeriveError(f"{model}: mlp_layer_types must name dense/sparse for each of "
+                          f"{layers} layers")
+
+    def is_nope(i):
+        return rope_vec[i] == 0
+
+    def reads_kv(i):
+        return kv_sources[i] != i
+
+    # The cache-naming trick above is sound only while every reader is a NoPE layer
+    # whose source is a NoPE layer: a RoPE reader would bind to a RoPE owner's stream
+    # under another name, or a NoPE reader of a RoPE source would state a record its
+    # owner does not store. Refused rather than misbound.
+    for i in range(layers):
+        if reads_kv(i):
+            src = kv_sources[i]
+            if not is_nope(i) or not is_nope(src) or src >= i:
+                raise DeriveError(
+                    f"{model}: layer {i} reads layer {src}'s KV, which is not a NoPE "
+                    f"layer reading an earlier NoPE layer's cache; this handler's cache "
+                    f"naming does not express that sharing")
+    # An indexer-sharing layer reads the closest preceding full layer's top-k, so the
+    # first layer must build one (vLLM asserts the same for a pipeline stage,
+    # model.py:_check_pp_stage).
+    if indexer_vec[0] != "full":
+        raise DeriveError(f"{model}: layer 0 has no indexer of its own and no earlier "
+                          f"layer to read one from")
+
+    base = base_dtype(cfg, raw, model)
+    act = DTYPE_WIDTHS[base]
+    fp32 = DTYPE_WIDTHS["fp32"]
+    quant = raw.get("quantization_config") or cfg.get("quantization_config") or {}
+    excluded = set(quant.get("modules_to_not_convert") or [])
+    unquant = fp8_unquantized_roles(cfg, raw, model, MISTRAL_LARGE4_UNQUANTIZED)
+
+    def at_base(node):
+        role = node.get("role")
+        if role and unquant.get(role):
+            return dict(node, weight_dtype=unquant[role])
+        return node
+
+    # The latent records: the SM90 FlashMLA family V4.1 commits, at this checkpoint's
+    # widths (see the docstring's uncertainty note).
+    rope_record = kv_lora + rope_dim * act + (kv_lora + rope_dim) // 64 + 1
+    nope_record = kv_lora + kv_lora // 64 + 1
+    index_record = index_dim + index_dim // 128 * fp32
+
+    def attention_node(i):
+        cache_dim = kv_lora + (0 if is_nope(i) else rope_dim)
+        node = {"op": "Attention", "holds_engine_kv": True, "kind": "sparse_mla",
+                "role": "attn", "n_q": nq, "n_kv": 1, "d_h": cache_dim,
+                "kv_lora_rank": kv_lora, "index_topk": index_topk}
+        if not is_nope(i):
+            node["qk_rope_head_dim"] = rope_dim
+        if reads_kv(i):
+            node["caches"] = [{"name": "kv_nope", "kind": "kv", "owned": False,
+                               "bytes_per_entry": nope_record}]
+        elif is_nope(i):
+            node["caches"] = [{"name": "kv_nope", "kind": "kv", "owned": True,
+                               "bytes_per_entry": nope_record}]
+        else:
+            node["caches"] = [{"name": "kv_rope", "kind": "kv", "owned": True,
+                               "bytes_per_entry": rope_record}]
+        return node
+
+    def indexer_nodes():
+        # wq_b reads the HIDDEN states (indexer.py:95-100), the one projection this
+        # family does not share with the DeepSeek/GLM lightning indexer.
+        return [
+            {"op": "Elementwise", "role": "index_q_input_norm", "tp": "replicated",
+             "bytes_per_token": 2 * hidden * act},
+            gemm("index_wq_b", index_heads * index_dim, hidden),
+            {"op": "Elementwise", "role": "index_q_ssmax_rope_quant", "tp": "replicated",
+             "bytes_per_token": index_heads * index_dim * (act + 1)
+             + index_heads * index_dim // 128},
+            at_base(gemm("index_wk_weights_proj", index_dim + index_heads, hidden)),
+            # The k-norm is FP32 (indexer.py:121) and the normalized, roped key goes
+            # straight into the FP8 cache (indexer.py:166-176), so the write states the
+            # cache it fills and only its traffic beyond the record.
+            {"op": "Elementwise", "role": "index_k_norm_rope_store", "tp": "replicated",
+             "bytes_per_token": 2 * index_dim * act, "writes_cache": "index"},
+            {"op": "Attention", "holds_engine_kv": False, "role": "block_index_scores",
+             "kind": "gqa", "n_q": index_heads, "n_kv": 1, "d_h": index_dim,
+             "tp": "replicated",
+             "caches": [{"name": "index", "kind": "index", "owned": True,
+                         "bytes_per_entry": index_record}]},
+        ]
+
+    def layer(i, *, dense):
+        has_indexer = indexer_vec[i] == "full"
+        nodes = [norm("input_norm")]
+        if has_indexer:
+            nodes += indexer_nodes()
+        if not reads_kv(i):
+            # kv_a is replicated (attention.py:94-101) and unquantized with its norm.
+            nodes += [
+                at_base(dict(gemm("kv_a_proj", kv_lora + (0 if is_nope(i) else rope_dim),
+                                  hidden), tp="replicated")),
+                {"op": "Elementwise", "role": "kv_a_layernorm", "tp": "replicated",
+                 "bytes_per_token": 2 * kv_lora * act},
+            ]
+        nodes.append(gemm("q_proj", nq * qk_head, hidden))
+        # NoPE layers spend the rope dims on nope, so kv_b is wider there
+        # (attention.py:79-82, 103-108).
+        nope_eff = qk_head if is_nope(i) else nope_dim
+        nodes.append(at_base(gemm("kv_b_proj", nq * (nope_eff + v_dim), kv_lora)))
+        if is_nope(i):
+            # No rope key exists; SSMax pads the query's zero rope dims
+            # (attention.py:211-217).
+            nodes.append({"op": "Elementwise", "role": "q_ssmax_pad", "tp": "sharded",
+                          "bytes_per_token": 2 * nq * (qk_head + rope_dim) * act})
+        else:
+            nodes += [
+                {"op": "Elementwise", "role": "q_rope_ssmax", "tp": "sharded",
+                 "bytes_per_token": 2 * nq * qk_head * act},
+                {"op": "Elementwise", "role": "k_pe_rope", "tp": "replicated",
+                 "bytes_per_token": 2 * rope_dim * act},
+            ]
+        nodes += [
+            attention_node(i),
+            gemm("o_proj", hidden, nq * v_dim),
+            collective("AllReduce", "attn_out", EMIT_TENSOR_PARALLEL),
+            norm("post_attn_norm"),
+        ]
+        if dense:
+            nodes += dense_mlp(cfg, model, hidden)
+            nodes.append(collective("AllReduce", "mlp_out", EMIT_TENSOR_PARALLEL))
+        else:
+            nodes += moe_block(cfg, model, hidden, raw,
+                               family="MistralLarge4ForConditionalGeneration")
+            nodes.append(collective("All2All", "moe_dispatch_combine", EMIT_EXPERT_PARALLEL))
+            nodes.append(collective("AllReduce", "mlp_out",
+                                    EMIT_TENSOR_PARALLEL_UNLESS_SP_MOE))
+        return {"id": "", "nodes": nodes, "edges": chain(nodes)}
+
+    # One kind per (indexer, kv, rope, dense) combination the stack actually uses; the
+    # id names what makes the kind distinct.
+    sequence = []
+    kinds = []
+    seen = {}
+    for i in range(layers):
+        dense = i < first_dense or (mlp_vec and mlp_vec[i] == "dense")
+        key = (indexer_vec[i], "read" if reads_kv(i) else ("own_nope" if is_nope(i) else "own_rope"),
+               dense)
+        if key not in seen:
+            parts = []
+            if dense:
+                parts.append("dense")
+            parts.append(indexer_vec[i])
+            if reads_kv(i):
+                parts.append("kvreader")
+            elif is_nope(i):
+                parts.append("nope")
+            else:
+                parts.append("rope")
+            kind = layer(i, dense=dense)
+            kind["id"] = "_".join(parts) + "_layer"
+            seen[key] = kind["id"]
+            kinds.append(kind)
+        sequence.append(seen[key])
+
+    return kinds, compress(sequence), {
+        "global": {
+            "context_window": int(cfg.get("max_position_embeddings") or 0),
+            # One bf16 hidden_states activation a token (model.py:239-241).
+            "pipeline_boundary_bytes_per_token": 2 * hidden,
+        },
+    }
 
 
 def handler_kimi_k25(cfg, raw, model):
@@ -7991,6 +8300,9 @@ HANDLERS = {
     "DeepseekV41ForCausalLM": handler_deepseek_v41,
     "GlmMoeDsaForCausalLM": handler_glm_moe_dsa,
     "InklingForConditionalGeneration": handler_moe,
+    # Mistral Large 4's text decoder: MLA + a DSA lightning indexer + NoPE + KV sharing
+    # + MoE with one shared expert and a dense first layer. See handler_mistral_large4.
+    "MistralLarge4ForConditionalGeneration": handler_mistral_large4,
     "GptOssForCausalLM": handler_moe,
     "MiniMaxM2ForCausalLM": handler_minimax_m2,
     "MiniMaxM3SparseForCausalLM": handler_minimax_m3,
@@ -8352,6 +8664,12 @@ UNPRICED_IMAGE_TOWERS = {
                                          "inference-sim/blis-substrate#304"),
     "InklingForConditionalGeneration": ("the hmlp tower's layer widths come from a planner that has been read, "
                                         "not run", ENCODER_ISSUES["inkling"]),
+    # Pixtral's 30-layer tower (vision_config.model_type pixtral at v0.34.0) has no builder
+    # here yet; the catalog lane that adds one prices it.
+    "MistralLarge4ForConditionalGeneration": ("the Pixtral tower has no builder in this deriver yet",
+                                              "inference-sim/blis-substrate#304"),
+    "Inkling2ForConditionalGeneration": ("the inkling2 tower has no builder in this deriver yet",
+                                         ENCODER_ISSUES["inkling"]),
 }
 AUDIO_TOWERS = {
     "MuseSparkForConditionalGeneration": "a ConvNeXt-style stack with depthwise convolutions, which have no primitive",
