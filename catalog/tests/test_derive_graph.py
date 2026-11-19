@@ -2769,7 +2769,18 @@ def test_nemotron_h_parses_the_character_form_of_the_layer_vector():
 # Architectures whose model code decides sequence parallelism itself rather than reading
 # the engine-wide use_sequence_parallel_moe. Named here rather than read from the deriver,
 # so the test does not move with the table it checks.
-OWN_SEQUENCE_PARALLELISM = {"DeepseekV41ForCausalLM", "DeepseekV4ForCausalLM"}
+# Inkling2 carries its own sequence parallelism (model.py: self.seq_parallel, the
+# reduce-scatter at :343 at abb8194d), as DeepSeek V4's family does.
+OWN_SEQUENCE_PARALLELISM = {"DeepseekV41ForCausalLM", "DeepseekV4ForCausalLM",
+                            "Inkling2ForConditionalGeneration"}
+
+# Architectures whose expert class shards its experts over the TENSOR-PARALLEL group and
+# dispatches no tokens: every rank holds its slice of the 384 experts, works every token
+# against it, and the partial outputs combine in the layer's all-reduce. Inkling2Experts
+# sets its expert-parallel group to the tensor-parallel world and reads no
+# enable_expert_parallel (vllm/models/inkling2/nvidia/moe.py:92-96 at abb8194d), so a
+# graph of one of these carries no All2All however a scenario states its parallelism.
+TP_GROUP_EXPERTS = {"Inkling2ForConditionalGeneration"}
 
 
 def test_collectives_land_where_the_parallelism_needs_them():
@@ -2818,12 +2829,14 @@ def test_collectives_land_where_the_parallelism_needs_them():
                     f"the model's own sequence parallelism")
 
             if has_experts:
-                assert len(all2all) == 1, (
+                tp_sharded = g["global"].get("architecture") in TP_GROUP_EXPERTS
+                assert tp_sharded or len(all2all) == 1, (
                     f"{where}: a routed layer with {len(all2all)} All2All nodes; an MoE "
                     f"step dispatches to the expert ranks exactly once")
-                assert all2all[0]["emit"] == "expert_parallel", (
-                    f"{where}: All2All emits on {all2all[0]['emit']!r}, but expert "
-                    f"dispatch is what expert parallelism conditions")
+                if not tp_sharded:
+                    assert all2all[0]["emit"] == "expert_parallel", (
+                        f"{where}: All2All emits on {all2all[0]['emit']!r}, but expert "
+                        f"dispatch is what expert parallelism conditions")
                 # A family whose MoE reduces a different tensor per mode states one
                 # reduction per mode instead; neither fires under a dispatch, which every
                 # sequence-parallel MoE has, so both stand down there too.
@@ -2883,7 +2896,14 @@ def test_a_recurrent_layer_reduces_its_mixer_output():
             if not any(n["op"] == "RecurrentUpdate" for n in kind["nodes"]):
                 continue
             reduces = [n for n in kind["nodes"] if n["op"] == "AllReduce"]
-            assert any(n["emit"] == "tensor_parallel" for n in reduces), (
+            # Either the unconditional all-reduce, or the SP-aware pair a model's own
+            # sequence parallelism replaces with a reduce-scatter (DeepSeek V4.1's and
+            # Inkling2's shape): what the relation forbids is the MoE-aware form.
+            sp_aware = any(n["emit"] == "tensor_parallel_unless_sequence_parallel"
+                           for n in reduces) and any(
+                n["op"] == "ReduceScatter" and n.get("emit") == "sequence_parallel"
+                for n in kind["nodes"])
+            assert any(n["emit"] == "tensor_parallel" for n in reduces) or sp_aware, (
                 f"{d.name}/{kind['id']}: a recurrent layer with no unconditional "
                 f"tensor-parallel reduction of its mixer output")
             seen += 1
@@ -10257,3 +10277,120 @@ def test_the_mla_prefill_widths_come_from_the_config(tmp_path):
     text_config(bumped)["v_head_dim"] = 64
     g = _derive_raw(bumped, tmp_path, "kimi-k2.5")
     assert {(a["prefill_qk_head_dim"], a["prefill_v_head_dim"]) for a in _attention_nodes(g) if a["kind"] == "mla"} == {(192, 64)}, t.get("v_head_dim")
+
+
+# --- Inkling 2 Small (thinkingmachines/Inkling-2-Small) ------------------------------------
+
+INK2 = MODELS / "inkling-2-small"
+
+
+def test_inkling2_kinds_follow_local_layer_ids():
+    """39 windowed layers and 9 attention-residual ones, one a 6-layer block, from the
+    config's own local_layer_ids; the block structure is checked, not assumed."""
+    t = text_config(config_of(INK2))
+    g = graph_of(INK2)
+    assert [k["id"] for k in g["layer_kinds"]] == ["local_moe", "full_moe"]
+    assert g["stack"] == {"pattern": ["local_moe"] * 5 + ["full_moe"], "repeat": 8}
+    seq = [k for _ in range(g["stack"]["repeat"]) for k in g["stack"]["pattern"]]
+    local = set(t["local_layer_ids"])
+    assert all(seq[i] == ("local_moe" if i in local else "full_moe") for i in range(len(seq)))
+    assert len(seq) == t["num_hidden_layers"] == 48
+    full = [i for i in range(len(seq)) if seq[i] == "full_moe"]
+    assert full == [5, 11, 17, 23, 29, 35, 41, 47]
+    assert t["n_layers_per_attn_res_block"] == 6
+    # The config's mtp_config is backed by no tensor in the checkpoint (#88), so the
+    # graph states no speculator.
+    assert g.get("speculator") is None
+
+
+def test_inkling2_attention_prices_what_the_checkpoint_ships():
+    """One fused qkvr projection (query, rel query, gate, a sink a head, k, v), the
+    output projection unreduced (the MoE all-reduce is the layer's only reduction),
+    short-conv mixing on the attention and MLP streams and the KV streams, the windowed
+    kind on local layers, and the 3-input norms and dynamic K/V convolutions on the
+    attention-residual ones (attention.py split_sizes; the pinned headers at 1df2d97d)."""
+    g = graph_of(INK2)
+    kinds = {k["id"]: k for k in g["layer_kinds"]}
+    for kid, inputs, window in (("local_moe", 1, 1024), ("full_moe", 3, None)):
+        nodes = {n["role"]: n for n in kinds[kid]["nodes"] if "role" in n}
+        assert nodes["attn_input_norms"]["bytes_per_token"] == inputs * 2 * 4608 * 2
+        assert nodes["qkvr"]["n"] == 48 * 128 + 48 * 16 + 48 * 128 + 48 + 2 * 8 * 128
+        assert nodes["qkvr"]["k"] == 4608 and nodes["qkvr"]["weight_dtype"] == "bf16"
+        assert nodes["o_proj"]["n"] == 4608 and nodes["o_proj"]["k"] == 48 * 128
+        attn = nodes["attn"] if "attn" in nodes else next(
+            n for n in kinds[kid]["nodes"] if n.get("op") == "Attention")
+        assert attn["n_q"] == 48 and attn["n_kv"] == 8 and attn["d_h"] == 128
+        if window:
+            assert attn["kind"] == "swa" and attn["window"] == window
+        else:
+            assert attn["kind"] == "gqa" and "window" not in attn
+        convs = [n for n in kinds[kid]["nodes"] if n.get("op") == "RecurrentUpdate"]
+        assert all(c["recurrent_kind"] == "short_conv" and c["conv_kernel"] == 4
+                   for c in convs)
+        assert {c["intermediate_size"] for c in convs} == {4608, 8 * 128}
+        # Two reductions a layer: the attention partial (SP-aware: an all-reduce that
+        # the model's own sequence parallelism replaces with a reduce-scatter) and the
+        # MoE's. No dispatch all-to-all exists: the experts shard over TP.
+        emits = {(n["op"], n.get("role"), n.get("emit"))
+                 for n in kinds[kid]["nodes"] if n.get("op") in ("AllReduce", "ReduceScatter")}
+        assert ("AllReduce", "attn_out", "tensor_parallel_unless_sequence_parallel") in emits
+        assert ("ReduceScatter", "attn_out", "sequence_parallel") in emits
+        assert ("AllReduce", "mlp_out", "tensor_parallel_unless_sp_moe") in emits
+        assert not any(n.get("op") == "All2All" for n in kinds[kid]["nodes"])
+    full = {n["role"]: n for n in kinds["full_moe"]["nodes"] if "role" in n}
+    assert "attn_res_mix" in full and "k_sconv_proj" in full and "v_sconv_proj" in full
+    local = {n["role"]: n for n in kinds["local_moe"]["nodes"] if "role" in n}
+    assert "attn_res_mix" not in local and "k_sconv_proj" not in local
+
+
+def test_inkling2_experts_are_nvfp4_beside_bf16_linears():
+    """384 routed experts, top-8, no shared expert, inner 2304, stored NVFP4 (U8-packed
+    w13/w2 with F8 scales at group 16 in the pinned headers) while the model code builds
+    every linear without the quant config."""
+    g = graph_of(INK2)
+    assert g["global"]["weight_dtype"] == "bf16"
+    experts = next(n for k in g["layer_kinds"] for n in k["nodes"]
+                   if n.get("role") == "experts")
+    assert (experts["experts"], experts["top_k"], experts["n"], experts["k"]) == (384, 8, 2304, 4608)
+    assert experts["weight_dtype"] == "nvfp4"
+    assert not any(n.get("role", "").startswith("shared") for k in g["layer_kinds"]
+                   for n in k["nodes"])
+    # The router's bias is stated (use_gate_bias; gate.bias in the checkpoint) at the
+    # base width, the graph's convention for a bias beside converted weights.
+    router = next(n for k in g["layer_kinds"] for n in k["nodes"]
+                  if n.get("role") == "router")
+    assert router["weight_dtype"] == "bf16" and router.get("bias_dtype") == "bf16"
+
+
+def test_inkling2_resident_weights_match_the_checkpoint():
+    """FID-7's PR-time check: the graph's resident weight bytes equal the checkpoint's
+    text-decoder tensors, read from the 24 pinned shard headers at 1df2d97d (the ~0.61
+    GiB vision tower excluded on both sides, the resident-only norms, clip scales,
+    rel_logits_proj tables, static conv kernels and FP32 pseudo-queries priced by no
+    node). The checkpoint figure is stated with its source."""
+    g = graph_of(INK2)
+    W = {"bf16": 2, "fp32": 4}
+
+    def resident(n, c=1):
+        if n.get("aliases"):
+            return 0
+        w = W.get(n.get("weight_dtype") or g["global"]["weight_dtype"])
+        if w is None:
+            w = 0.5 + 1 / 16  # NVFP4 payload plus one F8 scale byte a 16 values
+        if n["op"] == "GEMM":
+            return c * n["n"] * n["k"] * w
+        if n["op"] == "GroupedGEMM":
+            return c * n["experts"] * 3 * n["n"] * n["k"] * w
+        if n["op"] == "Gather":
+            return n["rows"] * n["row_bytes"]
+        return 0
+
+    seq = [k for _ in range(g["stack"]["repeat"]) for k in g["stack"]["pattern"]]
+    kinds = {k["id"]: k for k in g["layer_kinds"]}
+    counts = collections.Counter(seq)
+    total = sum(resident(n, c) for kid, c in counts.items() for n in kinds[kid]["nodes"])
+    total += sum(resident(n) for n in g.get("head", []))
+    total += g["global"]["vocab_size"] * g["global"]["hidden_size"] * W["bf16"]
+    checkpoint = 343_536_347_456
+    assert abs(total - checkpoint) / checkpoint < 1e-4, (
+        f"graph {total:,} B against the checkpoint's {checkpoint:,} B")
