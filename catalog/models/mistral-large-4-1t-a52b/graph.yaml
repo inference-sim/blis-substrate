@@ -762,6 +762,101 @@ layer_kinds:
     - 19
   - - 19
     - 20
+- id: dspark_layer
+  nodes:
+  - op: Elementwise
+    role: dspark_attn_norm
+  - op: GEMM
+    role: dspark_wq
+    n: 8192
+    k: 6144
+    weight_dtype: bf16
+  - op: GEMM
+    role: dspark_kv_a
+    n: 576
+    k: 6144
+    weight_dtype: bf16
+  - op: Elementwise
+    role: dspark_kv_a_norm
+    tp: replicated
+    bytes_per_token: 2048
+  - op: GEMM
+    role: dspark_kv_b
+    n: 12288
+    k: 512
+    weight_dtype: bf16
+  - op: Attention
+    holds_engine_kv: true
+    role: dspark_attn
+    kind: mla
+    n_q: 64
+    n_kv: 1
+    d_h: 576
+    kv_lora_rank: 512
+    qk_rope_head_dim: 64
+    prefill_qk_head_dim: 128
+    prefill_v_head_dim: 128
+  - op: GEMM
+    role: dspark_wo
+    n: 6144
+    k: 8192
+    weight_dtype: bf16
+  - op: AllReduce
+    role: dspark_attn_out
+    emit: tensor_parallel
+  - op: Elementwise
+    role: dspark_ffn_norm
+  - op: GEMM
+    role: dspark_mlp_gate_up
+    n: 49152
+    k: 6144
+    weight_dtype: bf16
+  - op: GEMM
+    role: dspark_mlp_down
+    n: 6144
+    k: 24576
+    weight_dtype: bf16
+  - op: AllReduce
+    role: dspark_mlp_out
+    emit: tensor_parallel
+  edges:
+  - - 0
+    - 1
+  - - 1
+    - 2
+  - - 2
+    - 3
+  - - 3
+    - 4
+  - - 4
+    - 5
+  - - 5
+    - 6
+  - - 6
+    - 7
+  - - 7
+    - 8
+  - - 8
+    - 9
+  - - 9
+    - 10
+  - - 10
+    - 11
+- id: dspark_context
+  nodes:
+  - op: Elementwise
+    role: dspark_target_norm
+    tp: replicated
+    bytes_per_token: 122880
+  - op: GEMM
+    role: dspark_target_projection
+    n: 6144
+    k: 30720
+    weight_dtype: bf16
+    tp: replicated
+  edges:
+  - - 0
+    - 1
 stack:
   prologue:
   - dense_full_rope_layer
@@ -812,7 +907,18 @@ encoder:
   omitted:
   - modality: image
     reason: the Pixtral tower has no builder in this deriver yet
-    issue: inference-sim/blis-substrate#304
+    issue: inference-sim/blis-substrate#405
+embedding:
+- op: Gather
+  role: embed_tokens
+  rows: 204800
+  row_bytes: 12288
+  rows_per_token: 1
+  out_bytes_per_token: 12288
+  shard: rows
+- op: AllReduce
+  role: embed_out
+  emit: tensor_parallel
 head:
 - op: Elementwise
   role: final_norm
@@ -821,3 +927,49 @@ head:
   n: 204800
   k: 6144
   weight_dtype: bf16
+speculator:
+  method: dspark
+  num_spec_tokens: 3
+  drafting: parallel_block
+  embedding:
+  - op: Gather
+    role: dspark_embed_tokens
+    rows: 204800
+    row_bytes: 12288
+    rows_per_token: 1
+    out_bytes_per_token: 12288
+    shard: rows
+    aliases: embedding.embed_tokens
+  - op: AllReduce
+    role: dspark_embed_out
+    emit: tensor_parallel
+  stack:
+    pattern:
+    - dspark_layer
+    repeat: 3
+  context_stack:
+    pattern:
+    - dspark_context
+    repeat: 1
+  head:
+  - op: Elementwise
+    role: dspark_final_norm
+  - op: GEMM
+    role: dspark_joint_proj
+    n: 1536
+    k: 7168
+    weight_dtype: bf16
+    tp: replicated
+  sequential_head:
+  - op: Gather
+    role: markov_w1
+    rows: 204800
+    row_bytes: 1024
+    rows_per_token: 1
+    out_bytes_per_token: 1024
+  - op: GEMM
+    role: markov_w2
+    n: 204800
+    k: 512
+    weight_dtype: bf16
+    tp: replicated

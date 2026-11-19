@@ -1283,6 +1283,18 @@ def test_the_draft_module_indexes_even_where_the_base_rule_skips():
         spec = g.get("speculator")
         if not spec:
             continue
+        # A DSpark draft of the DeepseekMTP shape inherits the target's sparse attention,
+        # so vLLM forces a scorer on it. Mistral Large 4's DSpark draft is dense MLA with
+        # no indexer tensors in the checkpoint (mtp_dspark.* at af26e786 carries wq,
+        # wkv_a_with_mqa, wkv_b, wo and a dense MLP, nothing else), so the forced-scorer
+        # rule does not reach it.
+        if spec.get("method") == "dspark" and not any(
+                n.get("role") == "block_index_scores"
+                for k in g["layer_kinds"] for n in k["nodes"]
+                if k["id"] in set(layer_sequence(spec["stack"]))):
+            assert d.name == "mistral-large-4-1t-a52b", (
+                f"{d.name}: a dspark draft with no scorer is not one this test knows")
+            continue
         kinds = {k["id"]: k for k in g["layer_kinds"]}
         base_scoring = {kid for kid, k in kinds.items()
                         if kid in set(layer_sequence(g["stack"]))
@@ -10320,6 +10332,9 @@ def test_ml4_kinds_follow_the_config_vectors():
     assert counts == {"dense_full_rope_layer": 1, "full_rope_layer": 25,
                       "full_nope_layer": 9, "shared_rope_layer": 28,
                       "full_kvreader_layer": 9}
+    # The draft module the checkpoint ships is its own stack, beside the target's.
+    sp = g["speculator"]
+    assert sp["stack"] == {"pattern": ["dspark_layer"], "repeat": 3}
     assert len(seq) == t["num_hidden_layers"] == 72
     # Layer 0 is the dense prologue (first_k_dense_replace 1).
     assert seq[0] == "dense_full_rope_layer"
@@ -10388,8 +10403,8 @@ def test_ml4_indexer_runs_only_on_the_full_layers():
     scoring = [k for k in seq
                if any(n.get("role") == "block_index_scores" for n in kinds[k]["nodes"])]
     assert len(scoring) == 44
-    for kid, kind in kinds.items():
-        attn = next(n for n in kind["nodes"]
+    for kid in set(seq):  # the target's kinds; the draft module is a stack of its own
+        attn = next(n for n in kinds[kid]["nodes"]
                     if n.get("op") == "Attention" and n.get("holds_engine_kv"))
         assert attn["kind"] == "sparse_mla" and attn["index_topk"] == 2048, kid
 
@@ -10427,3 +10442,80 @@ def test_ml4_refuses_a_reader_whose_source_is_a_rope_layer():
     raw = dict(config_of(ML4), text_config=t)
     with pytest.raises(Exception, match="NoPE layer reading an earlier NoPE layer"):
         dg.handler_mistral_large4(t, raw, "synthetic")
+
+
+def test_ml4_states_the_dspark_module_the_checkpoint_ships():
+    """The config states no dspark field, but the checkpoint ships mtp_dspark.* at
+    af26e786: three dense-MLA draft layers at the target's geometry (wq [8192, 6144],
+    wkv_a_with_mqa [576, 6144], wkv_b [12288, 512], wo [6144, 8192], w1/w3 [24576, 6144],
+    w2 [6144, 24576], all BF16), a target_projection [6144, 30720] over five target
+    layers, a Markov head of rank 512 and a joint_proj [1536, 7168]; mask_embedding
+    [2, 6144] gives the trained block, anchor + 2 (dspark.py:16-19, 102-105)."""
+    g = graph_of(ML4)
+    sp = g["speculator"]
+    assert sp["method"] == "dspark" and sp["num_spec_tokens"] == 3
+    assert sp["drafting"] == "parallel_block"
+    kinds = {k["id"]: k for k in g["layer_kinds"]}
+    layer = {n["role"]: n for n in kinds["dspark_layer"]["nodes"]}
+    assert layer["dspark_wq"]["n"] == 8192 and layer["dspark_wq"]["k"] == 6144
+    assert layer["dspark_kv_a"]["n"] == 576 and layer["dspark_kv_b"]["n"] == 12288
+    assert layer["dspark_attn"]["kind"] == "mla" and layer["dspark_attn"]["d_h"] == 576
+    assert layer["dspark_mlp_gate_up"]["n"] == 2 * 24576
+    assert all(n.get("weight_dtype") == "bf16" for n in layer.values()
+               if n.get("op") == "GEMM")
+    ctx = {n["role"]: n for n in kinds["dspark_context"]["nodes"]}
+    assert ctx["dspark_target_projection"]["n"] == 6144
+    assert ctx["dspark_target_projection"]["k"] == 5 * 6144
+    seq_head = {n["role"]: n for n in sp["sequential_head"]}
+    assert seq_head["markov_w1"]["rows"] == 204800
+    assert seq_head["markov_w1"]["row_bytes"] == 512 * 2
+    assert seq_head["markov_w2"]["n"] == 204800 and seq_head["markov_w2"]["k"] == 512
+
+
+def test_ml4_resident_weights_match_the_checkpoint():
+    """FID-7's PR-time check: the graph's resident weight bytes equal the checkpoint's
+    text-decoder and draft tensors, read from the shard headers at af26e786 (the vision
+    tower's tensors -- vision_encoder.*, patch_merger.*, vision_language_adapter.*,
+    about 3.17 GiB -- are priced by no node and excluded on both sides; so are the
+    aliased draft embedding and the few MB of norms and F32 block scales no node
+    carries). The checkpoint figure is stated with its source: 1,057,139,990,080 bytes
+    over 54 shards, summed from each pinned header's tensors at their stored dtype."""
+    g = graph_of(ML4)
+    W = {"bf16": 2, "fp8": 1, "fp32": 4}
+    sc = g["global"].get("weight_scale") or {}
+    per_el = 1 + (sc.get("bytes", 0) / sc.get("elements", 1) if sc else 0)
+
+    def resident(n, c=1):
+        if n.get("aliases"):
+            return 0
+        w = W[n.get("weight_dtype") or "fp8"]
+        if (n.get("weight_dtype") or "fp8") == "fp8":
+            w *= per_el
+        if n["op"] == "GEMM":
+            return c * n["n"] * n["k"] * w
+        if n["op"] == "GroupedGEMM":
+            return c * n["experts"] * 3 * n["n"] * n["k"] * w
+        if n["op"] == "Gather":
+            return n["rows"] * n["row_bytes"]
+        return 0
+
+    seq = (g["stack"].get("prologue", [])
+           + [k for _ in range(g["stack"].get("repeat", 0))
+              for k in g["stack"]["pattern"]] + g["stack"].get("epilogue", []))
+    kinds = {k["id"]: k for k in g["layer_kinds"]}
+    counts = collections.Counter(seq)
+    total = sum(resident(n, c) for kid, c in counts.items()
+                for n in kinds[kid]["nodes"])
+    total += sum(resident(n) for n in g.get("head", []))
+    total += sum(resident(n) for n in g.get("embedding", []))
+    sp = g["speculator"]
+    for kid in sp["stack"].get("pattern", []) * sp["stack"].get("repeat", 1):
+        total += sum(resident(n) for n in kinds[kid]["nodes"])
+    cs = sp.get("context_stack") or {}
+    for kid in cs.get("pattern", []) * cs.get("repeat", 1):
+        total += sum(resident(n) for n in kinds[kid]["nodes"])
+    for part in ("embedding", "head", "sequential_head"):
+        total += sum(resident(n) for n in sp.get(part, []))
+    checkpoint = 1_057_139_990_080
+    assert abs(total - checkpoint) / checkpoint < 0.001, (
+        f"graph {total:,} B against the checkpoint's {checkpoint:,} B")

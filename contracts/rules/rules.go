@@ -54,10 +54,8 @@ type Rule struct {
 
 // ArchDeepseekV41 and ArchDeepseekV4 are DeepSeek-V4.1's and DeepSeek-V4's architecture
 // names, the values of their model configurations' architectures[0], which several releases'
-// rules key on. ArchMistralLarge4 is Mistral Large 4's, whose indexer shares the DeepSeek
-// sparse indexer's dtype resolution at v0.34.0 (mistral/nvidia/indexer.py).
+// rules key on.
 const (
-	ArchDeepseekV41   = "DeepseekV41ForCausalLM"
-	ArchDeepseekV4    = "DeepseekV4ForCausalLM"
-	ArchMistralLarge4 = "MistralLarge4ForConditionalGeneration"
+	ArchDeepseekV41 = "DeepseekV41ForCausalLM"
+	ArchDeepseekV4  = "DeepseekV4ForCausalLM"
 )

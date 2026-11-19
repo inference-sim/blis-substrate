@@ -3107,13 +3107,13 @@ def handler_mistral_large4(cfg, raw, model):
 
     Records stated with a documented uncertainty: the latent records take the
     checkpoint's own fp8_kv_cache at its word -- the whole latent, rope key included,
-    at one byte a value, scales unpriced -- which is the form an engine's generic
-    latent mapping expresses. The SM90 FlashMLA family V4.1 commits instead stores the
-    rope key at BF16 beside FP8 nope values with UE8M0 scales (584 B for a 512-wide
-    latent), which would put ML4's RoPE record near 650 B; which of the two this
-    checkpoint's kernel packs is not verified against its source, and the delta is
-    under fifteen per cent of the record. Block size and page alignment are left to
-    the engine's defaults for the same reason.
+    at one byte a value, scales unpriced. The SM90 FlashMLA family V4.1 commits instead
+    stores the rope key at BF16 beside FP8 nope values with UE8M0 scales (584 B for a
+    512-wide latent), which would put ML4's RoPE record near 650 B; which of the two
+    this checkpoint's kernel packs is not verified against its source, and the delta is
+    under fifteen per cent of the record. Block size and page alignment are left to the
+    engine's defaults for the same reason. The mixed-record reading is tracked for the
+    engine side, where a latent-record mapping that prices a stated record belongs.
 
     What the graph cannot carry, recorded so a reader does not have to rediscover it:
       * SSMax (log-position query scaling, ssmax_scaling true) runs on every query and
@@ -3138,6 +3138,8 @@ def handler_mistral_large4(cfg, raw, model):
 
     hidden = int(require(cfg, "hidden_size", model))
     layers = int(require(cfg, "num_layers", model))
+    vocab = int(require(cfg, "vocab_size", model))
+    dense_ffn = int(require(cfg, "ffn_size", model))
     nq = int(require(cfg, "num_q_heads", model))
     nope_dim = int(require_key(cfg, "qk_nope_head_dim", model))
     rope_dim = int(require_key(cfg, "qk_rope_head_dim", model))
@@ -3341,12 +3343,100 @@ def handler_mistral_large4(cfg, raw, model):
             kinds.append(kind)
         sequence.append(seen[key])
 
+    # The draft module the checkpoint ships (mtp_dspark.*, BF16, at af26e786; the config
+    # states no dspark field, so every shape below cites a pinned tensor):
+    #   backbone.layers.{0,1,2} -- three dense-MLA decoder layers at the target's
+    #     geometry (wq [8192, 6144], wkv_a_with_mqa [576, 6144], wkv_b [12288, 512],
+    #     wo [6144, 8192], w1/w3 [24576, 6144], w2 [6144, 24576]), non-causal, the
+    #     draft RoPE the target's YaRN without LeRoPE (dspark.py:8-11);
+    #   backbone.target_projection [6144, 30720] -- five target layers' hidden states
+    #     (30720 = 5 x 6144, num_target_layers) concatenated and projected to the draft
+    #     hidden, once per step over the TARGET's scheduled tokens (dspark.py:110-118),
+    #     which is the speculator's context stack;
+    #   autoregressive_head -- a DSpark Markov head of rank 512 (markov_w1/w2
+    #     [204800, 512]) beside joint_proj [1536, 7168] (dspark.py:_DSPARK_NAME_MAP);
+    #   mask_embedding [2, 6144] -- position-specific masks, one row a mask slot
+    #     (dspark.py:16-19), so the trained block is anchor + 2 = 3 tokens. vLLM asserts
+    #     a deployment's num_speculative_tokens equals this trained depth
+    #     (dspark.py:102-105); the graph states it from the mask rows.
+    # Which five target layers the drafter taps is stated by no pinned artifact, so
+    # aux_hidden_state_layers is absent: the projection is priced (context_stack), the
+    # capture traffic of the taps is not.
+    draft_layers = 3
+    markov = 512
+    num_targets = 5
+
+    def dspark_layer():
+        nodes = [
+            norm("dspark_attn_norm"),
+            dict(gemm("dspark_wq", nq * qk_head, hidden), weight_dtype="bf16"),
+            dict(gemm("dspark_kv_a", kv_lora + rope_dim, hidden), weight_dtype="bf16"),
+            {"op": "Elementwise", "role": "dspark_kv_a_norm", "tp": "replicated",
+             "bytes_per_token": 2 * kv_lora * act},
+            dict(gemm("dspark_kv_b", nq * (nope_dim + v_dim), kv_lora),
+                 weight_dtype="bf16"),
+            {"op": "Attention", "holds_engine_kv": True, "role": "dspark_attn",
+             "kind": "mla", "n_q": nq, "n_kv": 1, "d_h": kv_lora + rope_dim,
+             "kv_lora_rank": kv_lora, "qk_rope_head_dim": rope_dim,
+             "prefill_qk_head_dim": qk_head, "prefill_v_head_dim": v_dim},
+            dict(gemm("dspark_wo", hidden, nq * v_dim), weight_dtype="bf16"),
+            collective("AllReduce", "dspark_attn_out", EMIT_TENSOR_PARALLEL),
+            norm("dspark_ffn_norm"),
+            dict(gemm("dspark_mlp_gate_up", 2 * dense_ffn, hidden), weight_dtype="bf16"),
+            dict(gemm("dspark_mlp_down", hidden, dense_ffn), weight_dtype="bf16"),
+            collective("AllReduce", "dspark_mlp_out", EMIT_TENSOR_PARALLEL),
+        ]
+        return {"id": "dspark_layer", "nodes": nodes, "edges": chain(nodes)}
+
+    kinds.append(dspark_layer())
+    context = [
+        {"op": "Elementwise", "role": "dspark_target_norm", "tp": "replicated",
+         "bytes_per_token": 2 * num_targets * hidden * act},
+        dict(gemm("dspark_target_projection", hidden, num_targets * hidden),
+             weight_dtype="bf16", tp="replicated"),
+    ]
+    kinds.append({"id": "dspark_context", "nodes": context, "edges": chain(context)})
+    speculator = {
+        "method": "dspark",
+        "num_spec_tokens": 3,
+        "drafting": "parallel_block",
+        # The drafter embeds with the target's VocabParallelEmbedding (dspark.py: the
+        # DSpark loader always aliases the target's).
+        "embedding": [{"op": "Gather", "role": "dspark_embed_tokens", "rows": vocab,
+                       "row_bytes": hidden * act, "rows_per_token": 1,
+                       "out_bytes_per_token": hidden * act, "shard": "rows",
+                       "aliases": "embedding.embed_tokens"},
+                      collective("AllReduce", "dspark_embed_out", EMIT_TENSOR_PARALLEL)],
+        "stack": {"pattern": ["dspark_layer"], "repeat": draft_layers},
+        "context_stack": {"pattern": ["dspark_context"], "repeat": 1},
+        "head": [
+            norm("dspark_final_norm"),
+            dict(gemm("dspark_joint_proj", 3 * markov, markov + hidden + markov),
+                 weight_dtype="bf16", tp="replicated"),
+        ],
+        "sequential_head": [
+            {"op": "Gather", "role": "markov_w1", "rows": vocab,
+             "row_bytes": markov * act, "rows_per_token": 1,
+             "out_bytes_per_token": markov * act},
+            dict(gemm("markov_w2", vocab, markov), weight_dtype="bf16",
+                 tp="replicated"),
+        ],
+    }
+
     return kinds, compress(sequence), {
         "global": {
             "context_window": int(cfg.get("max_position_embeddings") or 0),
             # One bf16 hidden_states activation a token (model.py:239-241).
             "pipeline_boundary_bytes_per_token": 2 * hidden,
         },
+        # tok_embeddings.weight is BF16 [204800, 6144] in the checkpoint at af26e786,
+        # although the config's fp8 exclusion list names every unquantized module but it;
+        # the graph states what the checkpoint stores.
+        "embedding": [{"op": "Gather", "role": "embed_tokens", "rows": vocab,
+                       "row_bytes": hidden * act, "rows_per_token": 1,
+                       "out_bytes_per_token": hidden * act, "shard": "rows"},
+                      collective("AllReduce", "embed_out", EMIT_TENSOR_PARALLEL)],
+        "speculator": speculator,
     }
 
 
@@ -8670,11 +8760,9 @@ UNPRICED_IMAGE_TOWERS = {
     "InklingForConditionalGeneration": ("the hmlp tower's layer widths come from a planner that has been read, "
                                         "not run", ENCODER_ISSUES["inkling"]),
     # Pixtral's 30-layer tower (vision_config.model_type pixtral at v0.34.0) has no builder
-    # here yet; the catalog lane that adds one prices it.
+    # here yet; #405 tracks pricing it.
     "MistralLarge4ForConditionalGeneration": ("the Pixtral tower has no builder in this deriver yet",
-                                              "inference-sim/blis-substrate#304"),
-    "Inkling2ForConditionalGeneration": ("the inkling2 tower has no builder in this deriver yet",
-                                         ENCODER_ISSUES["inkling"]),
+                                              "inference-sim/blis-substrate#405"),
 }
 AUDIO_TOWERS = {
     "MuseSparkForConditionalGeneration": "a ConvNeXt-style stack with depthwise convolutions, which have no primitive",
