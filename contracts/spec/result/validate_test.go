@@ -99,6 +99,14 @@ func valid() *Result {
 	}
 }
 
+func TestValidResultWithPreemptedRowPasses(t *testing.T) {
+	r := valid()
+	r.RequestRows[0].Preemptions, r.RequestRows[0].PreemptedAtUs = 2, []int64{40, 70}
+	if p := r.Validate(); !p.OK() {
+		t.Fatalf("a row with its preemption times must validate:\n%s", p.Error())
+	}
+}
+
 func TestValidResultPasses(t *testing.T) {
 	if p := valid().Validate(); !p.OK() {
 		t.Fatalf("the fixture must validate:\n%s", p.Error())
@@ -352,11 +360,16 @@ func TestEachFailureModeIsRefused(t *testing.T) {
 		{"first token without a token", row(3, func(x *RequestRow) { x.FirstTokenUs = ptr(int64(20)) }), "request_rows[3].first_token_us", "emitted no token"},
 		{"first token before queue entry", row(0, func(x *RequestRow) { x.QueueEntryUs = ptr(int64(101)) }), "request_rows[0].first_token_us", "before queue_entry_us"},
 		{"first token disagrees with ttft", row(0, func(x *RequestRow) { x.FirstTokenUs = ptr(int64(99)) }), "request_rows[0].first_token_us", "must equal first_token_us - arrival_us"},
+		{"negative ended_us", row(0, func(x *RequestRow) { x.EndedUs = ptr(int64(-1)) }), "request_rows[0].ended_us", "negative"},
 		{"non-finite tpot", row(0, func(x *RequestRow) { x.TPOTUs = ptr(nan) }), "request_rows[0].tpot_us", "finite"},
 		{"negative prompt tokens", row(0, func(x *RequestRow) { x.PromptTokens = -1 }), "request_rows[0].prompt_tokens", "negative"},
 		{"completion index on an unfinished row", row(2, func(x *RequestRow) { x.CompletionIndex = 3 }), "request_rows[2].completion_index", "only a completed"},
 		{"completion index out of range", row(0, func(x *RequestRow) { x.CompletionIndex = 3 }), "request_rows[0].completion_index", "lies in [1, 2]"},
 		{"completion index given twice", row(1, func(x *RequestRow) { x.CompletionIndex = 1 }), "request_rows[1].completion_index", "two requests"},
+		{"negative preemptions", row(0, func(x *RequestRow) { x.Preemptions = -1 }), "request_rows[0].preemptions", "negative"},
+		{"preemption times that do not match the count", row(0, func(x *RequestRow) { x.Preemptions = 2; x.PreemptedAtUs = []int64{50} }), "request_rows[0].preempted_at_us", "has 1 times but preemptions is 2"},
+		{"preemption before arrival", row(1, func(x *RequestRow) { x.Preemptions = 1; x.PreemptedAtUs = []int64{4} }), "request_rows[1].preempted_at_us", "before the request's arrival"},
+		{"preemption times out of order", row(0, func(x *RequestRow) { x.Preemptions = 2; x.PreemptedAtUs = []int64{60, 50} }), "request_rows[0].preempted_at_us", "previous preemption"},
 		{"row fates disagree with the counts", func(r *Result) {
 			r.RequestRows[2].Fate, r.RequestRows[2].TTFTUs = FateQueuedAtHorizon, nil
 		}, "request_rows", "fate in_flight_at_horizon"},

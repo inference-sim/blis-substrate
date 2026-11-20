@@ -1271,6 +1271,9 @@
         "e2e_us": {
           "type": "integer"
         },
+        "ended_us": {
+          "type": "integer"
+        },
         "fate": {
           "enum": [
             "completed",
@@ -1310,6 +1313,15 @@
             "grace"
           ],
           "type": "string"
+        },
+        "preempted_at_us": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "preemptions": {
+          "type": "integer"
         },
         "prompt_tokens": {
           "type": "integer"

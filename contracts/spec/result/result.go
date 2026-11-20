@@ -706,6 +706,10 @@ type RequestRow struct {
 	FirstTokenUs *int64 `yaml:"first_token_us,omitempty"`
 	// GatewayQueueDelayUs is the time spent in the router's flow-control queue.
 	GatewayQueueDelayUs *int64 `yaml:"gateway_queue_delay_us,omitempty"`
+	// EndedUs is the simulated time at which the request's fate was written: when it
+	// completed, was dropped (DropReason says why), timed out, or was cut off by the
+	// horizon (then the horizon). Absent in a Result written before it was added.
+	EndedUs *int64 `yaml:"ended_us,omitempty"`
 	// CompletionIndex is the request's 1-based position in the run's order of completion,
 	// for a completed request.
 	CompletionIndex int `yaml:"completion_index,omitempty"`
@@ -719,6 +723,14 @@ type RequestRow struct {
 	// LengthCapped: the request completed at a length limit rather than at end of
 	// sequence.
 	LengthCapped bool `yaml:"length_capped,omitempty"`
+
+	// Preemptions is how many times the engine preempted the request: freed its KV blocks
+	// and returned it to the waiting queue, to recompute its tokens when it runs again.
+	// PreemptedAtUs holds the simulated time of each, in order; its length equals
+	// Preemptions. The instance is the row's Instance. Both are absent for a request never
+	// preempted.
+	Preemptions   int     `yaml:"preemptions,omitempty"`
+	PreemptedAtUs []int64 `yaml:"preempted_at_us,omitempty"`
 
 	// Phase is the request's benchmark phase, when the workload marks phases.
 	Phase Phase `yaml:"phase,omitempty"`
