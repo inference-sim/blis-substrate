@@ -9981,10 +9981,6 @@ def test_a_tower_without_a_builder_is_refused_by_name(tmp_path):
     sys.path.insert(0, str(DERIVER.parent))
     import derive_graph  # noqa: E402
     raw = config_of(MODELS / "qwen3.5-397b-a17b")
-    raw["vision_config"]["deepstack_visual_indexes"] = [8, 16, 24]
-    with pytest.raises(derive_graph.DeriveError, match="deepstack"):
-        _derive_raw(raw, tmp_path, "qwen3.5-397b-a17b")
-    raw = config_of(MODELS / "qwen3.5-397b-a17b")
     del raw["vision_config"]["depth"]
     with pytest.raises(derive_graph.DeriveError, match="depth"):
         _derive_raw(raw, tmp_path, "qwen3.5-397b-a17b")
@@ -10257,3 +10253,79 @@ def test_the_mla_prefill_widths_come_from_the_config(tmp_path):
     text_config(bumped)["v_head_dim"] = 64
     g = _derive_raw(bumped, tmp_path, "kimi-k2.5")
     assert {(a["prefill_qk_head_dim"], a["prefill_v_head_dim"]) for a in _attention_nodes(g) if a["kind"] == "mla"} == {(192, 64)}, t.get("v_head_dim")
+
+
+def test_qwen3_vl_tower_builds_a_post_shuffle_merger_per_deepstack_index(tmp_path):
+    """Qwen3-VL's tower taps the blocks deepstack_visual_indexes names, each through its own
+    Qwen3_VisionPatchMerger with use_postshuffle_norm=True: a LayerNorm over the merged width
+    H x merge^2 (not H), linear_fc1 merged to merged (column), GELU, linear_fc2 merged to the
+    text hidden size (row), all on the merged rows (vLLM v0.33.0 qwen3_vl.py:509-557,
+    :644-656, :893-904). The main merger's nodes are unchanged."""
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    raw = config_of(MODELS / "qwen3.5-397b-a17b")
+    plain = _only_tower(_derive_raw(raw, tmp_path, "qwen3.5-397b-a17b"))
+    raw["vision_config"]["deepstack_visual_indexes"] = [8, 16, 24]
+    tower = _only_tower(_derive_raw(raw, tmp_path, "qwen3.5-397b-a17b"))
+    vc, text_hidden = raw["vision_config"], raw["text_config"]["hidden_size"]
+    M = vc["hidden_size"] * vc["spatial_merge_size"] ** 2
+    main, deep = tower["projector"][:len(plain["projector"])], tower["projector"][len(plain["projector"]):]
+    assert main == plain["projector"]
+    assert [n["role"] for n in deep] == [f"deepstack{k}_{r}" for k in range(3) for r in ("norm", "fc1", "act", "fc2")]
+    for k in range(3):
+        norm, fc1, act, fc2 = deep[4 * k:4 * k + 4]
+        assert norm["op"] == "elementwise" and norm["params"] == 2 * M and norm["rows"] == "output_tokens"
+        assert norm["bytes_per_row"] == 2 * M * 2
+        assert (fc1["n"], fc1["k"], fc1["tp"], fc1["bias"], fc1["rows"]) == (M, M, "column", True, "output_tokens")
+        assert act["op"] == "elementwise" and act["tp"] == "sharded" and act["rows"] == "output_tokens"
+        assert (fc2["n"], fc2["k"], fc2["tp"], fc2["bias"], fc2["rows"]) == (text_hidden, M, "row", True, "output_tokens")
+    for k in ("embedding", "layer_kinds", "stack"):
+        assert tower[k] == plain[k]
+
+
+def test_qwen3_vl_tower_refuses_a_deepstack_index_outside_the_tower(tmp_path):
+    sys.path.insert(0, str(DERIVER.parent))
+    import derive_graph  # noqa: E402
+    raw = config_of(MODELS / "qwen3.5-397b-a17b")
+    raw["vision_config"]["deepstack_visual_indexes"] = [8, raw["vision_config"]["depth"]]
+    with pytest.raises(derive_graph.DeriveError, match="deepstack"):
+        _derive_raw(raw, tmp_path, "qwen3.5-397b-a17b")
+
+
+def test_qwen3_vl_32b_decoder_is_the_qwen3_dense_graph_of_its_text_config(tmp_path):
+    """vLLM v0.33.0 builds Qwen3VLForConditionalGeneration's decoder as Qwen3LLMForCausalLM
+    from text_config with architectures ["Qwen3ForCausalLM"] (qwen3_vl.py:2042-2048), so the
+    entry's text graph is the Qwen3ForCausalLM derivation of that config, and its tower has
+    the three deepstack mergers its vision_config names."""
+    d = MODELS / "qwen3-vl-32b-instruct"
+    g = graph_of(d)
+    raw = config_of(d)
+    text = dict(raw["text_config"], architectures=["Qwen3ForCausalLM"])
+    ref = _derive_raw(text, tmp_path, "qwen3-vl-32b-instruct")
+    for k in ("layer_kinds", "stack"):
+        assert g[k] == ref[k]
+    assert g["global"]["architecture"] == "Qwen3VLForConditionalGeneration"
+    assert g["modality"] == "multimodal"
+    tower = _only_tower(g)
+    assert tower["stack"]["repeat"] == 27
+    assert [n["role"] for n in tower["projector"] if n["role"].startswith("deepstack")] == \
+        [f"deepstack{k}_{r}" for k in range(3) for r in ("norm", "fc1", "act", "fc2")]
+
+
+def test_qwen3_vl_32b_weight_bytes_equal_the_header_totals():
+    """At Qwen/Qwen3-VL-32B-Instruct's pinned revision the 14 shard headers (read by range
+    request; not committed) hold 1,190,533,600 bytes under model.visual., 134,536,704 parameters
+    of them in deepstack_merger_list, and 65,524,246,528 bytes under model.language_model. and
+    lm_head., all BF16. The graph's tower equals the first to the byte and its deepstack nodes
+    the second; its text GEMMs, head and embedding equal the third less the 64 x (2 x 5120 +
+    2 x 128) + 5120 norm weights, which carry no GEMM. Only a tower that builds every merger,
+    at its post-shuffle width, and a handler that places every projection agree."""
+    g = graph_of(MODELS / "qwen3-vl-32b-instruct")
+    tower = _only_tower(g)
+    assert _tower_params(tower) * 2 == 1_190_533_600
+    deep = [n for n in tower["projector"] if n["role"].startswith("deepstack")]
+    assert sum(n["n"] * n["k"] + n["n"] if n["op"] == "gemm" else n.get("params", 0) for n in deep) == 134_536_704
+    head = sum(n["n"] * n["k"] * 2 for n in g["head"] if n["op"] == "GEMM")
+    emb = g["global"]["vocab_size"] * g["global"]["hidden_size"] * 2
+    norms = (64 * (2 * 5120 + 2 * 128) + 5120) * 2
+    assert weight_bytes(g) + head + emb + norms == 65_524_246_528

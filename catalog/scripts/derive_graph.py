@@ -7964,6 +7964,9 @@ HANDLERS = {
     "MistralForCausalLM": handler_dense,
     "Qwen2ForCausalLM": handler_dense,
     "Qwen3ForCausalLM": handler_dense,
+    # vLLM v0.33.0 builds Qwen3-VL's decoder as Qwen3LLMForCausalLM from text_config with
+    # architectures ["Qwen3ForCausalLM"] (model_executor/models/qwen3_vl.py:2042-2048).
+    "Qwen3VLForConditionalGeneration": handler_dense,
     "MixtralForCausalLM": handler_moe,
     "Qwen3MoeForCausalLM": handler_moe,
     "Llama4ForConditionalGeneration": handler_moe,
@@ -8154,12 +8157,17 @@ def tower_moonvit(vc: dict[str, Any], raw: dict[str, Any], text_hidden: int, dty
 
 def tower_qwen3_vl(vc: dict[str, Any], raw: dict[str, Any], text_hidden: int, dtype: str, model: str) -> dict[str, Any]:
     """Qwen3-VL's vision transformer (model_executor/models/qwen3_vl.py:391-558), as
-    Qwen3.5 and Qwen3.6 use it. A deepstack merger is not built."""
+    Qwen3-VL, Qwen3.5 and Qwen3.6 use it. Each block deepstack_visual_indexes names also feeds
+    its own Qwen3_VisionPatchMerger with use_postshuffle_norm=True (:644-656, :893-904): its
+    LayerNorm runs over the merged width, after the view (:524-526, :549-551), so the whole
+    merger runs on the merged rows. The tap's position in the stack does not change its cost,
+    so the mergers follow the main one in the projector."""
     H, I, nh, L, p, tp_, sm, out = _need(vc, ("hidden_size", "intermediate_size", "num_heads", "depth",
                                                 "patch_size", "temporal_patch_size", "spatial_merge_size",
                                                 "out_hidden_size"), model)
-    if vc.get("deepstack_visual_indexes"):
-        raise DeriveError(f"{model}: deepstack_visual_indexes is non-empty; the deepstack mergers are not built")
+    deepstack = [int(i) for i in vc.get("deepstack_visual_indexes") or []]
+    if any(not 0 <= i < int(L) for i in deepstack):
+        raise DeriveError(f"{model}: deepstack_visual_indexes {deepstack} names a block outside the tower's {L}")
     if int(out) != text_hidden:
         raise DeriveError(f"{model}: out_hidden_size {out} differs from the text hidden size {text_hidden}")
     ch = int(vc.get("in_channels", 3))
@@ -8172,6 +8180,11 @@ def tower_qwen3_vl(vc: dict[str, Any], raw: dict[str, Any], text_hidden: int, dt
             _gemm("merge_fc1", M, M, bias=True, tp="column", rows="output_tokens"),
             _vnode("elementwise", "merge_act", bytes_per_row=2 * M * 2, rows="output_tokens", tp="sharded"),
             _gemm("merge_fc2", text_hidden, M, bias=True, tp="row", rows="output_tokens")]
+    for k in range(len(deepstack)):
+        proj += [_norm(f"deepstack{k}_norm", M, 2 * M, rows="output_tokens"),
+                 _gemm(f"deepstack{k}_fc1", M, M, bias=True, tp="column", rows="output_tokens"),
+                 _vnode("elementwise", f"deepstack{k}_act", bytes_per_row=2 * M * 2, rows="output_tokens", tp="sharded"),
+                 _gemm(f"deepstack{k}_fc2", text_hidden, M, bias=True, tp="row", rows="output_tokens")]
     return _tower(vc, text_hidden, dtype, patch=p, temporal=tp_, channels=ch, merge=sm * sm, parallel="tensor",
                   embedding=emb, block=block, layers=int(L), projector=proj)
 
@@ -8338,6 +8351,7 @@ TOWER_BUILDERS = {
     "KimiK31ForConditionalGeneration": lambda *a: tower_moonvit(*a, v2=True),
     "Qwen3_5MoeForConditionalGeneration": tower_qwen3_vl,
     "Qwen3_5ForConditionalGeneration": tower_qwen3_vl,
+    "Qwen3VLForConditionalGeneration": tower_qwen3_vl,
     "Glm5NextForConditionalGeneration": tower_glm5_next,
     "DeepseekV41ForCausalLM": tower_deepseek_v41,
     "Gemma4ForConditionalGeneration": tower_gemma4,

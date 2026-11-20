@@ -1,0 +1,9 @@
+name: qwen3-vl-32b-instruct
+source:
+  provider: huggingface
+  repo: Qwen/Qwen3-VL-32B-Instruct
+  revision: 0cfaf48183f594c314753d30a4c4974bc75f3ccb
+  retrieved: 2026-11-20
+licence:
+  id: Apache-2.0
+  evidence: https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct/raw/0cfaf48183f594c314753d30a4c4974bc75f3ccb/README.md
