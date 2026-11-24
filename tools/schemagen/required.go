@@ -21,6 +21,7 @@ var requiredKeys = map[string][]string{
 	"connector.Entry":             {"behaves_like", "evidence", "roles", "upstream"},
 	"connector.Registry":          {"connectors", "kind", "name"},
 	"deployment.Deployment":       {"kind", "name", "pools"},
+	"deployment.GPUPlacement":     {},
 	"deployment.Offload":          {"tiers"},
 	"deployment.PDTransfer":       {},
 	"deployment.Parallelism":      {"dp", "pp", "tp"},

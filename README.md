@@ -23,6 +23,15 @@ Go doc comments, the CLI output and the JSON Schemas under `contracts/schema`.
 | `validate/` | the catalog, registry and measurement validators and their commands |
 | `tools/` | repository tools (the pull-request checks, the invariant renderer, the schema generator) |
 
+Deployment pools may optionally state ordered `gpu_placements` with zero-based
+`node` and `gpu` indices. All pools must use disjoint allocations when this field
+is present, and each complete TP group must fit one physical node. This supports
+prefill and decode on the same node with different GPUs, with PP1, DP1, and PCP
+and local DP unset or 1. Pool `nodes` counts distinct allocated nodes; unused
+GPUs are allowed. Without this field, pools retain the disjoint whole-node,
+exact-fill placement contract. The field is documented in
+`contracts/spec/deployment` and published in `contracts/schema/deployment.schema.json`.
+
 ## Connections
 
 - **Pins nothing from BLIS.** It depends only on the Go standard library, the YAML parser and its own packages.
