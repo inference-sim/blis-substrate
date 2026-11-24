@@ -117,6 +117,11 @@ type Pool struct {
 	// selector, the llm-d.ai/role label of a disaggregated deployment). llm-d.ai/role is derived
 	// from Role (RoleLabelValue); given here, it must have that value.
 	Labels map[string]string `yaml:"labels,omitempty"`
+	// GPUPlacements lists the pool's physical GPUs in engine order. When any pool
+	// supplies it, every pool must supply a nonempty, disjoint allocation. Each TP
+	// group stays on one node; PP and DP must be 1, and PCP and DPLocal unset or 1.
+	// Nodes counts distinct allocated nodes, and unallocated GPUs may remain idle.
+	GPUPlacements []GPUPlacement `yaml:"gpu_placements,omitempty"`
 
 	// Offload is the pool's own KV tier hierarchy below HBM, and PDTransfer its own KV
 	// connector. Each engine is a server with its own --kv-transfer-config
@@ -129,6 +134,13 @@ type Pool struct {
 	// tiers and no other setting (Offload.StatesNone), which also overrides a default.
 	Offload    *Offload    `yaml:"offload,omitempty"`
 	PDTransfer *PDTransfer `yaml:"pd_transfer,omitempty"`
+}
+
+// GPUPlacement identifies one physical GPU in the scenario's cluster. Node and
+// GPU are zero-based indices; pools may share a node but never the same GPU.
+type GPUPlacement struct {
+	Node int `yaml:"node"`
+	GPU  int `yaml:"gpu"`
 }
 
 // Parallelism is the layout. EP is absent: see the package comment.

@@ -152,12 +152,8 @@ type ClusterConstraints struct {
 // past the end of a node, and that every offload tier names a storage class the cluster
 // actually lists.
 //
-// Pools fill the cluster exactly rather than take a subset of it: a deployment lays out
-// the whole cluster it is handed, so the inventory is that cluster's full extent and not
-// a pool to sub-select nodes from. This exact-fill rule is the placement contract the
-// pre-split Scenario enforced, carried here unchanged — relaxing it to allow partial use
-// of the declared hardware would be a behavior change, not part of this value-preserving
-// split.
+// Without explicit GPU allocations, pools fill the cluster exactly. With allocations,
+// pools may share physical nodes, but every GPU belongs to at most one allocation.
 //
 // They are separate from Validate because they need the cluster, which is a Scenario
 // property; the composition layer (blisschemas.Validate) supplies it as a
@@ -166,6 +162,11 @@ func (d *Deployment) ValidateAgainstCluster(c ClusterConstraints) *validate.Prob
 	p := &validate.Problems{}
 
 	total := 0
+	explicit := false
+	for _, pool := range d.Pools {
+		explicit = explicit || len(pool.GPUPlacements) > 0
+	}
+	occupied := map[GPUPlacement]bool{}
 	for i, pool := range d.Pools {
 		total += pool.Nodes
 		if pool.Parallel.DPLocal > 0 && c.GPUsPerNode > 0 &&
@@ -173,9 +174,41 @@ func (d *Deployment) ValidateAgainstCluster(c ClusterConstraints) *validate.Prob
 			p.Field(fmt.Sprintf("pools[%d].parallel.dp_local", i),
 				"%d does not divide gpus_per_node %d", pool.Parallel.DPLocal, c.GPUsPerNode)
 		}
-		validateRankFit(p, fmt.Sprintf("pools[%d]", i), pool, c)
+		if explicit {
+			at := fmt.Sprintf("pools[%d].gpu_placements", i)
+			if len(pool.GPUPlacements) == 0 {
+				p.Field(at, "required on every pool when explicit placement is used")
+				continue
+			}
+			if pool.Parallel.TP < 1 || pool.Parallel.PP != 1 || pool.Parallel.DP != 1 || pool.Parallel.PCP > 1 || pool.Parallel.DPLocal > 1 {
+				p.Field(at, "explicit placement requires positive TP, PP1, DP1 and PCP1")
+				continue
+			}
+			if len(pool.GPUPlacements)%pool.Parallel.TP != 0 {
+				p.Field(at, "must contain complete TP groups")
+			}
+			nodes := map[int]bool{}
+			for index, device := range pool.GPUPlacements {
+				if device.Node < 0 || device.Node >= c.Nodes || device.GPU < 0 || device.GPU >= c.GPUsPerNode {
+					p.Field(at, "GPU placement %+v is outside the cluster", device)
+				}
+				if occupied[device] {
+					p.Field(at, "GPU placement %+v overlaps another allocation", device)
+				}
+				if device.Node != pool.GPUPlacements[index-index%pool.Parallel.TP].Node {
+					p.Field(at, "each explicit TP group must fit one physical node")
+				}
+				occupied[device] = true
+				nodes[device.Node] = true
+			}
+			if len(nodes) != pool.Nodes {
+				p.Field(at, "distinct allocated nodes must equal pool.nodes")
+			}
+		} else {
+			validateRankFit(p, fmt.Sprintf("pools[%d]", i), pool, c)
+		}
 	}
-	if len(d.Pools) > 0 && total != c.Nodes {
+	if !explicit && len(d.Pools) > 0 && total != c.Nodes {
 		p.Field("pools",
 			"pool node counts sum to %d but the cluster declares %d", total, c.Nodes)
 	}

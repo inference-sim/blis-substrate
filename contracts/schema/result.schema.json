@@ -185,6 +185,18 @@
       ],
       "type": "object"
     },
+    "deployment.GPUPlacement": {
+      "additionalProperties": false,
+      "properties": {
+        "gpu": {
+          "type": "integer"
+        },
+        "node": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "deployment.Offload": {
       "additionalProperties": false,
       "properties": {
@@ -272,6 +284,12 @@
         "engine": {
           "description": "The pool's engine settings, in the engine's own names; validated by the engine, not by this schema.",
           "type": "object"
+        },
+        "gpu_placements": {
+          "items": {
+            "$ref": "#/$defs/deployment.GPUPlacement"
+          },
+          "type": "array"
         },
         "labels": {
           "additionalProperties": {

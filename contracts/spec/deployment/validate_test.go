@@ -145,6 +145,64 @@ func TestColocatedAlongsideDisaggregated(t *testing.T) {
 }
 
 // would supply.
+func TestExplicitGPUPlacement(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		decode GPUPlacement
+		nodes  int
+		valid  bool
+	}{
+		{"shared node", GPUPlacement{Node: 0, GPU: 1}, 1, true},
+		{"different nodes", GPUPlacement{Node: 1, GPU: 0}, 2, true},
+		{"overlapping GPU", GPUPlacement{Node: 0, GPU: 0}, 1, false},
+		{"unknown node", GPUPlacement{Node: 2, GPU: 1}, 1, false},
+		{"unknown GPU", GPUPlacement{Node: 0, GPU: 2}, 1, false},
+		{"negative node", GPUPlacement{Node: -1, GPU: 1}, 1, false},
+		{"negative GPU", GPUPlacement{Node: 0, GPU: -1}, 1, false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			d := &Deployment{Kind: "Deployment", Name: "explicit", PDTransfer: &PDTransfer{Connector: "NixlConnector"}, Pools: []Pool{
+				{Role: RolePrefill, Nodes: 1, Parallel: Parallelism{TP: 1, PP: 1, DP: 1}, GPUPlacements: []GPUPlacement{{Node: 0, GPU: 0}}},
+				{Role: RoleDecode, Nodes: 1, Parallel: Parallelism{TP: 1, PP: 1, DP: 1}, GPUPlacements: []GPUPlacement{test.decode}},
+			}}
+			if result := d.ValidateAgainstCluster(ClusterConstraints{Nodes: test.nodes, GPUsPerNode: 2}); result.OK() != test.valid {
+				t.Fatalf("valid=%v, got %s", test.valid, result.Error())
+			}
+		})
+	}
+}
+
+func TestExplicitGPUPlacementRejectsMalformedPools(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		change func(*Deployment)
+	}{
+		{"partial allocation", func(d *Deployment) { d.Pools[1].GPUPlacements = nil }},
+		{"pipeline parallelism", func(d *Deployment) { d.Pools[0].Parallel.PP = 2 }},
+		{"data parallelism", func(d *Deployment) { d.Pools[0].Parallel.DP = 2 }},
+		{"prefill context parallelism", func(d *Deployment) { d.Pools[0].Parallel.PCP = 2 }},
+		{"local data parallelism", func(d *Deployment) { d.Pools[0].Parallel.DPLocal = 2 }},
+		{"zero tensor width", func(d *Deployment) { d.Pools[0].Parallel.TP = 0 }},
+		{"incomplete tensor group", func(d *Deployment) { d.Pools[0].Parallel.TP = 2 }},
+		{"node count mismatch", func(d *Deployment) { d.Pools[0].Nodes = 2 }},
+		{"cross-node tensor group", func(d *Deployment) {
+			d.Pools[0].Parallel.TP = 2
+			d.Pools[0].GPUPlacements = []GPUPlacement{{Node: 0, GPU: 0}, {Node: 1, GPU: 1}}
+		}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			d := &Deployment{Kind: "Deployment", Name: "explicit", PDTransfer: &PDTransfer{Connector: "NixlConnector"}, Pools: []Pool{
+				{Role: RolePrefill, Nodes: 1, Parallel: Parallelism{TP: 1, PP: 1, DP: 1}, GPUPlacements: []GPUPlacement{{Node: 0, GPU: 0}}},
+				{Role: RoleDecode, Nodes: 1, Parallel: Parallelism{TP: 1, PP: 1, DP: 1}, GPUPlacements: []GPUPlacement{{Node: 1, GPU: 0}}},
+			}}
+			test.change(d)
+			if result := d.ValidateAgainstCluster(ClusterConstraints{Nodes: 2, GPUsPerNode: 2}); result.OK() {
+				t.Fatal("malformed explicit allocation must be rejected")
+			}
+		})
+	}
+}
+
 func TestValidateAgainstCluster(t *testing.T) {
 	// The pdDeployment pools sum to 60 nodes of 8 GPUs, which the matching cluster
 	// declares, and every dp_local of 8 divides the node.
